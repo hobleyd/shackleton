@@ -1,20 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:process_run/shell.dart';
-import 'package:process_run/which.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../models/foldersettings.dart';
+import '../models/folder_settings.dart';
 
-class FileCache extends ChangeNotifier {
-  static final FileCache _instance = FileCache._internal();
-
-  late Database _fileCache;
-  Map<String, List<String>> metadata = {};
-  bool hasExiftool = false;
+class CachedStorage {
+  late Database _cachedStorage;
 
   static const String _files = '''
         create table if not exists files(
@@ -25,8 +18,7 @@ class FileCache extends ChangeNotifier {
   static const String _tags = '''
         create table if not exists tags(
           id integer primary key,
-          key text not null,
-          value text not null,
+          tag text not null,
           unique (name) on conflict ignore);
           ''';
   static const String _filetags = '''
@@ -46,17 +38,8 @@ class FileCache extends ChangeNotifier {
   static const String _indexFiles = 'create index files_idx on files(path);';
   static const String _indexSettings = 'create index settings_idx on settings(path);';
 
-  factory FileCache() {
-    return _instance;
-  }
-
-  FileCache._internal() {
+  CachedStorage() {
     _openDatabase();
-    _checkDependencies();
-  }
-
-  void _checkDependencies() async {
-    hasExiftool = whichSync('exiftool') != null ? true : false;
   }
 
   void _createTables(Database db, int oldVersion, int newVersion) {
@@ -83,7 +66,7 @@ class FileCache extends ChangeNotifier {
       Directory documentsDirectory = await getApplicationDocumentsDirectory();
       database = documentsDirectory.path;
     }
-    database += '/db/fscache.db';
+    database += '/db/shackleton.db';
 
     return database;
   }
@@ -91,7 +74,7 @@ class FileCache extends ChangeNotifier {
   void _openDatabase() async {
     sqfliteFfiInit();
 
-    _fileCache = await databaseFactoryFfi.openDatabase(await _getDatabasePath(),
+    _cachedStorage = await databaseFactoryFfi.openDatabase(await _getDatabasePath(),
         options: OpenDatabaseOptions(
             version: 1,
             onConfigure: (db) {
@@ -108,16 +91,7 @@ class FileCache extends ChangeNotifier {
             }));
   }
 
-  Future<void> loadMetadata(FileSystemEntity entity) async {
-    if (!metadata.containsKey(entity.path)) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-subject', entity.path]);
-      metadata[entity.path] = output.stdout.split(',');
-
-      notifyListeners();
-    }
-  }
-
   void saveFolderSettings(FolderSettings settings) {
-    _fileCache.insert('settings', settings.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    _cachedStorage.insert('settings', settings.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

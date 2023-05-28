@@ -1,19 +1,25 @@
-import 'package:Shackleton/theme/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'notifiers/file_cache.dart';
-import 'notifiers/folder.dart';
-import 'theme/theme.dart';
+import 'misc/logger.dart';
+import 'providers/theme_notifier.dart';
 import 'widgets/shackleton.dart';
 
 void main() {
-  runApp(MultiProvider(
-      providers: [
-        ChangeNotifierProvider<Folder>(create: (_) => Folder()),
-        ChangeNotifierProvider<FileCache>(create: (_) => FileCache()),
-      ],
-      child: MaterialApp(title: 'Shackleton', home: const Shackleton(), theme: ShackletonTheme.normal,
-      )
-  ));
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(ProviderScope(observers: [Logger()], child: const ShackletonApp()));
+}
+
+class ShackletonApp extends ConsumerWidget {
+  const ShackletonApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp(
+      title: 'Shackleton',
+      home: const Shackleton(),
+      theme: ref.watch(themeNotifierProvider).theme,
+    );
+  }
 }

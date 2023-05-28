@@ -3,31 +3,40 @@ import 'dart:io';
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
-import 'package:provider/provider.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../notifiers/folder.dart';
 
-class FolderList extends StatefulWidget {
+import '../models/file_of_interest.dart';
+import '../models/folder_settings.dart';
+import '../misc/utils.dart';
+import '../providers/folder_contents_notifier.dart';
+import '../providers/folder_path_notifier.dart';
+import '../providers/folder_settings_notifier.dart';
+import '../providers/metadata_notifier.dart';
+import '../providers/selected_entities_notifier.dart';
+
+class FolderList extends ConsumerStatefulWidget {
   final Directory path;
 
   const FolderList({Key? key, required this.path}) : super(key: key);
 
   @override
-  _FolderList createState() => _FolderList();
+  ConsumerState<FolderList> createState() => _FolderList();
 }
 
-class _FolderList extends State<FolderList> {
+class _FolderList extends ConsumerState<FolderList> {
   bool _isCtrlKeyPressed = false;
   bool _isShiftKeyPressed = false;
   int _lastSelectedItemIndex = -1;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<Folder>(builder: (context, model, child) {
-      model.entities[widget.path] ?? model.getFolderContents(widget.path);
+    List<FileOfInterest> entities = ref.watch(folderContentsNotifierProvider(widget.path));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider);
+    FolderSettings folderSettings = ref.watch(folderSettingsNotifierProvider(widget.path));
+    var fsNotifier = ref.read(folderSettingsNotifierProvider(widget.path).notifier);
 
       return Row(children: [
         Expanded(
@@ -35,19 +44,19 @@ class _FolderList extends State<FolderList> {
                 formats: Formats.standardFormats,
                 hitTestBehavior: HitTestBehavior.opaque,
                 onDropOver: (event) {
-                  model.getSettings(widget.path).isDropZone = true;
+                  fsNotifier.setDropZone(true);
                   return _onDropOver(event);
                 },
                 onDropEnter: (event) {
-                  model.setDropZone(widget.path, true);
+                  fsNotifier.setDropZone(true);
                 },
                 onDropLeave: (event) {
-                  model.setDropZone(widget.path, false);
+                  fsNotifier.setDropZone(false);
                 },
-                onPerformDrop: (event) => _onPerformDrop(event, model),
+                onPerformDrop: (event) => _onPerformDrop(event),
                 child: Container(
                 alignment: Alignment.topLeft,
-                decoration: model.getSettings(widget.path).isDropZone
+                decoration: folderSettings.isDropZone
                     ? BoxDecoration(
                         shape: BoxShape.rectangle,
                         borderRadius: BorderRadius.circular(12),
@@ -58,13 +67,13 @@ class _FolderList extends State<FolderList> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
                       child: ListView.builder(
-                          itemCount: model.entities[widget.path]?.length ?? 0,
+                          itemCount: entities.length,
                           itemBuilder: (context, index) {
-                            FileSystemEntity entity = model.entities[widget.path]![index];
+                            FileOfInterest entity = entities[index];
 
                             return InkWell(
-                                onTap: () => _selectEntry(model, index),
-                                onDoubleTap: () => _openFile(model, index),
+                                onTap: () => _selectEntry(entities, index),
+                                onDoubleTap: () => entity.openFile(),
                                 child: DragItemWidget(
                                   allowedOperations: () => [DropOperation.move],
                                   canAddItemToExistingSession: true,
@@ -76,7 +85,7 @@ class _FolderList extends State<FolderList> {
                                   },
                                   child: DraggableWidget(
                                       child: Container(
-                                        color: model.selectedEntities.contains(entity) ? Colors.lime : Colors.transparent,
+                                        color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
                                         child: Row(children: [
                                           FileIcon(entity.path),
                                           Expanded(child: Text(entity.path.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
@@ -85,17 +94,19 @@ class _FolderList extends State<FolderList> {
                           },
                           scrollDirection: Axis.vertical,
                           shrinkWrap: true),
-                    )))),
+                    ),
+                ),
+            ),
+        ),
         MouseRegion(
             cursor: SystemMouseCursors.resizeColumn,
             child: GestureDetector(
               onHorizontalDragUpdate: (DragUpdateDetails details) {
-                model.setFolderWidth(widget.path, details.delta.dx);
+                fsNotifier.changeWidth(details.delta.dx);
               },
               child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
             )),
       ]);
-    });
   }
 
   @override
@@ -121,7 +132,7 @@ class _FolderList extends State<FolderList> {
     return DropOperation.none;
   }
 
-  Future<void> _onPerformDrop(PerformDropEvent event, Folder model) async {
+  Future<void> _onPerformDrop(PerformDropEvent event) async {
     final item = event.session.items.first;
     final reader = item.dataReader!;
     if (reader.canProvide(Formats.fileUri)) {
@@ -132,10 +143,10 @@ class _FolderList extends State<FolderList> {
           final type = await FileSystemEntity.type(Uri.decodeComponent(uri.path));
           switch (type) {
             case FileSystemEntityType.file:
-              _moveFile(File.fromUri(uri), Uri.decodeComponent(toFileUri.path));
+              moveFile(File.fromUri(uri), Uri.decodeComponent(toFileUri.path));
               break;
             case FileSystemEntityType.directory:
-              _moveDirectory(Directory.fromUri(uri), Uri.decodeComponent(toFileUri.path));
+              moveDirectory(Directory.fromUri(uri), Uri.decodeComponent(toFileUri.path));
               break;
             default:
               if (Link(uri.path).existsSync()) {
@@ -143,28 +154,10 @@ class _FolderList extends State<FolderList> {
               }
               break;
           }
-
-          // Refresh both listings to show the moved FileSystemEntity.
-          Directory d = model.entities.where((dir, settings) => dir.path == dirname(uri.path)).keys.first;
-          model.refreshFolder(widget.path);
-          model.refreshFolder(d);
         }
       });
     }
   }
-
-  void _copyDirectory(Directory source, Directory destination) =>
-      source.listSync(recursive: false)
-          .forEach((var entity) {
-        if (entity is Directory) {
-          var newDirectory = Directory(join(destination.absolute.path, basename(entity.path)));
-          newDirectory.createSync();
-
-          _copyDirectory(entity.absolute, newDirectory);
-        } else if (entity is File) {
-          entity.copySync(join(destination.path, basename(entity.path)));
-        }
-      });
 
   void _handleKeyEvent(RawKeyEvent event) {
     // Update key state based on key events
@@ -183,49 +176,21 @@ class _FolderList extends State<FolderList> {
     }
   }
 
-  Future<Directory> _moveDirectory(Directory source, String destination) async {
-    try {
-      // prefer using rename as it is probably faster
-      return await source.rename(destination);
-    } on FileSystemException catch (e) {
-      // if rename fails, recursively copy the directory and all it's contents.
-      _copyDirectory(source, Directory(destination));
-      source.delete(recursive: true);
-      return source;
-    }
-  }
+  void _selectEntry(List <FileOfInterest> entities, int index) {
+    // TODO: where should this live?
+    const Set<String> supportedExtensions = { 'jpg', 'tiff' };
 
-  Future<File> _moveFile(File sourceFile, String newPath) async {
-    try {
-      // prefer using rename as it is probably faster
-      return await sourceFile.rename(newPath);
-    } on FileSystemException catch (e) {
-      // if rename fails, copy the source file and then delete it
-      final newFile = await sourceFile.copy(newPath);
-      await sourceFile.delete();
-      return newFile;
-    }
-  }
+    var selectedEntities = ref.read(selectedEntitiesNotifierProvider.notifier);
 
-  Future _openFile(Folder model, int index) async {
-    FileSystemEntity entity = model.entities[widget.path]![index];
-    if (await canLaunchUrl(entity.uri)) {
-      launchUrl(entity.uri);
-    }
-  }
-
-  void _selectEntry(Folder model, int index) {
-    FileSystemEntity entity = model.entities[widget.path]![index];
-    if (entity.statSync().type == FileSystemEntityType.directory) {
-      model.addFolder(widget.path, Directory(entity.path));
+    //TODO: ensure any preview images being edited are cancelled
+    //Provider.of<FileCache>(context, listen: false).cancelEditing();
+    FileOfInterest entity = entities[index];
+    if (entity.isDirectory) {
+      ref.read(folderPathNotifierProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
 
     if (_isCtrlKeyPressed) {
-      if (model.selectedEntities.contains(entity)) {
-        model.removeSelection(entity);
-      } else {
-        model.addSelection(entity);
-      }
+      selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
     } else if (_isShiftKeyPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
@@ -238,14 +203,22 @@ class _FolderList extends State<FolderList> {
         }
 
         for (int i = start; i <= end; i++) {
-          model.addSelection(model.entities[widget.path]![i]);
+          selectedEntities.add(entities[i]);
         }
       }
     } else {
-      if (entity.statSync().type == FileSystemEntityType.file) {
-        model.selectedEntities.clear();
-        model.addSelection(entity);
-        _lastSelectedItemIndex = index;
+      _lastSelectedItemIndex = index;
+
+      selectedEntities.clear();
+      if (entity.isFile) {
+        selectedEntities.add(entity);
+      } else if (entity.isDirectory) {
+        Directory d = Directory(entity.path);
+        for (var e in d.listSync()) {
+          if (supportedExtensions.contains(entity.path.split('.').last)) {
+            selectedEntities.add(FileOfInterest(entity: e,));
+          }
+        }
       }
     }
   }
