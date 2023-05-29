@@ -1,9 +1,6 @@
 name: CI
 
-on:
-  workflow_run:
-    branches:
-      - master
+on: [push, workflow_dispatch]
       
 jobs:
  build:
