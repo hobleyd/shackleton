@@ -13,4 +13,5 @@ jobs:
          architecture: x64
          cache: true
      - run: flutter config --enable-macos-desktop
+     - run: dart run build_runner build
      - run: flutter build macos
