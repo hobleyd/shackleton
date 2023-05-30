@@ -18,6 +18,8 @@ class FolderSettingsNotifier extends _$FolderSettingsNotifier {
   }
 
   void setDropZone(bool isDropZone) {
-    state = state.copyWith(isDropZone: isDropZone);
+    if (state.isDropZone != isDropZone) {
+      state = state.copyWith(isDropZone: isDropZone);
+    }
   }
 }
