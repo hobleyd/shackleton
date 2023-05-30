@@ -7,7 +7,7 @@ class Preview {
 
   const Preview({
     this.visible = false,
-    this.height = 250,
+    this.height = 320,
   });
 
   Preview copyWith({double? height, bool? visible}) {
