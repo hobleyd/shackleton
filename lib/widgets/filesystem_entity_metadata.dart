@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
+import 'package:path/path.dart' as path;
 
 import '../models/file_of_interest.dart';
 import '../models/metadata.dart';
@@ -18,13 +19,14 @@ class FileSystemEntityMetadata extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    selectedEntities = ref.watch(selectedEntitiesNotifierProvider);
-    metadata = ref.watch(metadataNotifierProvider(entity.entity));
+    selectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.previewGrid));
+    metadata = ref.watch(metadataNotifierProvider(entity));
     Color background = selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(child: Container(color: background, child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))),
+        Text(entity.path.split(path.separator).last, style: Theme.of(context).textTheme.labelSmall),
+        entity.isImage ? Expanded(child: Container(color: background, child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
         SizedBox(height: 5, child: Container(color: background)),
         metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
       ],
@@ -54,7 +56,7 @@ class FileSystemEntityMetadata extends ConsumerWidget {
           padding: EdgeInsets.zero,
           splashRadius: 0.0001,
           tooltip: 'Save comma separated list of Tags to file...',
-          onPressed: () => ref.read(metadataNotifierProvider(entity.entity).notifier).saveTags(tagController.text)),
+          onPressed: () => ref.read(metadataNotifierProvider(entity).notifier).replaceTags(entity, tagController.text, update: true)),
     ]);
   }
 
@@ -62,11 +64,8 @@ class FileSystemEntityMetadata extends ConsumerWidget {
     return Container(
         color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
         child: Row(children: [
-          if (selectedEntities.isEmpty) ...[
-            Text(
-              'No metadata found for this image.',
-              style: Theme.of(context).textTheme.bodySmall,
-            )
+          if (!metadata.hasTags) ...[
+            Text('', style: Theme.of(context).textTheme.bodySmall,)
           ] else
             ...intersperse(Text(', ', style: Theme.of(context).textTheme.bodySmall),
                 metadata.tags.map((e) => Text(e.tag, style: Theme.of(context).textTheme.bodySmall))).toList(),
@@ -79,7 +78,7 @@ class FileSystemEntityMetadata extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 splashRadius: 0.0001,
                 tooltip: 'Provide comma separated list of Tags to edit...',
-                onPressed: () => ref.read(metadataNotifierProvider(entity.entity).notifier).setEditable(true)),
+                onPressed: () => ref.read(metadataNotifierProvider(entity).notifier).setEditable(true)),
           ]
         ]));
   }

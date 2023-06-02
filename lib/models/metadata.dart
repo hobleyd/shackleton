@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
 import 'tag.dart';
@@ -6,6 +8,8 @@ import 'tag.dart';
 class FileMetaData {
   final List<Tag> tags;
   final bool isEditing;
+
+  get hasTags => tags.isNotEmpty;
 
   const FileMetaData({
     required this.tags,

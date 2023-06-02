@@ -13,7 +13,9 @@ class FileSystemEntityPreview extends ConsumerWidget {
   // TODO: Add key navigation
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider);
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.folderList));
+    List<FileOfInterest> entities = selectedEntities.toList();
+    entities.sort();
 
     return selectedEntities.isEmpty
         ? const Padding(
@@ -30,13 +32,18 @@ class FileSystemEntityPreview extends ConsumerWidget {
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                     crossAxisCount: 5,
-                    children: selectedEntities
+                    children: entities
                         .map((e) => GestureDetector(
-                            onTap: () => selectedEntities.contains(e) ? selectedEntities.remove(e) : selectedEntities.add(e),
+                            onTap: () => _selectEntity(ref, e),
                             onDoubleTap: () => e.openFile(),
                             child: FileSystemEntityMetadata(entity: e)))
                         .toList())),
             const SizedBox(width: 200, child: MetadataEditor()),
           ]);
+  }
+
+  void _selectEntity(WidgetRef ref, FileOfInterest entity) {
+    var selectedEntities = ref.read(selectedEntitiesNotifierProvider(FileType.previewGrid).notifier);
+    selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:Shackleton/providers/preview_notifier.dart';
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,7 +35,7 @@ class _FolderList extends ConsumerState<FolderList> {
   @override
   Widget build(BuildContext context) {
     List<FileOfInterest> entities = ref.watch(folderContentsNotifierProvider(widget.path));
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider);
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.folderList));
     FolderSettings folderSettings = ref.watch(folderSettingsNotifierProvider(widget.path));
     var fsNotifier = ref.read(folderSettingsNotifierProvider(widget.path).notifier);
 
@@ -177,10 +178,7 @@ class _FolderList extends ConsumerState<FolderList> {
   }
 
   void _selectEntry(List <FileOfInterest> entities, int index) {
-    // TODO: where should this live?
-    const Set<String> supportedExtensions = { 'jpg', 'tiff' };
-
-    var selectedEntities = ref.read(selectedEntitiesNotifierProvider.notifier);
+    var selectedEntities = ref.read(selectedEntitiesNotifierProvider(FileType.folderList).notifier);
 
     //TODO: ensure any preview images being edited are cancelled
     //Provider.of<FileCache>(context, listen: false).cancelEditing();
@@ -213,10 +211,14 @@ class _FolderList extends ConsumerState<FolderList> {
       if (entity.isFile) {
         selectedEntities.add(entity);
       } else if (entity.isDirectory) {
-        Directory d = Directory(entity.path);
-        for (var e in d.listSync()) {
-          if (supportedExtensions.contains(entity.path.split('.').last)) {
-            selectedEntities.add(FileOfInterest(entity: e,));
+        // We only preselect folder entities if the preview pane is open on the assumption that this is what the user will be expecting.
+        if (ref.read(previewNotifierProvider).visible) {
+          Directory d = Directory(entity.path);
+          for (var e in d.listSync()) {
+            FileOfInterest foi = FileOfInterest(entity: e);
+            if (ref.read(metadataNotifierProvider(foi).notifier).isMetadataSupported(foi)) {
+              selectedEntities.add(foi);
+            }
           }
         }
       }

@@ -50,8 +50,11 @@ class FolderContentsNotifier extends _$FolderContentsNotifier {
     events.listen((FileSystemEvent event) {
       switch (event.type) {
         case FileSystemEvent.create:
-          List<FileOfInterest> entities = [...state, getEntity(event.path)];
-          state = [...sort(entities)];
+          FileOfInterest foi = getEntity(event.path);
+          if (!state.contains(foi)) {
+            List<FileOfInterest> entities = [...state, foi];
+            state = [...sort(entities)];
+          }
           break;
         case FileSystemEvent.delete:
         case FileSystemEvent.move:

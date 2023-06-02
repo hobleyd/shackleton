@@ -14,9 +14,11 @@ class MetadataEditor extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     TextEditingController tagController = TextEditingController();
 
-    // TODO: Display list of Tags to (optionally delete).
-    Set<FileOfInterest> entities = ref.watch(selectedEntitiesNotifierProvider);
-    final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataNotifierProvider(e.entity)).tags}.toList();
+    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.previewGrid));
+    Set<FileOfInterest> folderSelectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.folderList));
+    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : folderSelectedEntities;
+
+    final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataNotifierProvider(e)).tags}.toList();
 
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
@@ -37,7 +39,8 @@ class MetadataEditor extends ConsumerWidget {
                           splashRadius: 0.0001,
                           tooltip: 'Remove tag from selected images...',
                           onPressed: () => entities.forEach((e) {
-                                ref.read(metadataNotifierProvider(e.entity).notifier).removeTags(tags[index]);
+                            debugPrint('removing ${tags[index]} from ${e.path}');
+                                ref.read(metadataNotifierProvider(e).notifier).removeTags(e, tags[index]);
                               })),
                     ]);
                   })),
@@ -61,7 +64,7 @@ class MetadataEditor extends ConsumerWidget {
                   splashRadius: 0.0001,
                   tooltip: 'Add tags to selected images...',
                   onPressed: () => entities.forEach((e) {
-                        ref.read(metadataNotifierProvider(e.entity).notifier).saveTags(tagController.text);
+                        ref.read(metadataNotifierProvider(e).notifier).updateTags(e, tagController.text, update: true);
                       })),
             ],
           ),

@@ -1,13 +1,17 @@
+import 'dart:io';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 
 part 'selected_entities_notifier.g.dart';
 
+enum FileType { folderList, previewGrid }
+
 @riverpod
 class SelectedEntitiesNotifier extends _$SelectedEntitiesNotifier {
   @override
-  Set<FileOfInterest> build() {
+  Set<FileOfInterest> build(FileType type) {
     return {};
   }
 
@@ -37,5 +41,9 @@ class SelectedEntitiesNotifier extends _$SelectedEntitiesNotifier {
             e
       };
     }
+  }
+
+  int size() {
+    return state.length;
   }
 }
