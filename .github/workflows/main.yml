@@ -15,4 +15,4 @@ jobs:
      - run: flutter config --enable-macos-desktop
      - run: dart run build_runner build
      - run: flutter pub run flutter_launcher_icons
-     - run: flutter build macos
+     - run: flutter build macos --release --no-tree-shake-icons
