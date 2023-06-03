@@ -1,17 +1,14 @@
 import 'dart:io';
 
-import 'package:Shackleton/models/metadata.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
-import 'metadata_notifier.dart';
 
-part 'folder_contents_notifier.g.dart';
+part 'folder_contents.g.dart';
 
 @riverpod
-class FolderContentsNotifier extends _$FolderContentsNotifier {
+class FolderContents extends _$FolderContents {
   @override
   List<FileOfInterest> build(Directory path) {
     getFolderContents(path);

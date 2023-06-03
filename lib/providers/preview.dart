@@ -1,14 +1,14 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../models/preview.dart';
+import '../models/preview_settings.dart';
 
-part 'preview_notifier.g.dart';
+part 'preview.g.dart';
 
 @riverpod
-class PreviewNotifier extends _$PreviewNotifier {
+class Preview extends _$Preview {
   @override
-  Preview build() {
-    return const Preview();
+  PreviewSettings build() {
+    return const PreviewSettings();
   }
 
   void changeHeight(double delta) {

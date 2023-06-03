@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'folder_path_notifier.g.dart';
+part 'folder_path.g.dart';
 
 @riverpod
-class FolderPathNotifier extends _$FolderPathNotifier {
+class FolderPath extends _$FolderPath {
   @override
   List<Directory> build() {
     return [ _getHome() ];

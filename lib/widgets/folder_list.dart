@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:Shackleton/providers/preview_notifier.dart';
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,13 +9,14 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 
 import '../models/file_of_interest.dart';
-import '../models/folder_settings.dart';
+import '../models/folder_ui_settings.dart';
 import '../misc/utils.dart';
-import '../providers/folder_contents_notifier.dart';
-import '../providers/folder_path_notifier.dart';
-import '../providers/folder_settings_notifier.dart';
-import '../providers/metadata_notifier.dart';
-import '../providers/selected_entities_notifier.dart';
+import '../providers/folder_contents.dart';
+import '../providers/folder_path.dart';
+import '../providers/folder_settings.dart';
+import '../providers/metadata.dart';
+import '../providers/preview.dart';
+import '../providers/selected_entities.dart';
 
 class FolderList extends ConsumerStatefulWidget {
   final Directory path;
@@ -34,10 +34,10 @@ class _FolderList extends ConsumerState<FolderList> {
 
   @override
   Widget build(BuildContext context) {
-    List<FileOfInterest> entities = ref.watch(folderContentsNotifierProvider(widget.path));
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.folderList));
-    FolderSettings folderSettings = ref.watch(folderSettingsNotifierProvider(widget.path));
-    var fsNotifier = ref.read(folderSettingsNotifierProvider(widget.path).notifier);
+    List<FileOfInterest> entities = ref.watch(folderContentsProvider(widget.path));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
+    var fsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
 
       return Row(children: [
         Expanded(
@@ -121,7 +121,6 @@ class _FolderList extends ConsumerState<FolderList> {
   void initState() {
     super.initState();
 
-    // Add key event listeners
     RawKeyboard.instance.addListener(_handleKeyEvent);
   }
 
@@ -178,13 +177,13 @@ class _FolderList extends ConsumerState<FolderList> {
   }
 
   void _selectEntry(List <FileOfInterest> entities, int index) {
-    var selectedEntities = ref.read(selectedEntitiesNotifierProvider(FileType.folderList).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
 
     //TODO: ensure any preview images being edited are cancelled
     //Provider.of<FileCache>(context, listen: false).cancelEditing();
     FileOfInterest entity = entities[index];
     if (entity.isDirectory) {
-      ref.read(folderPathNotifierProvider.notifier).addFolder(widget.path, entity.entity as Directory);
+      ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
 
     if (_isCtrlKeyPressed) {
@@ -212,11 +211,11 @@ class _FolderList extends ConsumerState<FolderList> {
         selectedEntities.add(entity);
       } else if (entity.isDirectory) {
         // We only preselect folder entities if the preview pane is open on the assumption that this is what the user will be expecting.
-        if (ref.read(previewNotifierProvider).visible) {
+        if (ref.read(previewProvider).visible) {
           Directory d = Directory(entity.path);
           for (var e in d.listSync()) {
             FileOfInterest foi = FileOfInterest(entity: e);
-            if (ref.read(metadataNotifierProvider(foi).notifier).isMetadataSupported(foi)) {
+            if (ref.read(metadataProvider(foi).notifier).isMetadataSupported(foi)) {
               selectedEntities.add(foi);
             }
           }

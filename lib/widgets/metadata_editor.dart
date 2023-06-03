@@ -1,11 +1,11 @@
 import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:Shackleton/models/metadata.dart';
-import 'package:Shackleton/providers/selected_entities_notifier.dart';
+import 'package:Shackleton/models/file_metadata.dart';
+import 'package:Shackleton/providers/selected_entities.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/tag.dart';
-import '../providers/metadata_notifier.dart';
+import '../providers/metadata.dart';
 
 class MetadataEditor extends ConsumerWidget {
   const MetadataEditor({Key? key}) : super(key: key);
@@ -14,11 +14,11 @@ class MetadataEditor extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     TextEditingController tagController = TextEditingController();
 
-    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.previewGrid));
-    Set<FileOfInterest> folderSelectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.folderList));
+    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
+    Set<FileOfInterest> folderSelectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : folderSelectedEntities;
 
-    final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataNotifierProvider(e)).tags}.toList();
+    final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataProvider(e)).tags}.toList();
 
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
@@ -43,7 +43,7 @@ class MetadataEditor extends ConsumerWidget {
                               tooltip: 'Remove tag from selected images...',
                               onPressed: () => entities.forEach((e) {
                                     debugPrint('removing ${tags[index]} from ${e.path}');
-                                    ref.read(metadataNotifierProvider(e).notifier).removeTags(e, tags[index]);
+                                    ref.read(metadataProvider(e).notifier).removeTags(e, tags[index]);
                                   })),
                         ]));
                   })),
@@ -78,7 +78,7 @@ class MetadataEditor extends ConsumerWidget {
 
   bool _updateTags(WidgetRef ref, Set<FileOfInterest> entities, String tags) {
     for (var e in entities) {
-      ref.read(metadataNotifierProvider(e).notifier).updateTags(e, tags, update: true);
+      ref.read(metadataProvider(e).notifier).updateTags(e, tags, update: true);
     }
 
     return true;

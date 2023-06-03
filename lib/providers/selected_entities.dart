@@ -4,12 +4,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 
-part 'selected_entities_notifier.g.dart';
+part 'selected_entities.g.dart';
 
 enum FileType { folderList, previewGrid }
 
 @riverpod
-class SelectedEntitiesNotifier extends _$SelectedEntitiesNotifier {
+class SelectedEntities extends _$SelectedEntities {
   @override
   Set<FileOfInterest> build(FileType type) {
     return {};
@@ -27,6 +27,11 @@ class SelectedEntitiesNotifier extends _$SelectedEntitiesNotifier {
 
   bool contains(FileOfInterest entity) {
     return state.contains(entity);
+  }
+
+  void deleteFiles() {
+    state.map((e) => e.delete());
+    clear();
   }
 
   bool isSelected(FileOfInterest entity) {

@@ -26,6 +26,10 @@ class FileOfInterest extends Comparable {
   @override
   int compareTo(other) => path.compareTo(other.path);
 
+  void delete() async {
+    entity.deleteSync(recursive: true);
+  }
+
   Future openFile() async {
     if (await canLaunchUrl(entity.uri)) {
       launchUrl(entity.uri);

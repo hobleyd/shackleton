@@ -6,21 +6,21 @@ import 'package:intersperse/intersperse.dart';
 import 'package:path/path.dart' as path;
 
 import '../models/file_of_interest.dart';
-import '../models/metadata.dart';
-import '../providers/metadata_notifier.dart';
-import '../providers/selected_entities_notifier.dart';
+import '../models/file_metadata.dart';
+import '../providers/metadata.dart';
+import '../providers/selected_entities.dart';
 
-class FileSystemEntityMetadata extends ConsumerWidget {
+class EntityPreview extends ConsumerWidget {
   FileOfInterest entity;
   late Set<FileOfInterest> selectedEntities;
   late FileMetaData metadata;
 
-  FileSystemEntityMetadata({Key? key, required this.entity}) : super(key: key);
+  EntityPreview({Key? key, required this.entity}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    selectedEntities = ref.watch(selectedEntitiesNotifierProvider(FileType.previewGrid));
-    metadata = ref.watch(metadataNotifierProvider(entity));
+    selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
+    metadata = ref.watch(metadataProvider(entity));
     Color background = selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -87,13 +87,13 @@ class FileSystemEntityMetadata extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 splashRadius: 0.0001,
                 tooltip: 'Provide comma separated list of Tags to edit...',
-                onPressed: () => ref.read(metadataNotifierProvider(entity).notifier).setEditable(true)),
+                onPressed: () => ref.read(metadataProvider(entity).notifier).setEditable(true)),
           ]
         ]));
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
-    ref.read(metadataNotifierProvider(entity).notifier).replaceTags(entity, tags, update: true);
+    ref.read(metadataProvider(entity).notifier).replaceTags(entity, tags, update: true);
 
     return true;
   }

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../models/folder_settings.dart';
+import '../models/folder_ui_settings.dart';
 
 class CachedStorage {
   late Database _cachedStorage;
@@ -91,7 +91,7 @@ class CachedStorage {
             }));
   }
 
-  void saveFolderSettings(FolderSettings settings) {
+  void saveFolderSettings(FolderUISettings settings) {
     _cachedStorage.insert('settings', settings.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

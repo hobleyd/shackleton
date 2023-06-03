@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
 
 @immutable
-class Preview {
+class PreviewSettings {
   final bool visible;
   final double height;
 
-  const Preview({
+  const PreviewSettings({
     this.visible = false,
     this.height = 320,
   });
 
-  Preview copyWith({double? height, bool? visible}) {
-    return Preview(
+  PreviewSettings copyWith({double? height, bool? visible}) {
+    return PreviewSettings(
       height: height ?? this.height,
       visible: visible ?? this.visible,
     );

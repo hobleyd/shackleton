@@ -3,27 +3,27 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 @immutable
-class FolderSettings {
+class FolderUISettings {
   final FileSystemEntity entity;
   final bool isDropZone;
   final double width;
 
-  const FolderSettings({
+  const FolderUISettings({
     required this.entity,
     this.isDropZone = false,
     this.width = 200,
   });
 
-  FolderSettings copyWith({double? width, bool? isDropZone}) {
-    return FolderSettings(
+  FolderUISettings copyWith({double? width, bool? isDropZone}) {
+    return FolderUISettings(
       entity: entity,
       width: width ?? this.width,
       isDropZone: isDropZone ?? this.isDropZone,
     );
   }
 
-  static FolderSettings fromMap(Map<String, dynamic> setting) {
-    FolderSettings result =  FolderSettings(
+  static FolderUISettings fromMap(Map<String, dynamic> setting) {
+    FolderUISettings result =  FolderUISettings(
       entity: FileSystemEntity.typeSync(setting['path']) == FileSystemEntityType.file ? File(setting['path]']) : Directory(setting['path']),
       width: setting['width'],
     );
@@ -38,6 +38,7 @@ class FolderSettings {
     };
   }
 
+  @override
   String toString() {
     return '${entity.path} with width of $width, and isDropZone is $isDropZone';
   }

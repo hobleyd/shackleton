@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../models/folder_settings.dart';
+import '../models/folder_ui_settings.dart';
 
-part 'folder_settings_notifier.g.dart';
+part 'folder_settings.g.dart';
 
 @riverpod
-class FolderSettingsNotifier extends _$FolderSettingsNotifier {
+class FolderSettings extends _$FolderSettings {
   @override
-  FolderSettings build(FileSystemEntity entity) {
-    return FolderSettings(entity: entity);
+  FolderUISettings build(FileSystemEntity entity) {
+    return FolderUISettings(entity: entity);
   }
 
   void changeWidth(double delta) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'misc/logger.dart';
-import 'providers/theme_notifier.dart';
+import 'providers/theme.dart';
 import 'widgets/shackleton.dart';
 
 void main() {
@@ -19,7 +19,7 @@ class ShackletonApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Shackleton',
       home: const Shackleton(),
-      theme: ref.watch(themeNotifierProvider).theme,
+      theme: ref.watch(themeProvider).theme,
     );
   }
 }

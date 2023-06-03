@@ -2,10 +2,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../theme/shackleton_theme.dart';
 
-part 'theme_notifier.g.dart';
+part 'theme.g.dart';
 
 @riverpod
-class ThemeNotifier extends _$ThemeNotifier {
+class Theme extends _$Theme {
   ShackletonTheme _theme = ShackletonTheme(size: ThemeFontSize.small);
 
   @override

@@ -1,18 +1,16 @@
 import 'dart:io';
 
-import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:flutter/foundation.dart';
-import 'package:intersperse/intersperse.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../models/metadata.dart';
+import '../models/file_metadata.dart';
+import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 
-part 'metadata_notifier.g.dart';
+part 'metadata.g.dart';
 
 @riverpod
-class MetadataNotifier extends _$MetadataNotifier {
+class Metadata extends _$Metadata {
   @override
   FileMetaData build(FileOfInterest entity) {
     loadMetadataFromFile(entity);
@@ -20,9 +18,9 @@ class MetadataNotifier extends _$MetadataNotifier {
   }
 
   bool isMetadataSupported(FileOfInterest entity) {
-    const Set<String> supportedExtensions = { 'jpg', 'tiff' };
+    const Set<String> supportedExtensions = { 'jpg', 'jpeg', 'tiff' };
 
-    return supportedExtensions.contains(entity.path.split('.').last);
+    return supportedExtensions.contains(entity.path.split('.').last.toLowerCase());
   }
 
   Future<void> loadMetadataFromFile(FileOfInterest entity) async {
