@@ -21,6 +21,10 @@ class SelectedEntities extends _$SelectedEntities {
     }
   }
 
+  void addAll(Set<FileOfInterest> entities) {
+    state = { ...state, ...entities };
+  }
+
   void clear() {
     state = {};
   }
@@ -30,7 +34,9 @@ class SelectedEntities extends _$SelectedEntities {
   }
 
   void deleteFiles() {
-    state.map((e) => e.delete());
+    for (var e in state) {
+      e.delete();
+    }
     clear();
   }
 
@@ -46,6 +52,10 @@ class SelectedEntities extends _$SelectedEntities {
             e
       };
     }
+  }
+
+  void replace(FileOfInterest entity) {
+    state = { entity };
   }
 
   int size() {

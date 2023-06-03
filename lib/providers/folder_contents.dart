@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
+import '../providers/selected_entities.dart';
 
 part 'folder_contents.g.dart';
 
@@ -52,6 +53,18 @@ class FolderContents extends _$FolderContents {
           break;
         case FileSystemEvent.delete:
         case FileSystemEvent.move:
+          var folderEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+          var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+          FileOfInterest foi = getEntity(event.path);
+
+          if (folderEntities.contains(foi)) {
+            folderEntities.remove(foi);
+          }
+
+          if (previewEntities.contains(foi)) {
+            previewEntities.remove(foi);
+          }
+
           state = [
             for (final element in state)
               if (element.path != event.path) element,

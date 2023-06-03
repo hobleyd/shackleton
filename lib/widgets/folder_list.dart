@@ -162,13 +162,27 @@ class _FolderList extends ConsumerState<FolderList> {
   void _handleKeyEvent(RawKeyEvent event) {
     // Update key state based on key events
     if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
+      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
+        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+        debugPrint('setting alt key pressed to true');
+        _isCtrlKeyPressed = true;
+
+      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
+        debugPrint('folderList: setting ctrl key pressed to true');
           _isCtrlKeyPressed = true;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
           _isShiftKeyPressed = true;
       }
     } else if (event is RawKeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
+      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
+        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+        debugPrint('setting alt key pressed to false');
+        _isCtrlKeyPressed = true;
+
+      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
+        debugPrint('folderList: setting ctrl key pressed to false');
           _isCtrlKeyPressed = false;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
           _isShiftKeyPressed = false;
@@ -177,15 +191,17 @@ class _FolderList extends ConsumerState<FolderList> {
   }
 
   void _selectEntry(List <FileOfInterest> entities, int index) {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-
-    //TODO: ensure any preview images being edited are cancelled
-    //Provider.of<FileCache>(context, listen: false).cancelEditing();
     FileOfInterest entity = entities[index];
+
+    debugPrint('Key state: $_isShiftKeyPressed, $_isCtrlKeyPressed, $_lastSelectedItemIndex');
+    // Cancel editing in the PreviewGrid if we are making selections.
+    ref.read(metadataProvider(entity).notifier).setEditable(false);
+
     if (entity.isDirectory) {
       ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
 
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
     if (_isCtrlKeyPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
     } else if (_isShiftKeyPressed) {
@@ -206,19 +222,23 @@ class _FolderList extends ConsumerState<FolderList> {
     } else {
       _lastSelectedItemIndex = index;
 
+      debugPrint(entity.toString());
       selectedEntities.clear();
       if (entity.isFile) {
         selectedEntities.add(entity);
       } else if (entity.isDirectory) {
         // We only preselect folder entities if the preview pane is open on the assumption that this is what the user will be expecting.
         if (ref.read(previewProvider).visible) {
+          Set<FileOfInterest> selectedFiles = {};
+
           Directory d = Directory(entity.path);
           for (var e in d.listSync()) {
             FileOfInterest foi = FileOfInterest(entity: e);
             if (ref.read(metadataProvider(foi).notifier).isMetadataSupported(foi)) {
-              selectedEntities.add(foi);
+              selectedFiles.add(foi);
             }
           }
+          selectedEntities.addAll(selectedFiles);
         }
       }
     }
