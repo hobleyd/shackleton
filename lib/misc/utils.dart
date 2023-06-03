@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:Shackleton/models/metadata.dart';
 import 'package:path/path.dart';
+
+import '../models/file_of_interest.dart';
 
 void copyDirectory(Directory source, Directory destination) {
   for (var entity in source.listSync(recursive: false)) {

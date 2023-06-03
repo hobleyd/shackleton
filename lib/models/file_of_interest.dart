@@ -15,6 +15,7 @@ class FileOfInterest extends Comparable {
   get hashCode => entity.path.hashCode;
   get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
+  get isHidden => entity.path.split('/').last.startsWith('.');
   get isImage => imageExtensions.contains(entity.path.split('.').last);
   get path => entity.path;
   get uri => entity.uri;

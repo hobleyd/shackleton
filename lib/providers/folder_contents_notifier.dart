@@ -23,19 +23,14 @@ class FolderContentsNotifier extends _$FolderContentsNotifier {
     // TODO: refactor with AppSettings.
     bool showHiddenFiles = false;
 
-    debugPrint('getFolderContents');
     List<FileOfInterest> files = [];
     for (var file in path.listSync()) {
-      if (!showHiddenFiles) {
-        if (file.path.split('/').last.startsWith('.')) {
-          continue;
-        }
-      }
       FileOfInterest foi = FileOfInterest(entity: file);
+      if (!showHiddenFiles && foi.isHidden) {
+          continue;
+      }
       files.add(foi);
     }
-    //List<FileOfInterest> entities = path.listSync().map((e) => FileOfInterest(entity: e, metadata: ref.watch(metadataNotifierProvider(e)))).toList();
-
     state = [...sort(files)];
   }
 
@@ -52,8 +47,10 @@ class FolderContentsNotifier extends _$FolderContentsNotifier {
         case FileSystemEvent.create:
           FileOfInterest foi = getEntity(event.path);
           if (!state.contains(foi)) {
-            List<FileOfInterest> entities = [...state, foi];
-            state = [...sort(entities)];
+            if (!foi.isHidden) {
+              List<FileOfInterest> entities = [...state, foi];
+              state = [...sort(entities)];
+            }
           }
           break;
         case FileSystemEvent.delete:
