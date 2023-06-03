@@ -36,19 +36,26 @@ class FileSystemEntityMetadata extends ConsumerWidget {
   Widget _getEditableMetadata(BuildContext context, WidgetRef ref) {
     TextEditingController tagController = TextEditingController();
 
-    tagController.text = metadata.tags.isNotEmpty ? intersperse(', ', metadata.tags.map((e) => e.tag)).toString() : '';
-    tagController.text = tagController.text.substring(1, tagController.text.length-1);
+    if (metadata.tags.isNotEmpty) {
+      for (int i = 0; i < metadata.tags.length; i++) {
+        tagController.text += metadata.tags[i].tag;
+        if (i != metadata.tags.length - 1) {
+          tagController.text += ', ';
+        }
+      }
+    }
 
     return Row(children: [
-      Expanded(child: TextField(
-          decoration: const InputDecoration(border: InputBorder.none),
-          autofocus: true,
-          keyboardType: TextInputType.multiline,
-          maxLines: null,
-          controller: tagController,
-          style: Theme.of(context).textTheme.bodySmall
-      )),
-      const Spacer(),
+      Expanded(
+        child: TextField(
+            autofocus: true,
+            controller: tagController,
+            decoration: const InputDecoration(border: InputBorder.none),
+            keyboardType: TextInputType.text,
+            maxLines: 1,
+            onSubmitted: (tags) => _replaceTags(ref, tags),
+            style: Theme.of(context).textTheme.bodySmall),
+      ),
       IconButton(
           icon: const Icon(Icons.save),
           constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
@@ -56,19 +63,21 @@ class FileSystemEntityMetadata extends ConsumerWidget {
           padding: EdgeInsets.zero,
           splashRadius: 0.0001,
           tooltip: 'Save comma separated list of Tags to file...',
-          onPressed: () => ref.read(metadataNotifierProvider(entity).notifier).replaceTags(entity, tagController.text, update: true)),
+          onPressed: () => _replaceTags(ref, tagController.text)),
     ]);
   }
 
   Widget _getMetadata(BuildContext context, WidgetRef ref) {
     return Container(
+        padding: const EdgeInsets.only(left: 2),
         color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
         child: Row(children: [
           if (!metadata.hasTags) ...[
             Text('', style: Theme.of(context).textTheme.bodySmall,)
           ] else
-            ...intersperse(Text(', ', style: Theme.of(context).textTheme.bodySmall),
-                metadata.tags.map((e) => Text(e.tag, style: Theme.of(context).textTheme.bodySmall))).toList(),
+            ...intersperse(
+                    Text(', ', style: Theme.of(context).textTheme.bodySmall), metadata.tags.map((e) => Text(e.tag, style: Theme.of(context).textTheme.bodySmall)))
+                .toList(),
           ...[
             const Spacer(),
             IconButton(
@@ -81,5 +90,11 @@ class FileSystemEntityMetadata extends ConsumerWidget {
                 onPressed: () => ref.read(metadataNotifierProvider(entity).notifier).setEditable(true)),
           ]
         ]));
+  }
+
+  bool _replaceTags(WidgetRef ref, String tags) {
+    ref.read(metadataNotifierProvider(entity).notifier).replaceTags(entity, tags, update: true);
+
+    return true;
   }
 }

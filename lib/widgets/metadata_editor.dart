@@ -28,34 +28,39 @@ class MetadataEditor extends ConsumerWidget {
               child: ListView.builder(
                   itemCount: tags.length,
                   itemBuilder: (context, index) {
-                    return Row(children: [
-                      Text(tags[index].tag, style: Theme.of(context).textTheme.bodySmall),
-                      const Spacer(),
-                      IconButton(
-                          icon: const Icon(Icons.clear),
-                          constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
-                          iconSize: 12,
-                          padding: EdgeInsets.zero,
-                          splashRadius: 0.0001,
-                          tooltip: 'Remove tag from selected images...',
-                          onPressed: () => entities.forEach((e) {
-                            debugPrint('removing ${tags[index]} from ${e.path}');
-                                ref.read(metadataNotifierProvider(e).notifier).removeTags(e, tags[index]);
-                              })),
-                    ]);
+                    return Container(
+                        color: index % 2 == 1 ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.white,
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(children: [
+                          Text(tags[index].tag, style: Theme.of(context).textTheme.bodySmall),
+                          const Spacer(),
+                          IconButton(
+                              icon: const Icon(Icons.clear),
+                              constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                              iconSize: 12,
+                              padding: EdgeInsets.zero,
+                              splashRadius: 0.0001,
+                              tooltip: 'Remove tag from selected images...',
+                              onPressed: () => entities.forEach((e) {
+                                    debugPrint('removing ${tags[index]} from ${e.path}');
+                                    ref.read(metadataNotifierProvider(e).notifier).removeTags(e, tags[index]);
+                                  })),
+                        ]));
                   })),
           const Spacer(),
           Row(
             children: [
               Expanded(
-                  child: TextField(
-                decoration: const InputDecoration(border: InputBorder.none),
-                autofocus: true,
-                controller: tagController,
-                keyboardType: TextInputType.multiline,
-                maxLines: 1,
-                style: Theme.of(context).textTheme.bodySmall,
-              )),
+                child: TextField(
+                  autofocus: true,
+                  controller: tagController,
+                  decoration: const InputDecoration(border: InputBorder.none),
+                  keyboardType: TextInputType.text,
+                  maxLines: 1,
+                  onSubmitted: (tags) => _updateTags(ref, entities, tags),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
               IconButton(
                   icon: const Icon(Icons.add),
                   constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
@@ -63,14 +68,19 @@ class MetadataEditor extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   splashRadius: 0.0001,
                   tooltip: 'Add tags to selected images...',
-                  onPressed: () => entities.forEach((e) {
-                        ref.read(metadataNotifierProvider(e).notifier).updateTags(e, tagController.text, update: true);
-                      })),
+                  onPressed: () => _updateTags(ref, entities, tagController.text)),
             ],
           ),
         ],
       ),
     );
-    // TODO: Then an editable Textbox to add more entries.
+  }
+
+  bool _updateTags(WidgetRef ref, Set<FileOfInterest> entities, String tags) {
+    for (var e in entities) {
+      ref.read(metadataNotifierProvider(e).notifier).updateTags(e, tags, update: true);
+    }
+
+    return true;
   }
 }
