@@ -20,7 +20,7 @@ jobs:
        with:
          name: 'shackleton.dmg'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
-     - uses: ncipollo/release-action@v1.12
+     - uses: ncipollo/release-action@v1
        with:
          artifacts: 'shackleton.dmg'
          token: $
