@@ -16,6 +16,9 @@ jobs:
      - run: dart run build_runner build
      - run: flutter pub run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons
+     - name: Get App version
+       id: app-version
+       uses: alvarogabrielgomez/github-actions-get-content-pubspec-flutter@v1
      - uses: QQxiaoming/create-dmg-action@v0.0.2
        with:
          name: 'shackleton.dmg'
@@ -24,3 +27,5 @@ jobs:
        with:
          artifacts: 'shackleton.dmg'
          token: $
+         tag: $app-version
+         commit: $app-version
