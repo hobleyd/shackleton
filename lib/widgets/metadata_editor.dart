@@ -1,11 +1,10 @@
-import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:Shackleton/models/file_metadata.dart';
-import 'package:Shackleton/providers/selected_entities.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 import '../providers/metadata.dart';
+import '../providers/selected_entities.dart';
 
 class MetadataEditor extends ConsumerWidget {
   const MetadataEditor({Key? key}) : super(key: key);
@@ -42,7 +41,6 @@ class MetadataEditor extends ConsumerWidget {
                               splashRadius: 0.0001,
                               tooltip: 'Remove tag from selected images...',
                               onPressed: () => entities.forEach((e) {
-                                    debugPrint('removing ${tags[index]} from ${e.path}');
                                     ref.read(metadataProvider(e).notifier).removeTags(e, tags[index]);
                                   })),
                         ]));

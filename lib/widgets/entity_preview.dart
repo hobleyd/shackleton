@@ -11,7 +11,7 @@ import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
 
 class EntityPreview extends ConsumerWidget {
-  FileOfInterest entity;
+  final FileOfInterest entity;
   late Set<FileOfInterest> selectedEntities;
   late FileMetaData metadata;
 

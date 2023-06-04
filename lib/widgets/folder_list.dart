@@ -17,6 +17,7 @@ import '../providers/folder_settings.dart';
 import '../providers/metadata.dart';
 import '../providers/preview.dart';
 import '../providers/selected_entities.dart';
+import 'entity_context_menu.dart';
 
 class FolderList extends ConsumerStatefulWidget {
   final Directory path;
@@ -39,75 +40,83 @@ class _FolderList extends ConsumerState<FolderList> {
     FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
     var fsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
 
-      return Row(children: [
-        Expanded(
-            child: DropRegion(
-                formats: Formats.standardFormats,
-                hitTestBehavior: HitTestBehavior.opaque,
-                onDropOver: (event) {
-                  fsNotifier.setDropZone(true);
-                  return _onDropOver(event);
-                },
-                onDropEnter: (event) {
-                  fsNotifier.setDropZone(true);
-                },
-                onDropLeave: (event) {
-                  fsNotifier.setDropZone(false);
-                },
-                onPerformDrop: (event) => _onPerformDrop(event),
-                child: Container(
-                alignment: Alignment.topLeft,
-                decoration: folderSettings.isDropZone
-                    ? BoxDecoration(
-                        shape: BoxShape.rectangle,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.teal, width: 2,),
-                      )
-                    : null,
-
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                      child: ListView.builder(
-                          itemCount: entities.length,
-                          itemBuilder: (context, index) {
-                            FileOfInterest entity = entities[index];
-
-                            return InkWell(
-                                onTap: () => _selectEntry(entities, index),
-                                onDoubleTap: () => entity.openFile(),
-                                child: DragItemWidget(
-                                  allowedOperations: () => [DropOperation.move],
-                                  canAddItemToExistingSession: true,
-                                  dragItemProvider: (request) async {
-                                    final item = DragItem();
-                                    item.add(Formats.fileUri(entity.uri));
-                                    item.add(Formats.htmlText.lazy(() => entity.path));
-                                    return item;
-                                  },
-                                  child: DraggableWidget(
-                                      child: Container(
-                                        color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                                        child: Row(children: [
-                                          FileIcon(entity.path),
-                                          Expanded(child: Text(entity.path.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
-                                      ]))),
-                                ));
-                          },
-                          scrollDirection: Axis.vertical,
-                          shrinkWrap: true),
+    return Row(children: [
+      Expanded(
+        child: DropRegion(
+          formats: Formats.standardFormats,
+          hitTestBehavior: HitTestBehavior.opaque,
+          onDropOver: (event) {
+            fsNotifier.setDropZone(true);
+            return _onDropOver(event);
+          },
+          onDropEnter: (event) {
+            fsNotifier.setDropZone(true);
+          },
+          onDropLeave: (event) {
+            fsNotifier.setDropZone(false);
+          },
+          onPerformDrop: (event) => _onPerformDrop(event),
+          child: Container(
+            alignment: Alignment.topLeft,
+            decoration: folderSettings.isDropZone
+                ? BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.teal,
+                      width: 2,
                     ),
-                ),
+                  )
+                : null,
+            child: EntityContextMenu(
+              fileType: FileType.folderList,
+              folder: FileOfInterest(entity: widget.path),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                child: ListView.builder(
+                    itemCount: entities.length,
+                    itemBuilder: (context, index) {
+                      FileOfInterest entity = entities[index];
+
+                      return InkWell(
+                          onTap: () => _selectEntry(entities, index),
+                          onDoubleTap: () => entity.openFile(),
+                          child: DragItemWidget(
+                            allowedOperations: () => [DropOperation.move],
+                            canAddItemToExistingSession: true,
+                            dragItemProvider: (request) async {
+                              final item = DragItem();
+                              item.add(Formats.fileUri(entity.uri));
+                              item.add(Formats.htmlText.lazy(() => entity.path));
+                              return item;
+                            },
+                            child: DraggableWidget(
+                                child: Container(
+                                    color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
+                                    child: Row(children: [
+                                      FileIcon(entity.path),
+                                      Expanded(
+                                          child: Text(entity.path.split('/').last,
+                                              maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
+                                    ]))),
+                          ));
+                    },
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true),
+              ),
             ),
+          ),
         ),
-        MouseRegion(
-            cursor: SystemMouseCursors.resizeColumn,
-            child: GestureDetector(
-              onHorizontalDragUpdate: (DragUpdateDetails details) {
-                fsNotifier.changeWidth(details.delta.dx);
-              },
-              child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
-            )),
-      ]);
+      ),
+      MouseRegion(
+          cursor: SystemMouseCursors.resizeColumn,
+          child: GestureDetector(
+            onHorizontalDragUpdate: (DragUpdateDetails details) {
+              fsNotifier.changeWidth(details.delta.dx);
+            },
+            child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+          )),
+    ]);
   }
 
   @override

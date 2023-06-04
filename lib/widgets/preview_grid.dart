@@ -1,15 +1,15 @@
 import 'dart:io';
 
-import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:Shackleton/providers/selected_entities.dart';
-import 'package:Shackleton/widgets/metadata_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_context_menu/super_context_menu.dart';
 
+import '../models/file_of_interest.dart';
 import '../providers/metadata.dart';
+import '../providers/selected_entities.dart';
 import 'entity_preview.dart';
+import 'entity_context_menu.dart';
+import 'metadata_editor.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
   const PreviewGrid({Key? key}) : super(key: key);
@@ -41,7 +41,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
             ))
         : Row(children: [
             Expanded(
-              child: ContextMenuWidget(
+              child: EntityContextMenu(
+                fileType: FileType.previewGrid,
                 child: GridView.count(
                     primary: false,
                     padding: const EdgeInsets.only(left: 20, right: 20),
@@ -51,25 +52,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
                     children: entities
                         .map((e) => GestureDetector(onTap: () => _selectEntity(ref, e), onDoubleTap: () => e.openFile(), child: EntityPreview(entity: e)))
                         .toList()),
-                menuProvider: (_) {
-                  var selectedPreviewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-                  return Menu(children: [
-                    MenuAction(
-                      callback: () => selectedPreviewEntities.clear(),
-                      image: MenuImage.icon(Icons.deselect),
-                      title: 'Deselect all',
-                    ),
-                    if (ref.watch(selectedEntitiesProvider(FileType.previewGrid)).isNotEmpty) ...[
-                      MenuSeparator(),
-                      MenuAction(
-                        attributes: const MenuActionAttributes(destructive: true),
-                        image: MenuImage.icon(Icons.delete),
-                        callback: () => selectedPreviewEntities.deleteFiles(),
-                        title: 'Delete selected files',
-                      ),
-                    ]
-                  ]);
-                },
               ),
             ),
             const SizedBox(width: 200, child: MetadataEditor()),
