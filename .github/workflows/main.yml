@@ -12,7 +12,15 @@ jobs:
          channel: 'stable'
          architecture: x64
          cache: true
-     - run: flutter config --enable-macos-desktop
+     - run: flutter config --enable-macos-desktop --enable-windows-desktop
      - run: dart run build_runner build
      - run: flutter pub run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons
+     - uses: QQxiaoming/create-dmg-action@v0.0.2
+       with:
+         name: 'shackleton.dmg'
+         srcdir: 'build/macos/Build/Products/Release/shackleton.app'
+     - uses: ncipollo/release-action@v2
+       with:
+         artifacts: 'shackleton.dmg'
+         token: $
