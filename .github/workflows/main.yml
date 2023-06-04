@@ -18,7 +18,8 @@ jobs:
      - run: flutter build macos --release --no-tree-shake-icons
      - name: Get App version
        id: app-version
-       uses: alvarogabrielgomez/github-actions-get-content-pubspec-flutter@v1
+       key: version
+       uses: alvarogabrielgomez/action-get-pubspec-key-flutter@v1
      - uses: QQxiaoming/create-dmg-action@v0.0.2
        with:
          name: 'shackleton.dmg'
