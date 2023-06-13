@@ -231,7 +231,6 @@ class _FolderList extends ConsumerState<FolderList> {
     } else {
       _lastSelectedItemIndex = index;
 
-      debugPrint(entity.toString());
       selectedEntities.clear();
       if (entity.isFile) {
         selectedEntities.add(entity);
@@ -243,7 +242,7 @@ class _FolderList extends ConsumerState<FolderList> {
           Directory d = Directory(entity.path);
           for (var e in d.listSync()) {
             FileOfInterest foi = FileOfInterest(entity: e);
-            if (ref.read(metadataProvider(foi).notifier).isMetadataSupported(foi)) {
+            if (foi.canPreview) {
               selectedFiles.add(foi);
             }
           }

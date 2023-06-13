@@ -30,6 +30,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
   Widget build(BuildContext context) {
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     entities = selectedEntities.toList();
+    entities.removeWhere((element) => !element.canPreview);
     entities.sort();
 
     return selectedEntities.isEmpty

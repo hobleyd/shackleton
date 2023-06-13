@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:process_run/cmd_run.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -17,20 +19,14 @@ class Metadata extends _$Metadata {
     return const FileMetaData(tags: []);
   }
 
-  bool isMetadataSupported(FileOfInterest entity) {
-    const Set<String> supportedExtensions = { 'jpg', 'jpeg', 'tiff' };
-
-    return supportedExtensions.contains(entity.path.split('.').last.toLowerCase());
-  }
-
   Future<void> loadMetadataFromFile(FileOfInterest entity) async {
-    if (isMetadataSupported(entity)) {
+    if (entity.isMetadataSupported) {
       bool hasExiftool = whichSync('exiftool') != null ? true : false;
 
       if (hasExiftool) {
         ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-subject', entity.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          replaceTags(entity, output.stdout);
+          replaceTags(entity, output.stdout, update: false);
           //TODO: Tag.writeTags(_fileCache, entity, tags);
           //cachedStorageNotifierProvider.cacheTagsForEntity(entity, tags);
         }
@@ -60,7 +56,7 @@ class Metadata extends _$Metadata {
     bool hasExiftool = whichSync('exiftool') != null ? true : false;
 
     if (hasExiftool) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', "-subject=$tags", entity.path]);
+      ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tags', entity.path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         if (output.outText.trim() == '1 image files updated') {
           return true;
@@ -71,11 +67,11 @@ class Metadata extends _$Metadata {
     return false;
   }
 
-  void replaceTags(FileOfInterest entity, String tags, {bool update = false}) async {
+  void replaceTags(FileOfInterest entity, String tags, {bool update = true}) async {
     updateTags(entity, tags, tagSet: {}, update: update);
   }
 
-  void updateTags(FileOfInterest entity, String tags, {Set<Tag>? tagSet, bool update = false}) async {
+  void updateTags(FileOfInterest entity, String tags, {Set<Tag>? tagSet, bool update = true}) async {
     Set<Tag> newTags = tagSet ?? state.tags.toSet();
 
     newTags.addAll(tags.split(',').map((e) => Tag(tag: e.trim())));
@@ -83,9 +79,15 @@ class Metadata extends _$Metadata {
     List<Tag> tagList = newTags.toList();
     tagList.sort();
 
-    if (update && tagList.isNotEmpty) {
+    if (update) {
+      String tagString = "";
+      if (tagList.isNotEmpty) {
+        tagString = tagList.toString();
+        tagString = tagString.substring(1, tagString.length - 1);
+      }
+
       // If we want to save to file, then we only update state once the file is written.
-      if (await saveMetadataToFile(entity, tags)) {
+      if (await saveMetadataToFile(entity, tagString)) {
         state = state.copyWith(tags: tagList, isEditing: false);
       }
     } else {

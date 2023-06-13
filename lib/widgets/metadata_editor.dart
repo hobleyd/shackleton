@@ -76,7 +76,7 @@ class MetadataEditor extends ConsumerWidget {
 
   bool _updateTags(WidgetRef ref, Set<FileOfInterest> entities, String tags) {
     for (var e in entities) {
-      ref.read(metadataProvider(e).notifier).updateTags(e, tags, update: true);
+      ref.read(metadataProvider(e).notifier).updateTags(e, tags);
     }
 
     return true;

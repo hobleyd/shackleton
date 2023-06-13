@@ -26,7 +26,7 @@ class EntityPreview extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(entity.path.split(path.separator).last, style: Theme.of(context).textTheme.labelSmall),
-        entity.isImage ? Expanded(child: Container(color: background, child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
+        entity.canPreview ? Expanded(child: Container(color: background, child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
         SizedBox(height: 5, child: Container(color: background)),
         metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
       ],
@@ -93,7 +93,7 @@ class EntityPreview extends ConsumerWidget {
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
-    ref.read(metadataProvider(entity).notifier).replaceTags(entity, tags, update: true);
+    ref.read(metadataProvider(entity).notifier).replaceTags(entity, tags);
 
     return true;
   }

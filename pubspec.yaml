@@ -15,6 +15,7 @@ dependencies:
   flutter_riverpod: ^2.3.6
   image: ^4.0.17
   intersperse: ^2.0.0
+  mockito: ^5.4.1
   url_launcher: ^6.1.11
   path: ^1.8.3
   path_provider: ^2.0.15
