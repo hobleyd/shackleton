@@ -16,16 +16,12 @@ jobs:
      - run: dart run build_runner build
      - run: flutter pub run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons
-     - name: Get App version
-       id: app-version
-       uses: alvarogabrielgomez/action-get-pubspec-key-flutter@v1.0.4
      - uses: QQxiaoming/create-dmg-action@v0.0.2
        with:
-         name: 'shackleton.dmg'
+         name: 'build/macos/Build/Products/Release/shackleton.dmg'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
-     - uses: ncipollo/release-action@v1
+     # Upload generated dmg to the artifacts.
+     - uses: actions/upload-artifact@v1
        with:
-         artifacts: 'shackleton.dmg'
-         token: $
-         tag: $app-version
-         commit: $app-version
+         name: shackleton.dmg
+         path: build/macos/Build/Products/Release/shackleton.dmg
