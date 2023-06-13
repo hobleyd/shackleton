@@ -18,7 +18,7 @@ jobs:
      - run: flutter build macos --release --no-tree-shake-icons
      - uses: QQxiaoming/create-dmg-action@v0.0.2
        with:
-         name: 'build/macos/Build/Products/Release/shackleton.dmg'
+         name: 'shackleton'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
      # Upload generated dmg to the artifacts.
      - uses: actions/upload-artifact@v1
