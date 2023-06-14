@@ -12,7 +12,9 @@ import 'entity_context_menu.dart';
 import 'metadata_editor.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
-  const PreviewGrid({Key? key}) : super(key: key);
+  final int columnCount;
+
+  const PreviewGrid({Key? key, required this.columnCount}) : super(key: key);
 
   @override
   ConsumerState<PreviewGrid> createState() => _PreviewGrid();
@@ -49,7 +51,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
                     padding: const EdgeInsets.only(left: 20, right: 20),
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    crossAxisCount: 5,
+                    crossAxisCount: widget.columnCount,
                     children: entities
                         .map((e) => GestureDetector(onTap: () => _selectEntity(ref, e), onDoubleTap: () => e.openFile(), child: EntityPreview(entity: e)))
                         .toList()),
@@ -79,10 +81,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
       if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
         // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
         // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        debugPrint('setting alt key pressed to true');
         _isCtrlKeyPressed = true;
       } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-        debugPrint('setting ctrl key pressed to true');
         _isCtrlKeyPressed = true;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
         _isShiftKeyPressed = true;
@@ -91,10 +91,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
       if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
         // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
         // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        debugPrint('setting alt key pressed to true');
         _isCtrlKeyPressed = false;
       } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-        debugPrint('setting ctrl key pressed to false');
 
         _isCtrlKeyPressed = false;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {

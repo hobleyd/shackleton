@@ -174,11 +174,9 @@ class _FolderList extends ConsumerState<FolderList> {
       if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
         // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
         // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        debugPrint('setting alt key pressed to true');
         _isCtrlKeyPressed = true;
 
       } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-        debugPrint('folderList: setting ctrl key pressed to true');
           _isCtrlKeyPressed = true;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
           _isShiftKeyPressed = true;
@@ -187,11 +185,9 @@ class _FolderList extends ConsumerState<FolderList> {
       if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
         // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
         // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        debugPrint('setting alt key pressed to false');
-        _isCtrlKeyPressed = true;
+        _isCtrlKeyPressed = false;
 
       } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-        debugPrint('folderList: setting ctrl key pressed to false');
           _isCtrlKeyPressed = false;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
           _isShiftKeyPressed = false;
@@ -202,7 +198,6 @@ class _FolderList extends ConsumerState<FolderList> {
   void _selectEntry(List <FileOfInterest> entities, int index) {
     FileOfInterest entity = entities[index];
 
-    debugPrint('Key state: $_isShiftKeyPressed, $_isCtrlKeyPressed, $_lastSelectedItemIndex');
     // Cancel editing in the PreviewGrid if we are making selections.
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
