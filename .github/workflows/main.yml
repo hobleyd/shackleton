@@ -24,4 +24,4 @@ jobs:
      - uses: actions/upload-artifact@v1
        with:
          name: shackleton.dmg
-         path: build/macos/Build/Products/Release/shackleton.dmg
+         path: shackleton.dmg
