@@ -4,7 +4,7 @@ import '../models/file_of_interest.dart';
 
 part 'selected_entities.g.dart';
 
-enum FileType { folderList, previewGrid }
+enum FileType { folderList, previewGrid, previewPane }
 
 @riverpod
 class SelectedEntities extends _$SelectedEntities {

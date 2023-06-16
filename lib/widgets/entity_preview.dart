@@ -12,14 +12,15 @@ import '../providers/selected_entities.dart';
 
 class EntityPreview extends ConsumerWidget {
   final FileOfInterest entity;
+  final FileType selectionType;
   late Set<FileOfInterest> selectedEntities;
   late FileMetaData metadata;
 
-  EntityPreview({Key? key, required this.entity}) : super(key: key);
+  EntityPreview({Key? key, required this.entity, required this.selectionType}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
+    selectedEntities = ref.watch(selectedEntitiesProvider(selectionType));
     metadata = ref.watch(metadataProvider(entity));
     Color background = selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
     return Column(

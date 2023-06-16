@@ -7,6 +7,7 @@ import '../models/preview_settings.dart';
 import '../providers/folder_path.dart';
 import '../providers/folder_settings.dart';
 import '../providers/preview.dart';
+import '../providers/selected_entities.dart';
 import 'preview_grid.dart';
 import 'folder_list.dart';
 
@@ -32,7 +33,7 @@ class Shackleton extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 6, bottom: 6),
             child: Column(children: [
               if (preview.visible) ...{
-                SizedBox(height: preview.height, child: const PreviewGrid(columnCount: 5)),
+                SizedBox(height: preview.height, child: const PreviewGrid(columnCount: 5, type: FileType.folderList)),
                 MouseRegion(
                     cursor: SystemMouseCursors.resizeRow,
                     child: GestureDetector(
