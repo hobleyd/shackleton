@@ -29,13 +29,16 @@ class FolderList extends ConsumerStatefulWidget {
 }
 
 class _FolderList extends ConsumerState<FolderList> {
-  bool _isCtrlKeyPressed = false;
-  bool _isShiftKeyPressed = false;
+  bool _isIndividualMultiSelectionPressed = false;
+  bool _isBlockMultiSelectionPressed = false;
   int _lastSelectedItemIndex = -1;
+  bool _hasFocus = false;
+
+  late List<FileOfInterest> entities;
 
   @override
   Widget build(BuildContext context) {
-    List<FileOfInterest> entities = ref.watch(folderContentsProvider(widget.path));
+    entities = ref.watch(folderContentsProvider(widget.path));
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
     var fsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
@@ -56,53 +59,57 @@ class _FolderList extends ConsumerState<FolderList> {
             fsNotifier.setDropZone(false);
           },
           onPerformDrop: (event) => _onPerformDrop(event),
-          child: Container(
-            alignment: Alignment.topLeft,
-            decoration: folderSettings.isDropZone
-                ? BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.teal,
-                      width: 2,
-                    ),
-                  )
-                : null,
-            child: EntityContextMenu(
-              fileType: FileType.folderList,
-              folder: FileOfInterest(entity: widget.path),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                child: ListView.builder(
-                    itemCount: entities.length,
-                    itemBuilder: (context, index) {
-                      FileOfInterest entity = entities[index];
+          child: MouseRegion(
+            onEnter: (_) => _hasFocus = true,
+            onExit: (_) => _hasFocus = false,
+            child: Container(
+              alignment: Alignment.topLeft,
+              decoration: folderSettings.isDropZone
+                  ? BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.teal,
+                        width: 2,
+                      ),
+                    )
+                  : null,
+              child: EntityContextMenu(
+                fileType: FileType.folderList,
+                folder: FileOfInterest(entity: widget.path),
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                  child: ListView.builder(
+                      itemCount: entities.length,
+                      itemBuilder: (context, index) {
+                        FileOfInterest entity = entities[index];
 
-                      return InkWell(
-                          onTap: () => _selectEntry(entities, index),
-                          onDoubleTap: () => entity.openFile(),
-                          child: DragItemWidget(
-                            allowedOperations: () => [DropOperation.move],
-                            canAddItemToExistingSession: true,
-                            dragItemProvider: (request) async {
-                              final item = DragItem();
-                              item.add(Formats.fileUri(entity.uri));
-                              item.add(Formats.htmlText.lazy(() => entity.path));
-                              return item;
-                            },
-                            child: DraggableWidget(
-                                child: Container(
-                                    color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                                    child: Row(children: [
-                                      FileIcon(entity.path),
-                                      Expanded(
-                                          child: Text(entity.path.split('/').last,
-                                              maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
-                                    ]))),
-                          ));
-                    },
-                    scrollDirection: Axis.vertical,
-                    shrinkWrap: true),
+                        return InkWell(
+                            onTap: () => _selectEntry(entities, index),
+                            onDoubleTap: () => entity.openFile(),
+                            child: DragItemWidget(
+                              allowedOperations: () => [DropOperation.move],
+                              canAddItemToExistingSession: true,
+                              dragItemProvider: (request) async {
+                                final item = DragItem();
+                                item.add(Formats.fileUri(entity.uri));
+                                item.add(Formats.htmlText.lazy(() => entity.path));
+                                return item;
+                              },
+                              child: DraggableWidget(
+                                  child: Container(
+                                      color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
+                                      child: Row(children: [
+                                        FileIcon(entity.path),
+                                        Expanded(
+                                            child: Text(entity.path.split('/').last,
+                                                maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
+                                      ]))),
+                            ));
+                      },
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true),
+                ),
               ),
             ),
           ),
@@ -141,6 +148,51 @@ class _FolderList extends ConsumerState<FolderList> {
     return DropOperation.none;
   }
 
+  KeyEventResult _handleKeyEvent(RawKeyEvent event) {
+    if (!_hasFocus) {
+      return KeyEventResult.ignored;
+    }
+
+    // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+    // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+    bool isCtrlOrMeta = event is RawKeyDownEvent
+        ? (Platform.isMacOS && event.isMetaPressed) || (!Platform.isMacOS && event.isControlPressed)
+        : (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.metaLeft || event.logicalKey == LogicalKeyboardKey.metaRight))
+        ||
+        (!Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight));
+
+    if (event is RawKeyDownEvent) {
+      if (isCtrlOrMeta) {
+        _isIndividualMultiSelectionPressed = true;
+
+        if (event.physicalKey == PhysicalKeyboardKey.keyA) {
+          var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+          selectedEntities.addAll(entities.toSet());
+        }
+
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.shift) {
+        _isBlockMultiSelectionPressed = true;
+
+        return KeyEventResult.handled;
+      }
+    } else if (event is RawKeyUpEvent) {
+      if (isCtrlOrMeta) {
+        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+        _isIndividualMultiSelectionPressed = false;
+
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.shift) {
+        _isBlockMultiSelectionPressed = false;
+
+        return KeyEventResult.handled;
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
   Future<void> _onPerformDrop(PerformDropEvent event) async {
     final item = event.session.items.first;
     final reader = item.dataReader!;
@@ -168,33 +220,6 @@ class _FolderList extends ConsumerState<FolderList> {
     }
   }
 
-  void _handleKeyEvent(RawKeyEvent event) {
-    // Update key state based on key events
-    if (event is RawKeyDownEvent) {
-      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        _isCtrlKeyPressed = true;
-
-      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-          _isCtrlKeyPressed = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
-          _isShiftKeyPressed = true;
-      }
-    } else if (event is RawKeyUpEvent) {
-      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        _isCtrlKeyPressed = false;
-
-      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-          _isCtrlKeyPressed = false;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
-          _isShiftKeyPressed = false;
-      }
-    }
-  }
-
   void _selectEntry(List <FileOfInterest> entities, int index) {
     FileOfInterest entity = entities[index];
 
@@ -206,9 +231,9 @@ class _FolderList extends ConsumerState<FolderList> {
     }
 
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    if (_isCtrlKeyPressed) {
+    if (_isIndividualMultiSelectionPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
-    } else if (_isShiftKeyPressed) {
+    } else if (_isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
         int end = index;

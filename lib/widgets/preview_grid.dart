@@ -25,6 +25,7 @@ class PreviewGrid extends ConsumerStatefulWidget {
 class _PreviewGrid extends ConsumerState<PreviewGrid> {
   bool _isIndividualMultiSelectionPressed = false;
   bool _isBlockMultiSelectionPressed = false;
+  bool _hasFocus = false;
   final PageController _controller = PageController();
 
   int _lastSelectedItemIndex = -1;
@@ -50,7 +51,11 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
             Expanded(
               child: EntityContextMenu(
                 fileType: widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane,
-                child: widget.columnCount == 1 ? _getPageView() : _getGridView(),
+                child: MouseRegion(
+                  onEnter: (_) => _hasFocus = true,
+                  onExit: (_) => _hasFocus = false,
+                  child: widget.columnCount == 1 ? _getPageView() : _getGridView(),
+                ),
               ),
             ),
             const VerticalDivider(),
@@ -141,37 +146,63 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> {
       ],
     );
   }
-  
-  void _handleKeyEvent(RawKeyEvent event) {
-    // Update key state based on key events
+
+  KeyEventResult _handleKeyEvent(RawKeyEvent event) {
+    if (!_hasFocus) {
+      return KeyEventResult.ignored;
+    }
+
+    // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+    // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+    bool isCtrlOrMeta = event is RawKeyDownEvent
+        ? (Platform.isMacOS && event.isMetaPressed) || (!Platform.isMacOS && event.isControlPressed)
+        : (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.metaLeft || event.logicalKey == LogicalKeyboardKey.metaRight))
+          ||
+          (!Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight));
+
     if (event is RawKeyDownEvent) {
-      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+      if (isCtrlOrMeta) {
         _isIndividualMultiSelectionPressed = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
-        _isIndividualMultiSelectionPressed = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
+
+        if (event.physicalKey == PhysicalKeyboardKey.keyA) {
+          var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
+          selectedEntities.addAll(entities.toSet());
+        }
+
+        return KeyEventResult.handled;
+      } else if (event.isShiftPressed) {
         _isBlockMultiSelectionPressed = true;
+
+        return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _previousPage();
+        if (widget.columnCount == 1) {
+          _previousPage();
+        }
+
+        return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        _nextPage();
+        if (widget.columnCount == 1) {
+          _nextPage();
+        }
+
+        return KeyEventResult.handled;
       }
     } else if (event is RawKeyUpEvent) {
-      if (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.altLeft || event.logicalKey == LogicalKeyboardKey.altRight)) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+      if (Platform.isMacOS && isCtrlOrMeta) {
         _isIndividualMultiSelectionPressed = false;
-      } else if (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight) {
 
-        _isIndividualMultiSelectionPressed = false;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
+        return KeyEventResult.handled;
+      } else if (event.isShiftPressed) {
         _isBlockMultiSelectionPressed = false;
+
+        return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.escape) {
         Navigator.of(context, rootNavigator: true).maybePop(context);
+        return KeyEventResult.handled;
       }
     }
+
+    return KeyEventResult.ignored;
   }
 
   void _nextPage() {
