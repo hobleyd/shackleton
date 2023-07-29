@@ -33,7 +33,7 @@ class FolderList extends ConsumerStatefulWidget {
 class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback {
   late List<FileOfInterest> entities;
   late KeyboardHandler handler;
-  
+
   int _lastSelectedItemIndex = -1;
 
   @override
@@ -60,8 +60,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           },
           onPerformDrop: (event) => _onPerformDrop(event),
           child: MouseRegion(
-            onEnter: (_) => handler.setFocus(true),
-            onExit: (_) => handler.setFocus(false),
+            onEnter: (_) => handler.hasFocus = true,
+            onExit: (_) => handler.hasFocus = false,
             child: Container(
               alignment: Alignment.topLeft,
               decoration: folderSettings.isDropZone
@@ -186,9 +186,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     }
 
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    if (handler.isIndividualMultiSelectionPressed()) {
+    if (handler.isIndividualMultiSelectionPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
-    } else if (handler.isBlockMultiSelectionPressed()) {
+    } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
         int end = index;
@@ -230,6 +230,11 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   @override
   void delete() {
 
+  }
+
+  @override
+  void exit() {
+    
   }
 
   @override

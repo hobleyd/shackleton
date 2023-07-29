@@ -52,8 +52,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
               child: EntityContextMenu(
                 fileType: widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane,
                 child: MouseRegion(
-                  onEnter: (_) => handler.setFocus(true),
-                  onExit: (_) => handler.setFocus(false),
+                  onEnter: (_) => handler.hasFocus = true,
+                  onExit: (_) => handler.hasFocus = false,
                   child: widget.columnCount == 1 ? _getPageView() : _getGridView(),
                 ),
               ),
@@ -154,9 +154,9 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
     int index = entities.indexOf(entity);
     var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
-    if (handler.isIndividualMultiSelectionPressed()) {
+    if (handler.isIndividualMultiSelectionPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
-    } else if (handler.isBlockMultiSelectionPressed()) {
+    } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
         int end = index;
@@ -180,6 +180,11 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   @override
   void delete() {
 
+  }
+
+  @override
+  void exit() {
+    Navigator.of(context, rootNavigator: true).maybePop(context);
   }
 
   @override

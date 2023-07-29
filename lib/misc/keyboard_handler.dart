@@ -7,16 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../interfaces/keyboard_callback.dart';
 
 class KeyboardHandler {
-  bool _isIndividualMultiSelectionPressed = false;
-  bool _isBlockMultiSelectionPressed = false;
-  bool _hasFocus = false;
+  bool isIndividualMultiSelectionPressed = false;
+  bool isBlockMultiSelectionPressed = false;
   KeyboardCallback keyboardCallback;
+  bool hasFocus = false;
   WidgetRef ref;
 
   KeyboardHandler({required this.ref, required this.keyboardCallback});
 
-  // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-  // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+  // Return true if Meta is pressed on the Mac, or Ctrl is pressed on everything else.
+  // We are waiting on you, Asahi Linux team!
   bool _isCtrlOrMeta(RawKeyEvent event) {
     return event is RawKeyDownEvent
         ? (Platform.isMacOS && event.isMetaPressed) || (!Platform.isMacOS && event.isControlPressed)
@@ -26,7 +26,7 @@ class KeyboardHandler {
   }
 
   KeyEventResult _handleKeyEvent(RawKeyEvent event) {
-    if (!_hasFocus) {
+    if (!hasFocus) {
       return KeyEventResult.ignored;
     }
 
@@ -34,7 +34,7 @@ class KeyboardHandler {
 
     if (event is RawKeyDownEvent) {
       if (isCtrlOrMeta) {
-        _isIndividualMultiSelectionPressed = true;
+        isIndividualMultiSelectionPressed = true;
 
         if (event.physicalKey == PhysicalKeyboardKey.keyA) {
           keyboardCallback.selectAll();
@@ -42,7 +42,7 @@ class KeyboardHandler {
 
         return KeyEventResult.handled;
       } else if (event.isShiftPressed) {
-        _isBlockMultiSelectionPressed = true;
+        isBlockMultiSelectionPressed = true;
 
         return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
@@ -53,16 +53,19 @@ class KeyboardHandler {
         keyboardCallback.right();
 
         return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+        keyboardCallback.exit();
+        return KeyEventResult.handled;
       }
     } else if (event is RawKeyUpEvent) {
       if (isCtrlOrMeta) {
         // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
         // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        _isIndividualMultiSelectionPressed = false;
+        isIndividualMultiSelectionPressed = false;
 
         return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
-        _isBlockMultiSelectionPressed = false;
+        isBlockMultiSelectionPressed = false;
 
         return KeyEventResult.handled;
       }
@@ -75,19 +78,7 @@ class KeyboardHandler {
     RawKeyboard.instance.removeListener(_handleKeyEvent);
   }
 
-  bool isBlockMultiSelectionPressed() {
-    return _isBlockMultiSelectionPressed;
-  }
-
-  bool isIndividualMultiSelectionPressed() {
-    return _isIndividualMultiSelectionPressed;
-  }
-
   void register() {
     RawKeyboard.instance.addListener(_handleKeyEvent);
-  }
-
-  void setFocus(bool focus) {
-    _hasFocus = focus;
   }
 }
