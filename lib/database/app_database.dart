@@ -1,12 +1,9 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../models/folder_ui_settings.dart';
-
-class CachedStorage {
+class AppDatabase {
   late Database _cachedStorage;
 
   static const String _files = '''
@@ -28,17 +25,24 @@ class CachedStorage {
           foreign key(fileId) references files(id),
           foreign key(tagId) references tags(id));
           ''';
-  static const String _settings = '''
-        create table if not exists files(
+  static const String _folder_settings = '''
+        create table if not exists folder_settings(
           id integer primary key,
           path text not null,
           width int not null,
           unique (path) on conflict ignore);
           ''';
+  static const String _app_settings = '''
+        create table if not exists app_settings(
+          id integer primary key,
+          libraryPath text not null,
+          showHiddenFiles int not null,
+          unique (path) on conflict ignore);
+          ''';
   static const String _indexFiles = 'create index files_idx on files(path);';
   static const String _indexSettings = 'create index settings_idx on settings(path);';
 
-  CachedStorage() {
+  AppDatabase() {
     _openDatabase();
   }
 
@@ -48,7 +52,8 @@ class CachedStorage {
       db.execute(_files);
       db.execute(_tags);
       db.execute(_filetags);
-      db.execute(_settings);
+      db.execute(_folder_settings);
+      db.execute(_app_settings);
 
       db.execute(_indexFiles);
       db.execute(_indexSettings);
@@ -62,12 +67,14 @@ class CachedStorage {
 
   Future<String> _getDatabasePath() async {
     String database = "";
-    if (!kIsWeb) {
-      Directory documentsDirectory = await getApplicationDocumentsDirectory();
-      database = documentsDirectory.path;
+    if (Platform.isWindows) {
+      database = Platform.environment['APPDATA']!;
+    } else {
+      database = path.join(Platform.environment['HOME']!, '.shackleton');
     }
-    database += '/db/shackleton.db';
+    await Directory(database).create(recursive: true);
 
+    database = path.join(database, 'shackleton.db');
     return database;
   }
 
@@ -91,7 +98,12 @@ class CachedStorage {
             }));
   }
 
-  void saveFolderSettings(FolderUISettings settings) {
-    _cachedStorage.insert('settings', settings.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  Future<int> insert(String table, Map<String, dynamic> rows, { ConflictAlgorithm? conflictAlgorithm }) async {
+    return _cachedStorage.insert(table, rows, conflictAlgorithm: conflictAlgorithm);
   }
+
+  Future<List<Map<String, dynamic>>> query(String table, { List<String>? columns, String? where, List<dynamic>? whereArgs }) async {
+    return _cachedStorage.query(table, columns: columns, where: where, whereArgs: whereArgs);
+  }
+
 }
