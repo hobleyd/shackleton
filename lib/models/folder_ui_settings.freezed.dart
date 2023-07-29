@@ -20,9 +20,11 @@ FolderUISettings _$FolderUISettingsFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$FolderUISettings {
+  @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
   FileSystemEntity get entity => throw _privateConstructorUsedError;
-  double? get width => throw _privateConstructorUsedError;
-  bool? get isDropZone => throw _privateConstructorUsedError;
+  double get width => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+  bool get isDropZone => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -36,7 +38,12 @@ abstract class $FolderUISettingsCopyWith<$Res> {
           FolderUISettings value, $Res Function(FolderUISettings) then) =
       _$FolderUISettingsCopyWithImpl<$Res, FolderUISettings>;
   @useResult
-  $Res call({FileSystemEntity entity, double? width, bool? isDropZone});
+  $Res call(
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+          FileSystemEntity entity,
+      double width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+          bool isDropZone});
 }
 
 /// @nodoc
@@ -53,22 +60,22 @@ class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
   @override
   $Res call({
     Object? entity = null,
-    Object? width = freezed,
-    Object? isDropZone = freezed,
+    Object? width = null,
+    Object? isDropZone = null,
   }) {
     return _then(_value.copyWith(
       entity: null == entity
           ? _value.entity
           : entity // ignore: cast_nullable_to_non_nullable
               as FileSystemEntity,
-      width: freezed == width
+      width: null == width
           ? _value.width
           : width // ignore: cast_nullable_to_non_nullable
-              as double?,
-      isDropZone: freezed == isDropZone
+              as double,
+      isDropZone: null == isDropZone
           ? _value.isDropZone
           : isDropZone // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
     ) as $Val);
   }
 }
@@ -81,7 +88,12 @@ abstract class _$$_FolderUISettingsCopyWith<$Res>
       __$$_FolderUISettingsCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({FileSystemEntity entity, double? width, bool? isDropZone});
+  $Res call(
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+          FileSystemEntity entity,
+      double width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+          bool isDropZone});
 }
 
 /// @nodoc
@@ -96,57 +108,51 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
   @override
   $Res call({
     Object? entity = null,
-    Object? width = freezed,
-    Object? isDropZone = freezed,
+    Object? width = null,
+    Object? isDropZone = null,
   }) {
     return _then(_$_FolderUISettings(
       entity: null == entity
           ? _value.entity
           : entity // ignore: cast_nullable_to_non_nullable
               as FileSystemEntity,
-      width: freezed == width
+      width: null == width
           ? _value.width
           : width // ignore: cast_nullable_to_non_nullable
-              as double?,
-      isDropZone: freezed == isDropZone
+              as double,
+      isDropZone: null == isDropZone
           ? _value.isDropZone
           : isDropZone // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as bool,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$_FolderUISettings
-    with DiagnosticableTreeMixin
-    implements _FolderUISettings {
+class _$_FolderUISettings implements _FolderUISettings {
   const _$_FolderUISettings(
-      {required this.entity, this.width, this.isDropZone});
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+          required this.entity,
+      required this.width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+          required this.isDropZone});
 
   factory _$_FolderUISettings.fromJson(Map<String, dynamic> json) =>
       _$$_FolderUISettingsFromJson(json);
 
   @override
+  @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
   final FileSystemEntity entity;
   @override
-  final double? width;
+  final double width;
   @override
-  final bool? isDropZone;
+  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+  final bool isDropZone;
 
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+  String toString() {
     return 'FolderUISettings(entity: $entity, width: $width, isDropZone: $isDropZone)';
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties
-      ..add(DiagnosticsProperty('type', 'FolderUISettings'))
-      ..add(DiagnosticsProperty('entity', entity))
-      ..add(DiagnosticsProperty('width', width))
-      ..add(DiagnosticsProperty('isDropZone', isDropZone));
   }
 
   @override
@@ -180,19 +186,23 @@ class _$_FolderUISettings
 
 abstract class _FolderUISettings implements FolderUISettings {
   const factory _FolderUISettings(
-      {required final FileSystemEntity entity,
-      final double? width,
-      final bool? isDropZone}) = _$_FolderUISettings;
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+          required final FileSystemEntity entity,
+      required final double width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+          required final bool isDropZone}) = _$_FolderUISettings;
 
   factory _FolderUISettings.fromJson(Map<String, dynamic> json) =
       _$_FolderUISettings.fromJson;
 
   @override
+  @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
   FileSystemEntity get entity;
   @override
-  double? get width;
+  double get width;
   @override
-  bool? get isDropZone;
+  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+  bool get isDropZone;
   @override
   @JsonKey(ignore: true)
   _$$_FolderUISettingsCopyWith<_$_FolderUISettings> get copyWith =>

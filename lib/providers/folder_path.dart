@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../misc/utils.dart';
+
 part 'folder_path.g.dart';
 
 @riverpod
@@ -12,7 +14,7 @@ class FolderPath extends _$FolderPath {
   }
 
   Directory _getHome() {
-    return Directory(Platform.environment['HOME'] ?? Platform.environment['USERPROFILE']!);
+    return Directory(getHomeFolder());
   }
 
   void addFolder(Directory clickedPath, Directory newPath) {

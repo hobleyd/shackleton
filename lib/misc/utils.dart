@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
+import 'package:async/async.dart';
+import 'package:convert/convert.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 
@@ -23,10 +26,9 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
   if (filesToZip.isEmpty) {
     return null;
   }
-  debugPrint('creating zip file');
+
   FileOfInterest foi = FileOfInterest(entity: getZipName(folder, filesToZip));
   var encoder = ZipFileEncoder();
-  debugPrint('creating encoder for ${foi.path}');
   encoder.create(foi.path, level: Deflate.BEST_COMPRESSION);
   for (var file in filesToZip) {
     if (file.isDirectory) {
@@ -36,17 +38,46 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
       encoder.addFile(file.entity as File);
     }
   }
-  debugPrint('closing $foi');
   encoder.close();
   return foi;
 }
 
-FileOfInterest getEntity(String path) {
+FileSystemEntity getEntity(String path) {
   if (FileSystemEntity.typeSync(path) == FileSystemEntityType.directory) {
-    return FileOfInterest(entity: Directory(path));
+    return Directory(path);
   }
 
-  return FileOfInterest(entity: File(path));
+  return File(path);
+}
+
+Future<Digest> getFileSha256(File entity) async {
+  final reader = ChunkedStreamReader(entity.openRead());
+  const chunkSize = 4096;
+  var output = AccumulatorSink<Digest>();
+  var input = sha256.startChunkedConversion(output);
+
+  try {
+    while (true) {
+      final chunk = await reader.readChunk(chunkSize);
+      if (chunk.isEmpty) {
+        // indicate end of file
+        break;
+      }
+      input.add(chunk);
+    }
+  } finally {
+    // We always cancel the ChunkedStreamReader,
+    // this ensures the underlying stream is cancelled.
+    reader.cancel();
+  }
+
+  input.close();
+
+  return output.events.single;
+}
+
+String getHomeFolder() {
+  return Platform.environment['HOME'] ?? Platform.environment['USERPROFILE']!;
 }
 
 File getZipName(FileOfInterest folder, Set<FileOfInterest> filesToZip) {

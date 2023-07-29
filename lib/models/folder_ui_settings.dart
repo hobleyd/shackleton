@@ -1,45 +1,25 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-@immutable
-class FolderUISettings {
-  final FileSystemEntity entity;
-  final bool isDropZone;
-  final double width;
+import '../misc/utils.dart';
 
-  const FolderUISettings({
-    required this.entity,
-    this.isDropZone = false,
-    this.width = 200,
-  });
+part 'folder_ui_settings.freezed.dart';
+part 'folder_ui_settings.g.dart';
 
-  FolderUISettings copyWith({double? width, bool? isDropZone}) {
-    return FolderUISettings(
-      entity: entity,
-      width: width ?? this.width,
-      isDropZone: isDropZone ?? this.isDropZone,
-    );
-  }
+FileSystemEntity _fseFromJson(String path) => getEntity(path);
+String _fseToJson(FileSystemEntity entity) => entity.path;
 
-  static FolderUISettings fromMap(Map<String, dynamic> setting) {
-    FolderUISettings result =  FolderUISettings(
-      entity: FileSystemEntity.typeSync(setting['path']) == FileSystemEntityType.file ? File(setting['path]']) : Directory(setting['path']),
-      width: setting['width'],
-    );
+bool _boolFromJson(int value) => value.isOdd;
+int _boolToJson(bool value) => value ? 1 : 0;
 
-    return result;
-  }
+@freezed
+class FolderUISettings with _$FolderUISettings {
+  const factory FolderUISettings({
+    @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson) required FileSystemEntity entity,
+    required double width,
+    @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) required bool isDropZone}) = _FolderUISettings;
 
-  Map<String, dynamic> toMap() {
-    return {
-      'path': entity.path,
-      'width': width,
-    };
-  }
+  factory FolderUISettings.fromJson(Map<String, Object?> json) => _$FolderUISettingsFromJson(json);
 
-  @override
-  String toString() {
-    return '${entity.path} with width of $width, and isDropZone is $isDropZone';
-  }
 }

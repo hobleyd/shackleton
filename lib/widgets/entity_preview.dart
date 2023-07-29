@@ -94,7 +94,7 @@ class EntityPreview extends ConsumerWidget {
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
-    ref.read(metadataProvider(entity).notifier).replaceTags(entity, tags);
+    ref.read(metadataProvider(entity).notifier).replaceTagsFromString(entity, tags);
 
     return true;
   }

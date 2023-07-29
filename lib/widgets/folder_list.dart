@@ -8,9 +8,11 @@ import 'package:path/path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 
+import '../interfaces/keyboard_callback.dart';
+import '../misc/keyboard_handler.dart';
+import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
-import '../misc/utils.dart';
 import '../providers/folder_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/folder_settings.dart';
@@ -28,13 +30,11 @@ class FolderList extends ConsumerStatefulWidget {
   ConsumerState<FolderList> createState() => _FolderList();
 }
 
-class _FolderList extends ConsumerState<FolderList> {
-  bool _isIndividualMultiSelectionPressed = false;
-  bool _isBlockMultiSelectionPressed = false;
-  int _lastSelectedItemIndex = -1;
-  bool _hasFocus = false;
-
+class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback {
   late List<FileOfInterest> entities;
+  late KeyboardHandler handler;
+  
+  int _lastSelectedItemIndex = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +60,8 @@ class _FolderList extends ConsumerState<FolderList> {
           },
           onPerformDrop: (event) => _onPerformDrop(event),
           child: MouseRegion(
-            onEnter: (_) => _hasFocus = true,
-            onExit: (_) => _hasFocus = false,
+            onEnter: (_) => handler.setFocus(true),
+            onExit: (_) => handler.setFocus(false),
             child: Container(
               alignment: Alignment.topLeft,
               decoration: folderSettings.isDropZone
@@ -128,7 +128,7 @@ class _FolderList extends ConsumerState<FolderList> {
 
   @override
   void dispose() {
-    RawKeyboard.instance.removeListener(_handleKeyEvent);
+    handler.deregister();
 
     super.dispose();
   }
@@ -136,8 +136,8 @@ class _FolderList extends ConsumerState<FolderList> {
   @override
   void initState() {
     super.initState();
-
-    RawKeyboard.instance.addListener(_handleKeyEvent);
+    handler = KeyboardHandler(ref: ref, keyboardCallback: this);
+    handler.register();
   }
 
   DropOperation _onDropOver(DropOverEvent event) {
@@ -146,51 +146,6 @@ class _FolderList extends ConsumerState<FolderList> {
       return event.session.allowedOperations.contains(DropOperation.move) ? DropOperation.move : DropOperation.none;
     }
     return DropOperation.none;
-  }
-
-  KeyEventResult _handleKeyEvent(RawKeyEvent event) {
-    if (!_hasFocus) {
-      return KeyEventResult.ignored;
-    }
-
-    // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-    // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-    bool isCtrlOrMeta = event is RawKeyDownEvent
-        ? (Platform.isMacOS && event.isMetaPressed) || (!Platform.isMacOS && event.isControlPressed)
-        : (Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.metaLeft || event.logicalKey == LogicalKeyboardKey.metaRight))
-        ||
-        (!Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight));
-
-    if (event is RawKeyDownEvent) {
-      if (isCtrlOrMeta) {
-        _isIndividualMultiSelectionPressed = true;
-
-        if (event.physicalKey == PhysicalKeyboardKey.keyA) {
-          var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-          selectedEntities.addAll(entities.toSet());
-        }
-
-        return KeyEventResult.handled;
-      } else if (event.logicalKey == LogicalKeyboardKey.shift) {
-        _isBlockMultiSelectionPressed = true;
-
-        return KeyEventResult.handled;
-      }
-    } else if (event is RawKeyUpEvent) {
-      if (isCtrlOrMeta) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        _isIndividualMultiSelectionPressed = false;
-
-        return KeyEventResult.handled;
-      } else if (event.logicalKey == LogicalKeyboardKey.shift) {
-        _isBlockMultiSelectionPressed = false;
-
-        return KeyEventResult.handled;
-      }
-    }
-
-    return KeyEventResult.ignored;
   }
 
   Future<void> _onPerformDrop(PerformDropEvent event) async {
@@ -231,9 +186,9 @@ class _FolderList extends ConsumerState<FolderList> {
     }
 
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    if (_isIndividualMultiSelectionPressed) {
+    if (handler.isIndividualMultiSelectionPressed()) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
-    } else if (_isBlockMultiSelectionPressed) {
+    } else if (handler.isBlockMultiSelectionPressed()) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
         int end = index;
@@ -270,5 +225,26 @@ class _FolderList extends ConsumerState<FolderList> {
         }
       }
     }
+  }
+
+  @override
+  void delete() {
+
+  }
+
+  @override
+  void left() {
+
+  }
+
+  @override
+  void right() {
+
+  }
+
+  @override
+  void selectAll() {
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    selectedEntities.addAll(entities.toSet());
   }
 }

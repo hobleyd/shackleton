@@ -3,6 +3,7 @@
 *.log
 *.pyc
 *.swp
+*.freezed.dart
 *.g.dart
 *.lock
 .DS_Store

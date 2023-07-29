@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'misc/logger.dart';
+import 'database/app_database.dart';
+import 'misc/provider_logger.dart';
 import 'providers/theme.dart';
+import 'repositories/app_settings_repository.dart';
+import 'repositories/file_tags_repository.dart';
+import 'repositories/folder_settings_repository.dart';
 import 'widgets/shackleton.dart';
 
-void main() {
+Future<void> loadCachedStorage() async {
+  AppDatabase db = AppDatabase();
+
+  await db.openDatabase();
+  await AppSettingsRepository(db).getSettings();
+  await FolderSettingsRepository(db).getSettings();
+  await FileTagsRepository(db).getTags();
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(ProviderScope(observers: [Logger()], child: const ShackletonApp()));
+  await loadCachedStorage();
+
+  runApp(ProviderScope(
+      observers: [ProviderLogger()],
+      child: const ShackletonApp()));
 }
 
 class ShackletonApp extends ConsumerWidget {

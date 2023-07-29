@@ -1,11 +1,13 @@
 import 'dart:io';
 
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../providers/selected_entities.dart';
-
+import '../providers/settings.dart';
+import '../repositories/app_settings_repository.dart';
 part 'folder_contents.g.dart';
 
 @riverpod
@@ -18,8 +20,7 @@ class FolderContents extends _$FolderContents {
   }
 
   void getFolderContents(Directory path) {
-    // TODO: refactor with AppSettings.
-    bool showHiddenFiles = false;
+    bool showHiddenFiles = ref.read(settingsProvider).showHiddenFiles;
 
     List<FileOfInterest> files = [];
     for (var file in path.listSync()) {
@@ -43,7 +44,7 @@ class FolderContents extends _$FolderContents {
     events.listen((FileSystemEvent event) {
       switch (event.type) {
         case FileSystemEvent.create:
-          FileOfInterest foi = getEntity(event.path);
+          FileOfInterest foi = FileOfInterest(entity: getEntity(event.path));
           if (!state.contains(foi)) {
             if (!foi.isHidden) {
               List<FileOfInterest> entities = [...state, foi];
@@ -55,7 +56,7 @@ class FolderContents extends _$FolderContents {
         case FileSystemEvent.move:
           var folderEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
           var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-          FileOfInterest foi = getEntity(event.path);
+          FileOfInterest foi = FileOfInterest(entity: getEntity(event.path));
 
           if (folderEntities.contains(foi)) {
             folderEntities.remove(foi);

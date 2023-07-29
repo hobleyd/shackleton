@@ -14,8 +14,10 @@ class FileOfInterest extends Comparable {
   @override
   get hashCode => entity.path.hashCode;
   get canPreview => imageExtensions.contains(entity.path.split('.').last.toLowerCase());
+  get exists => entity.existsSync();
   get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
+  get isImage => imageExtensions.contains(entity.path.split('.').last.toLowerCase());
   get isHidden => entity.path.split('/').last.startsWith('.');
   get isMetadataSupported => imageExtensions.contains(entity.path.split('.').last);
   get path => entity.path;

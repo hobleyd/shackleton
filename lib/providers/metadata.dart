@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-import 'package:process_run/cmd_run.dart';
+import 'package:Shackleton/repositories/file_tags_repository.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../database/app_database.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
@@ -13,24 +13,43 @@ part 'metadata.g.dart';
 
 @riverpod
 class Metadata extends _$Metadata {
+  late FileTagsRepository fileTagsRepository;
+
   @override
   FileMetaData build(FileOfInterest entity) {
+    fileTagsRepository = FileTagsRepository(ref.read(appDbProvider));
+
     loadMetadataFromFile(entity);
     return const FileMetaData(tags: []);
   }
 
-  Future<void> loadMetadataFromFile(FileOfInterest entity) async {
+  Future<Set<Tag>> getTagsFromFile(FileOfInterest entity) async {
     if (entity.isMetadataSupported) {
       bool hasExiftool = whichSync('exiftool') != null ? true : false;
 
       if (hasExiftool) {
         ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-subject', entity.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          replaceTags(entity, output.stdout, update: false);
-          //TODO: Tag.writeTags(_fileCache, entity, tags);
-          //cachedStorageNotifierProvider.cacheTagsForEntity(entity, tags);
+          Set<Tag> tagList = {};
+
+          tagList.addAll(getTagsFromString(output.stdout));
+
+          return tagList;
         }
       }
+    }
+    return {};
+  }
+
+  Set<Tag> getTagsFromString(String tags) {
+    return tags.split(',').map((e) => Tag(tag: e.trim())).toSet();
+  }
+
+  Future<void> loadMetadataFromFile(FileOfInterest entity) async {
+    if (entity.isMetadataSupported) {
+      Set<Tag> tags = await getTagsFromFile(entity);
+
+      replaceTags(entity, tags, update: false);
     }
   }
 
@@ -67,15 +86,18 @@ class Metadata extends _$Metadata {
     return false;
   }
 
-  void replaceTags(FileOfInterest entity, String tags, {bool update = true}) async {
+  void replaceTags(FileOfInterest entity, Set<Tag> tags, {bool update = true}) async {
+    fileTagsRepository.writeTags(entity.entity, tags);
     updateTags(entity, tags, tagSet: {}, update: update);
   }
 
-  void updateTags(FileOfInterest entity, String tags, {Set<Tag>? tagSet, bool update = true}) async {
+  void replaceTagsFromString(FileOfInterest entity, String tags) {
+    return replaceTags(entity, getTagsFromString(tags));
+  }
+
+  void updateTags(FileOfInterest entity, Set<Tag> tags, {Set<Tag>? tagSet, bool update = true}) async {
     Set<Tag> newTags = tagSet ?? state.tags.toSet();
-
-    newTags.addAll(tags.split(',').map((e) => Tag(tag: e.trim())));
-
+    newTags.addAll(tags);
     List<Tag> tagList = newTags.toList();
     tagList.sort();
 
@@ -94,6 +116,10 @@ class Metadata extends _$Metadata {
       // Otherwise, we are reading from the file and only want to update the provider.
       state = state.copyWith(tags: tagList, isEditing: false);
     }
+  }
+
+  void updateTagsFromString(FileOfInterest entity, String tags, {Set<Tag>? tagSet, bool update = true}) {
+    return updateTags(entity, getTagsFromString(tags), tagSet: tagSet, update: update);
   }
 
   void setEditable(bool editable) {
