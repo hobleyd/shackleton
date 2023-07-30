@@ -9,8 +9,8 @@ import '../interfaces/keyboard_callback.dart';
 class KeyboardHandler {
   bool isIndividualMultiSelectionPressed = false;
   bool isBlockMultiSelectionPressed = false;
-  KeyboardCallback keyboardCallback;
   bool hasFocus = false;
+  KeyboardCallback keyboardCallback;
   WidgetRef ref;
 
   KeyboardHandler({required this.ref, required this.keyboardCallback});
@@ -55,6 +55,9 @@ class KeyboardHandler {
         return KeyEventResult.handled;
       } else if (event.logicalKey == LogicalKeyboardKey.escape) {
         keyboardCallback.exit();
+        return KeyEventResult.handled;
+      } else if (event.logicalKey == LogicalKeyboardKey.backspace || event.logicalKey == LogicalKeyboardKey.delete) {
+        keyboardCallback.delete();
         return KeyEventResult.handled;
       }
     } else if (event is RawKeyUpEvent) {

@@ -36,7 +36,7 @@ class EntityContextMenu extends ConsumerWidget {
             MenuAction(
               attributes: const MenuActionAttributes(destructive: true),
               image: MenuImage.icon(Icons.delete),
-              callback: () => selectedPreviewEntities.deleteFiles(),
+              callback: () => selectedPreviewEntities.deleteAll(),
               title: 'Delete selected files',
             ),
           ]

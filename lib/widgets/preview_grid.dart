@@ -16,9 +16,8 @@ import 'preview_pane.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
   final int columnCount;
-  final FileType type;
 
-  const PreviewGrid({Key? key, required this.columnCount, required this.type}) : super(key: key);
+  const PreviewGrid({Key? key, required this.columnCount}) : super(key: key);
 
   @override
   ConsumerState<PreviewGrid> createState() => _PreviewGrid();
@@ -35,7 +34,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   // TODO: Add key navigation
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(widget.type));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     entities = selectedEntities.toList();
     entities.removeWhere((element) => !element.canPreview);
     entities.sort();
@@ -50,11 +49,11 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
         : Row(children: [
             Expanded(
               child: EntityContextMenu(
-                fileType: widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane,
+                fileType: FileType.previewGrid,
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
-                  child: widget.columnCount == 1 ? _getPageView() : _getGridView(),
+                  child: _getGridView(),
                 ),
               ),
             ),
@@ -90,62 +89,21 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
             onDoubleTap: () => _previewEntities(e),
             child: EntityPreview(
               entity: e,
-              selectionType: widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane,
+              selectionType: FileType.previewGrid,
             )))
             .toList());
   }
-  
-  Widget _getPageView() {
-    return Container(
-      padding: const EdgeInsets.only(left: 20, right: 20),
-      color: Colors.grey,
-      child: Stack(
-      children: [
-         PageView.builder(
-            controller: _controller,
-            onPageChanged: (index) {
-              _lastSelectedItemIndex = index;
-            },
-            itemCount: entities.length,
-            itemBuilder: (BuildContext context, int pos) {
-              return GestureDetector(
-                  onTap: () => _selectEntity(entities[pos]),
-                  child: EntityPreview(
-                    entity: entities[pos],
-                    selectionType: widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane,
-                  ));
-            },
-          ),
-        Align(
-          alignment: Alignment.center,
-          child: Row(
-            children: [
-              IconButton(
-                  onPressed: () => left(),
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 28.0)),
-              const Spacer(),
-              IconButton(
-                  onPressed: () => right(),
-                  icon: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 28.0)),
-            ],
-          ),
-        ),
-      ],
-    ),
-    );
-  }
 
   void _previewEntities(FileOfInterest tappedEntity) {
-    var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
 
     if (!selectedEntities.contains(tappedEntity)) {
-      // If we double tap on an unselectedEntity, assume we want to clear the selection.
-      var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
-      selectedEntities.replace(tappedEntity);
+      // If we double tap on an unselectedEntity, assume we want to browse everything in detail.
+      selectAll();
     }
 
     // TODO: Ideally this would be a new window, but Flutter doesn't support multiple windows yet, refactor when it does.
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const PreviewPane()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewPane(initialEntity: tappedEntity,)));
   }
 
   void _selectEntity(FileOfInterest entity) {
@@ -153,7 +111,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
     int index = entities.indexOf(entity);
-    var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
     if (handler.isIndividualMultiSelectionPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
     } else if (handler.isBlockMultiSelectionPressed) {
@@ -179,7 +137,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void delete() {
-
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    selectedEntities.deleteAll();
   }
 
   @override
@@ -203,7 +162,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void selectAll() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(widget.type == FileType.folderList ? FileType.previewGrid : FileType.previewPane).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
     selectedEntities.addAll(entities.toSet());
   }
 }

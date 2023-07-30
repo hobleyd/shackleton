@@ -229,12 +229,13 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
   @override
   void delete() {
-
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    selectedEntities.deleteAll();
   }
 
   @override
   void exit() {
-    
+
   }
 
   @override

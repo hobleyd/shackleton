@@ -39,7 +39,7 @@ class Shackleton extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 6, bottom: 6),
             child: Column(children: [
               if (preview.visible) ...{
-                SizedBox(height: preview.height, child: const PreviewGrid(columnCount: 5, type: FileType.folderList)),
+                SizedBox(height: preview.height, child: const PreviewGrid(columnCount: 5)),
                 MouseRegion(
                     cursor: SystemMouseCursors.resizeRow,
                     child: GestureDetector(

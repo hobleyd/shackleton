@@ -31,7 +31,12 @@ class SelectedEntities extends _$SelectedEntities {
     return state.contains(entity);
   }
 
-  void deleteFiles() {
+  void delete(FileOfInterest entity) {
+    entity.delete();
+    remove(entity);
+  }
+
+  void deleteAll() {
     for (var e in state) {
       e.delete();
     }

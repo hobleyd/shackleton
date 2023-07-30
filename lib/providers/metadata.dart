@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:Shackleton/repositories/file_tags_repository.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -8,6 +7,7 @@ import '../database/app_database.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
+import '../repositories/file_tags_repository.dart';
 
 part 'metadata.g.dart';
 
