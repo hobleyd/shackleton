@@ -26,7 +26,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   // TODO: Add buttons to rotate the selected image(s)
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
     entities = selectedEntities.toList();
     entities.sort();
 
@@ -73,7 +73,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   Widget _getPageView() {
     return Container(
       padding: const EdgeInsets.only(left: 20, right: 20),
-      color: Colors.grey,
+      color: Colors.transparent,
       child: Stack(
         children: [
           PageView.builder(
@@ -112,7 +112,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   @override
   void delete() {
     if (_lastSelectedItemIndex != -1) {
-      var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+      var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
       previewEntities.delete(entities[_lastSelectedItemIndex]);
     }
   }

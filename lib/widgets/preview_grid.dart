@@ -24,17 +24,17 @@ class PreviewGrid extends ConsumerStatefulWidget {
 }
 
 class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallback {
+  final ScrollController _controller = ScrollController();
   late List<FileOfInterest> entities;
   late KeyboardHandler handler;
 
-  final PageController _controller = PageController();
   int _lastSelectedItemIndex = -1;
 
   // TODO: Add buttons to rotate the selected image(s)
   // TODO: Add key navigation
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
     entities = selectedEntities.toList();
     entities.removeWhere((element) => !element.canPreview);
     entities.sort();
@@ -78,24 +78,26 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   Widget _getGridView() {
     return GridView.count(
-        primary: false,
-        padding: const EdgeInsets.only(left: 20, right: 20),
+        controller: _controller,
+        crossAxisCount: widget.columnCount,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        crossAxisCount: widget.columnCount,
-        children: entities
-            .map((e) => GestureDetector(
-            onTap: () => _selectEntity(e),
-            onDoubleTap: () => _previewEntities(e),
-            child: EntityPreview(
-              entity: e,
-              selectionType: FileType.previewGrid,
-            )))
-            .toList());
+        padding: const EdgeInsets.only(left: 20, right: 20),
+        primary: false,
+        children: entities.map((e) =>
+            GestureDetector(
+                onTap: () => _selectEntity(e),
+                onDoubleTap: () => _previewEntities(e),
+                child: EntityPreview(
+                  entity: e,
+                  selectionType: FileType.previewPane,
+                )
+            )
+        ).toList());
   }
 
   void _previewEntities(FileOfInterest tappedEntity) {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
 
     if (!selectedEntities.contains(tappedEntity)) {
       // If we double tap on an unselectedEntity, assume we want to browse everything in detail.
@@ -111,7 +113,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
     int index = entities.indexOf(entity);
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     if (handler.isIndividualMultiSelectionPressed) {
       selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
     } else if (handler.isBlockMultiSelectionPressed) {
@@ -148,15 +150,15 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void left() {
-    if (widget.columnCount == 1) {
-      if (_lastSelectedItemIndex != 0) _controller.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    if (_lastSelectedItemIndex > 0) {
+      _selectEntity(entities[--_lastSelectedItemIndex]);
     }
   }
 
   @override
   void right() {
-    if (widget.columnCount == 1) {
-      if (_lastSelectedItemIndex < entities.length - 1) _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    if (_lastSelectedItemIndex < entities.length) {
+      _selectEntity(entities[++_lastSelectedItemIndex]);
     }
   }
 

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -140,6 +139,37 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     handler.register();
   }
 
+  void _addSelectedEntity(FileOfInterest entity) {
+    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    folderListSelection.add(entity);
+
+    // We want to add selected entities to both the folder list selection, and the preview grid.
+    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    debugPrint('canpreview: ${entity.canPreview}');
+    if (entity.canPreview) {
+      previewGridSelection.add(entity);
+    } else if (entity.isDirectory) {
+      Set<FileOfInterest> selectedFiles = {};
+
+      Directory d = Directory(entity.path);
+      for (var e in d.listSync()) {
+        FileOfInterest foi = FileOfInterest(entity: e);
+        if (foi.canPreview) {
+          selectedFiles.add(foi);
+        }
+      }
+      previewGridSelection.addAll(selectedFiles);
+    }
+  }
+
+  _clearSelectedEntities() {
+    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    folderListSelection.clear();
+
+    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    previewGridSelection.clear();
+  }
+
   DropOperation _onDropOver(DropOverEvent event) {
     final item = event.session.items.first;
     if (item.canProvide(Formats.fileUri)) {
@@ -181,13 +211,14 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     // Cancel editing in the PreviewGrid if we are making selections.
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
+    // Add the selected Directory into the visible folder list.
     if (entity.isDirectory) {
       ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
 
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+
     if (handler.isIndividualMultiSelectionPressed) {
-      selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
+      _toggleSelectedEntity(entity);
     } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
@@ -200,31 +231,23 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         }
 
         for (int i = start; i <= end; i++) {
-          selectedEntities.add(entities[i]);
+          _addSelectedEntity(entities[i]);
         }
       }
     } else {
       _lastSelectedItemIndex = index;
 
-      selectedEntities.clear();
-      if (entity.isFile) {
-        selectedEntities.add(entity);
-      } else if (entity.isDirectory) {
-        // We only preselect folder entities if the preview pane is open on the assumption that this is what the user will be expecting.
-        if (ref.read(previewProvider).visible) {
-          Set<FileOfInterest> selectedFiles = {};
-
-          Directory d = Directory(entity.path);
-          for (var e in d.listSync()) {
-            FileOfInterest foi = FileOfInterest(entity: e);
-            if (foi.canPreview) {
-              selectedFiles.add(foi);
-            }
-          }
-          selectedEntities.addAll(selectedFiles);
-        }
-      }
+      _clearSelectedEntities();
+      _addSelectedEntity(entity);
     }
+  }
+
+  void _toggleSelectedEntity(FileOfInterest entity) {
+    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    folderListSelection.contains(entity) ? folderListSelection.remove(entity) : folderListSelection.add(entity);
+
+    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    previewGridSelection.contains(entity) ? previewGridSelection.remove(entity) : previewGridSelection.add(entity);
   }
 
   @override

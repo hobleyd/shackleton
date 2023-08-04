@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../misc/utils.dart';
 
 const Set<String> imageExtensions = { 'gif', 'jpeg', 'jpg', 'png', 'tiff' };
 
@@ -30,7 +33,17 @@ class FileOfInterest extends Comparable {
   int compareTo(other) => path.compareTo(other.path);
 
   void delete() async {
-    entity.deleteSync(recursive: true);
+    if (Platform.isMacOS) {
+      String trash = join(getHomeFolder(), '.Trash', basename(path));
+
+      if (isDirectory) {
+        moveDirectory(entity as Directory, trash);
+      } else {
+        moveFile(entity as File, trash);
+      }
+    } else {
+      entity.deleteSync();
+    }
   }
 
   Future openFile() async {
