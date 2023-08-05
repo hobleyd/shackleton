@@ -195,7 +195,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
             keyboardType: TextInputType.text,
             maxLines: 1,
             onSubmitted: (tags) => _renameFile(entity, tagController.text),
-            onEditingComplete: () => debugPrint('editing complete'),
             style: Theme.of(context).textTheme.bodySmall),
       ),
       IconButton(
@@ -204,8 +203,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           iconSize: 12,
           padding: EdgeInsets.zero,
           splashRadius: 0.0001,
-          tooltip: 'Save comma separated list of Tags to file...',
+          tooltip: 'Rename file...',
           onPressed: () => _renameFile(entity, tagController.text)),
+      const SizedBox(width: 9), // Allow space for scrollbar.
     ]);
   }
 
