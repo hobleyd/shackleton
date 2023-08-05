@@ -7,7 +7,6 @@ import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../providers/selected_entities.dart';
 import '../providers/settings.dart';
-import '../repositories/app_settings_repository.dart';
 part 'folder_contents.g.dart';
 
 @riverpod
@@ -31,6 +30,14 @@ class FolderContents extends _$FolderContents {
       files.add(foi);
     }
     state = [...sort(files)];
+  }
+
+  void setEditableState(FileOfInterest entity, bool editable) {
+    List<FileOfInterest> files = List.from(state);
+    int idx = files.indexOf(entity);
+    files.removeAt(idx);
+    files.insert(idx, entity.copyWith(editing: editable));
+    state = files;
   }
 
   List<FileOfInterest> sort(List<FileOfInterest> entities) {

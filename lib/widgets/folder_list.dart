@@ -16,7 +16,6 @@ import '../providers/folder_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/folder_settings.dart';
 import '../providers/metadata.dart';
-import '../providers/preview.dart';
 import '../providers/selected_entities.dart';
 import 'entity_context_menu.dart';
 
@@ -95,16 +94,25 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                                 item.add(Formats.htmlText.lazy(() => entity.path));
                                 return item;
                               },
-                              child: DraggableWidget(
-                                  child: Container(
-                                      color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                                      child: Row(children: [
-                                        FileIcon(entity.path),
-                                        Expanded(
-                                            child: Text(entity.path.split('/').last,
-                                                maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)),
-                                      ]))),
-                            ));
+                              child: entity.editing
+                                  ? _getEditableEntity(context, entity)
+                                  : DraggableWidget(
+                                      child: Container(
+                                        color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
+                                        child: Row(children: [
+                                          FileIcon(entity.path),
+                                          Expanded(
+                                            child: Text(
+                                                entity.path.split('/').last,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(context).textTheme.bodySmall),
+                                          ),],
+                                        ),
+                                      ),
+                              ),
+                            )
+                        );
                       },
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true),
@@ -145,7 +153,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
     // We want to add selected entities to both the folder list selection, and the preview grid.
     var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-    debugPrint('canpreview: ${entity.canPreview}');
     if (entity.canPreview) {
       previewGridSelection.add(entity);
     } else if (entity.isDirectory) {
@@ -168,6 +175,37 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
     var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
     previewGridSelection.clear();
+  }
+
+  Widget _getEditableEntity(BuildContext context, FileOfInterest entity) {
+    TextEditingController tagController = TextEditingController();
+    tagController.text = entity.name;
+    tagController.selection = TextSelection(baseOffset: 0, extentOffset: entity.extensionIndex);
+
+    return Row(children: [
+      FileIcon(entity.path),
+      Expanded(
+        child: TextField(
+            autofocus: true,
+            controller: tagController,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+            ),
+            keyboardType: TextInputType.text,
+            maxLines: 1,
+            onSubmitted: (tags) => _renameFile(entity, tagController.text),
+            style: Theme.of(context).textTheme.bodySmall),
+      ),
+      IconButton(
+          icon: const Icon(Icons.save),
+          constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+          iconSize: 12,
+          padding: EdgeInsets.zero,
+          splashRadius: 0.0001,
+          tooltip: 'Save comma separated list of Tags to file...',
+          onPressed: () => _renameFile(entity, tagController.text)),
+    ]);
   }
 
   DropOperation _onDropOver(DropOverEvent event) {
@@ -205,6 +243,13 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     }
   }
 
+  void _renameFile(FileOfInterest entity, String filename) {
+    FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
+    contents.setEditableState(entity, false);
+
+    entity.rename(filename);
+  }
+
   void _selectEntry(List <FileOfInterest> entities, int index) {
     FileOfInterest entity = entities[index];
 
@@ -215,7 +260,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     if (entity.isDirectory) {
       ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
-
 
     if (handler.isIndividualMultiSelectionPressed) {
       _toggleSelectedEntity(entity);
@@ -235,10 +279,17 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         }
       }
     } else {
-      _lastSelectedItemIndex = index;
+      if (_lastSelectedItemIndex == index) {
+        // We want to edit the name....
+        debugPrint('set editing: true');
+        FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
+        contents.setEditableState(entity, true);
+      } else {
+        _lastSelectedItemIndex = index;
 
-      _clearSelectedEntities();
-      _addSelectedEntity(entity);
+        _clearSelectedEntities();
+        _addSelectedEntity(entity);
+      }
     }
   }
 

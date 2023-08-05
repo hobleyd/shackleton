@@ -52,7 +52,7 @@ class MetadataEditor extends ConsumerWidget {
                 child: TextField(
                   autofocus: true,
                   controller: tagController,
-                  decoration: const InputDecoration(border: InputBorder.none),
+                  decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                   keyboardType: TextInputType.text,
                   maxLines: 1,
                   onSubmitted: (tags) => _updateTags(ref, entities, tags),
