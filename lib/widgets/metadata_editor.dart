@@ -7,15 +7,18 @@ import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
 
 class MetadataEditor extends ConsumerWidget {
-  const MetadataEditor({Key? key}) : super(key: key);
+  FileType completeListType;
+  FileType selectedListType;
+
+  MetadataEditor({Key? key, required this.completeListType, required this.selectedListType}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     TextEditingController tagController = TextEditingController();
 
-    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
-    Set<FileOfInterest> folderSelectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
-    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : folderSelectedEntities;
+    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesProvider(selectedListType));
+    Set<FileOfInterest> gridEntries = ref.watch(selectedEntitiesProvider(completeListType));
+    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : gridEntries;
 
     final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataProvider(e)).tags}.toList();
 
@@ -40,9 +43,8 @@ class MetadataEditor extends ConsumerWidget {
                               padding: EdgeInsets.zero,
                               splashRadius: 0.0001,
                               tooltip: 'Remove tag from selected images...',
-                              onPressed: () => entities.forEach((e) {
-                                    ref.read(metadataProvider(e).notifier).removeTags(e, tags[index]);
-                                  })),
+                              onPressed: () => _removeTags(ref, entities, tags, index)
+                          ),
                         ]));
                   })),
           const Spacer(),
@@ -72,6 +74,12 @@ class MetadataEditor extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _removeTags(WidgetRef ref, Set<FileOfInterest> entities, List<Tag> tags, int index) {
+    for (var e in entities) {
+      ref.read(metadataProvider(e).notifier).removeTags(e, tags[index]);
+    }
   }
 
   bool _updateTags(WidgetRef ref, Set<FileOfInterest> entities, String tags) {

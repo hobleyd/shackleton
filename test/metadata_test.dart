@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:Shackleton/models/file_of_interest.dart';
-import 'package:Shackleton/models/tag.dart';
-import 'package:Shackleton/providers/metadata.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shackleton/models/file_of_interest.dart';
+import 'package:shackleton/models/tag.dart';
+import 'package:shackleton/providers/metadata.dart';
 
 void main() {
   test('can add tags to empty set', () async {

@@ -195,6 +195,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
             keyboardType: TextInputType.text,
             maxLines: 1,
             onSubmitted: (tags) => _renameFile(entity, tagController.text),
+            onEditingComplete: () => debugPrint('editing complete'),
             style: Theme.of(context).textTheme.bodySmall),
       ),
       IconButton(
@@ -246,6 +247,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   void _renameFile(FileOfInterest entity, String filename) {
     FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
     contents.setEditableState(entity, false);
+    handler.setEditing(false);
 
     entity.rename(filename);
   }
@@ -281,9 +283,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     } else {
       if (_lastSelectedItemIndex == index) {
         // We want to edit the name....
-        debugPrint('set editing: true');
         FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
         contents.setEditableState(entity, true);
+        handler.setEditing(true);
       } else {
         _lastSelectedItemIndex = index;
 
@@ -309,7 +311,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
   @override
   void exit() {
-
+    if (handler.isEditing) {
+      FileOfInterest entity = entities[_lastSelectedItemIndex];
+      FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
+      contents.setEditableState(entity, false);
+      handler.setEditing(false);
+    }
   }
 
   @override
@@ -326,5 +333,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   void selectAll() {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
     selectedEntities.addAll(entities.toSet());
+
+    var gridEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    gridEntities.addAll(entities.toSet());
   }
 }

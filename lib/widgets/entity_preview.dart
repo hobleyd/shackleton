@@ -15,21 +15,25 @@ class EntityPreview extends ConsumerWidget {
   final FileType selectionType;
   late Set<FileOfInterest> selectedEntities;
   late FileMetaData metadata;
+  bool displayMetadata;
 
-  EntityPreview({Key? key, required this.entity, required this.selectionType}) : super(key: key);
+  EntityPreview({Key? key, required this.entity, required this.selectionType, this.displayMetadata = true}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     selectedEntities = ref.watch(selectedEntitiesProvider(selectionType));
     metadata = ref.watch(metadataProvider(entity));
-    Color background = selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
+    Color background = (selectionType != FileType.previewItem && selectedEntities.contains(entity)) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(entity.path.split(path.separator).last, style: Theme.of(context).textTheme.labelSmall),
-        entity.canPreview ? Expanded(child: Container(color: background, child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
-        SizedBox(height: 5, child: Container(color: background)),
-        metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
+        entity.canPreview ? Expanded(child: Container(alignment: Alignment.center, color: background, padding: const EdgeInsets.symmetric(vertical: 10), child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
+        if (displayMetadata)
+          ...[
+            SizedBox(height: 5, child: Container(color: background)),
+            metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
+          ]
       ],
     );
   }

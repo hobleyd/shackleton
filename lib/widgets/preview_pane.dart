@@ -26,8 +26,8 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   // TODO: Add buttons to rotate the selected image(s)
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
-    entities = selectedEntities.toList();
+    Set<FileOfInterest> previewEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
+    entities = previewEntities.toList();
     entities.sort();
 
     // First time through, we set the initial image to the one clicked on.
@@ -52,7 +52,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             ),
           ),
           const VerticalDivider(),
-          const SizedBox(width: 200, child: MetadataEditor()),
+          SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem,)),
         ]));
   }
 
@@ -66,6 +66,12 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   @override
   void initState() {
     super.initState();
+
+    Future(() {
+      // Update the selected previewItem to show correct metadata
+      ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).replace(widget.initialEntity);
+    });
+
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
     handler.register();
   }
@@ -78,15 +84,17 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
         children: [
           PageView.builder(
             controller: _controller,
-            
             onPageChanged: (index) {
               _lastSelectedItemIndex = index;
+
+              ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).replace(entities[index]);
             },
             itemCount: entities.length,
             itemBuilder: (BuildContext context, int pos) {
               return EntityPreview(
                     entity: entities[pos],
-                    selectionType: FileType.previewPane,
+                    selectionType: FileType.previewItem,
+                    displayMetadata: false,
                   );
             },
           ),
@@ -114,6 +122,10 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
     if (_lastSelectedItemIndex != -1) {
       var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
       previewEntities.delete(entities[_lastSelectedItemIndex]);
+
+      if (previewEntities.state.isEmpty) {
+        exit();
+      }
     }
   }
 
@@ -124,12 +136,16 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void left() {
-    if (_lastSelectedItemIndex != 0) _controller.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    if (_lastSelectedItemIndex != 0) {
+      _controller.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    }
   }
 
   @override
   void right() {
-    if (_lastSelectedItemIndex < entities.length - 1) _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    if (_lastSelectedItemIndex < entities.length - 1) {
+      _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
+    }
   }
 
   @override

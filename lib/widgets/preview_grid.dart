@@ -56,7 +56,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
               ),
             ),
             const VerticalDivider(),
-            const SizedBox(width: 200, child: MetadataEditor()),
+            SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane,)),
           ]);
   }
 
@@ -96,7 +96,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   void _previewEntities(FileOfInterest tappedEntity) {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
-
     if (!selectedEntities.contains(tappedEntity)) {
       // If we double tap on an unselectedEntity, assume we want to browse everything in detail.
       selectAll();
@@ -137,7 +136,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void delete() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     selectedEntities.deleteAll();
   }
 
@@ -162,7 +161,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void selectAll() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     selectedEntities.addAll(entities.toSet());
   }
 }

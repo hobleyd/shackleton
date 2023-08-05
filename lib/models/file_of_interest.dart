@@ -68,6 +68,6 @@ class FileOfInterest extends Comparable {
 
   @override
   String toString() {
-    return entity.path;
+    return name;
   }
 }
