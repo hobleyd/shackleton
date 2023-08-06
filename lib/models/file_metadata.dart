@@ -14,6 +14,8 @@ class FileMetaData {
     this.isEditing = false,
   });
 
+  bool contains(Tag tag) => tags.contains(tag);
+
   FileMetaData copyWith({List<Tag>? tags, bool? isEditing}) {
     return FileMetaData(
       tags: tags ?? this.tags,

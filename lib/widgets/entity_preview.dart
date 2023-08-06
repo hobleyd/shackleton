@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:path/path.dart' as path;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/file_metadata.dart';
@@ -28,12 +29,19 @@ class EntityPreview extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(entity.path.split(path.separator).last, style: Theme.of(context).textTheme.labelSmall),
-        entity.canPreview ? Expanded(child: Container(alignment: Alignment.center, color: background, padding: const EdgeInsets.symmetric(vertical: 10), child: Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain))) : const Expanded(child: Text('')),
-        if (displayMetadata)
-          ...[
-            SizedBox(height: 5, child: Container(color: background)),
-            metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
-          ]
+        entity.canPreview
+            ? Expanded(
+                child: Container(
+                    alignment: Alignment.center,
+                    color: background,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: _getPreview())
+              )
+            : const Expanded(child: Text('')),
+        if (displayMetadata) ...[
+          SizedBox(height: 5, child: Container(color: background)),
+          metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
+        ],
       ],
     );
   }
@@ -95,6 +103,14 @@ class EntityPreview extends ConsumerWidget {
                 onPressed: () => ref.read(metadataProvider(entity).notifier).setEditable(true)),
           ]
         ]));
+  }
+
+  Widget _getPreview() {
+    if (entity.extension == 'pdf') {
+      return SfPdfViewer.file(entity.entity as File);
+    }
+
+    return Image.file(File.fromUri(entity.uri), alignment: Alignment.center, fit: BoxFit.contain);
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {

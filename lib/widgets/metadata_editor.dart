@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 import '../providers/metadata.dart';
@@ -34,7 +35,10 @@ class MetadataEditor extends ConsumerWidget {
                         color: index % 2 == 1 ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.white,
                         padding: const EdgeInsets.only(bottom: 2),
                         child: Row(children: [
-                          Text(tags[index].tag, style: Theme.of(context).textTheme.bodySmall),
+                          GestureDetector(
+                            onTap: () => _filterByTag(ref, tags[index]),
+                            child: Text(tags[index].tag, style: Theme.of(context).textTheme.bodySmall),
+                          ),
                           const Spacer(),
                           IconButton(
                               icon: const Icon(Icons.clear),
@@ -74,6 +78,21 @@ class MetadataEditor extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _filterByTag(WidgetRef ref, Tag tag) {
+    Set<FileOfInterest> filteredEntities = {};
+
+    Set<FileOfInterest> gridEntries = ref.watch(selectedEntitiesProvider(completeListType));
+    for (var e in gridEntries) {
+      FileMetaData metadata = ref.watch(metadataProvider(e));
+      if (metadata.contains(tag)) {
+        filteredEntities.add(e);
+      }
+    }
+
+    var selectedList = ref.read(selectedEntitiesProvider(selectedListType).notifier);
+    selectedList.replaceAll(filteredEntities);
   }
 
   void _removeTags(WidgetRef ref, Set<FileOfInterest> entities, List<Tag> tags, int index) {

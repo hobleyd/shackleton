@@ -61,6 +61,10 @@ class SelectedEntities extends _$SelectedEntities {
     state = { entity };
   }
 
+  void replaceAll(Set<FileOfInterest> entities) {
+    state = { ...entities };
+  }
+
   int size() {
     return state.length;
   }

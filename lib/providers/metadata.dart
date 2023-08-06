@@ -23,6 +23,8 @@ class Metadata extends _$Metadata {
     return const FileMetaData(tags: []);
   }
 
+  bool contains(Tag tag) => state.contains(tag);
+
   Future<Set<Tag>> getTagsFromFile(FileOfInterest entity) async {
     if (entity.isMetadataSupported) {
       bool hasExiftool = whichSync('exiftool') != null ? true : false;

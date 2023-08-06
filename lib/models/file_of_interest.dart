@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../misc/utils.dart';
 
 const Set<String> imageExtensions = { 'gif', 'jpeg', 'jpg', 'png', 'tiff' };
+const Set<String> documentExtensions = { 'pdf' };
 
 @immutable
 class FileOfInterest extends Comparable {
@@ -17,14 +18,15 @@ class FileOfInterest extends Comparable {
 
   @override
   get hashCode => entity.path.hashCode;
-  get canPreview => imageExtensions.contains(entity.path.split('.').last.toLowerCase());
+  get canPreview => imageExtensions.contains(extension) || documentExtensions.contains(extension);
   get exists => entity.existsSync();
+  get extension => entity.path.split('.').last.toLowerCase();
   get extensionIndex => name.lastIndexOf('.');
   get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
-  get isImage => imageExtensions.contains(entity.path.split('.').last.toLowerCase());
+  get isImage => imageExtensions.contains(extension);
   get isHidden => entity.path.split('/').last.startsWith('.');
-  get isMetadataSupported => imageExtensions.contains(entity.path.split('.').last);
+  get isMetadataSupported => imageExtensions.contains(extension);
   get name => entity.path.split('/').last;
   get path => entity.path;
   get uri => entity.uri;
