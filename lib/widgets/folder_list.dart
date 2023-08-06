@@ -325,6 +325,14 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   }
 
   @override
+  void newEntity() {
+    FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
+    FileOfInterest entity = FileOfInterest(entity: widget.path.createTempSync('new-'), editing: true);
+    contents.add(entity);
+    handler.setEditing(true);
+  }
+
+  @override
   void right() {
 
   }

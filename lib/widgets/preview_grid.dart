@@ -160,6 +160,11 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   }
 
   @override
+  void newEntity() {
+
+  }
+
+  @override
   void selectAll() {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     selectedEntities.addAll(entities.toSet());

@@ -18,6 +18,11 @@ class FolderContents extends _$FolderContents {
     return state;
   }
 
+  void add(FileOfInterest entity) {
+    List<FileOfInterest> entities = [...state, entity];
+    state = [...sort(entities)];
+  }
+
   void getFolderContents(Directory path) {
     bool showHiddenFiles = ref.read(settingsProvider).showHiddenFiles;
 
@@ -54,8 +59,7 @@ class FolderContents extends _$FolderContents {
           FileOfInterest foi = FileOfInterest(entity: getEntity(event.path));
           if (!state.contains(foi)) {
             if (!foi.isHidden) {
-              List<FileOfInterest> entities = [...state, foi];
-              state = [...sort(entities)];
+              add(foi);
             }
           }
           break;

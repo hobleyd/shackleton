@@ -45,6 +45,8 @@ class KeyboardHandler {
 
             if (event.physicalKey == PhysicalKeyboardKey.keyA) {
               keyboardCallback.selectAll();
+            } else if (event.physicalKey == PhysicalKeyboardKey.keyN) {
+              keyboardCallback.newEntity();
             }
 
             return KeyEventResult.handled;

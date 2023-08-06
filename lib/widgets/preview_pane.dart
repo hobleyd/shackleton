@@ -142,6 +142,11 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   }
 
   @override
+  void newEntity() {
+
+  }
+
+  @override
   void right() {
     if (_lastSelectedItemIndex < entities.length - 1) {
       _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
