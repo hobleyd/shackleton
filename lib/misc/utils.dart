@@ -89,7 +89,6 @@ File getZipName(FileOfInterest folder, Set<FileOfInterest> filesToZip) {
       name += '.zip';
     }
 
-    debugPrint('new zip file name is: $name');
     return File(join(folder.path, name));
   }
 
@@ -100,7 +99,6 @@ File getZipName(FileOfInterest folder, Set<FileOfInterest> filesToZip) {
   while (output.existsSync()) {
     output = File(join(folder.path, '$prefix-${version++}.zip'));
   }
-  debugPrint('new zip file name is: ${output.path}');
 
   return output;
 }

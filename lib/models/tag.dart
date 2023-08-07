@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-class Tag extends Comparable {
+class Tag implements Comparable {
   int? id;
   String tag;
 

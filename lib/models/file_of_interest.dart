@@ -6,19 +6,20 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../misc/utils.dart';
 
-const Set<String> imageExtensions = { 'gif', 'jpeg', 'jpg', 'png', 'tiff' };
 const Set<String> documentExtensions = { 'pdf' };
+const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff' };
+const Set<String> videoExtensions = { 'gif' };
 
 @immutable
-class FileOfInterest extends Comparable {
+class FileOfInterest implements Comparable {
   final FileSystemEntity entity;
   final bool editing;
 
-  FileOfInterest({required this.entity, this.editing = false});
+  const FileOfInterest({required this.entity, this.editing = false});
 
   @override
   get hashCode => entity.path.hashCode;
-  get canPreview => imageExtensions.contains(extension) || documentExtensions.contains(extension);
+  get canPreview => imageExtensions.contains(extension) || documentExtensions.contains(extension) || videoExtensions.contains(extension);
   get exists => entity.existsSync();
   get extension => entity.path.split('.').last.toLowerCase();
   get extensionIndex => name.lastIndexOf('.') ==  -1 ? name.length : name.lastIndexOf('.');

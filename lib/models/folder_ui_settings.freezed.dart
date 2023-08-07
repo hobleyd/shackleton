@@ -40,10 +40,9 @@ abstract class $FolderUISettingsCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-          FileSystemEntity entity,
+      FileSystemEntity entity,
       double width,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-          bool isDropZone});
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool isDropZone});
 }
 
 /// @nodoc
@@ -90,10 +89,9 @@ abstract class _$$_FolderUISettingsCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-          FileSystemEntity entity,
+      FileSystemEntity entity,
       double width,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-          bool isDropZone});
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool isDropZone});
 }
 
 /// @nodoc
@@ -133,10 +131,10 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
 class _$_FolderUISettings implements _FolderUISettings {
   const _$_FolderUISettings(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-          required this.entity,
+      required this.entity,
       required this.width,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-          required this.isDropZone});
+      required this.isDropZone});
 
   factory _$_FolderUISettings.fromJson(Map<String, dynamic> json) =>
       _$$_FolderUISettingsFromJson(json);
@@ -187,10 +185,10 @@ class _$_FolderUISettings implements _FolderUISettings {
 abstract class _FolderUISettings implements FolderUISettings {
   const factory _FolderUISettings(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-          required final FileSystemEntity entity,
+      required final FileSystemEntity entity,
       required final double width,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-          required final bool isDropZone}) = _$_FolderUISettings;
+      required final bool isDropZone}) = _$_FolderUISettings;
 
   factory _FolderUISettings.fromJson(Map<String, dynamic> json) =
       _$_FolderUISettings.fromJson;

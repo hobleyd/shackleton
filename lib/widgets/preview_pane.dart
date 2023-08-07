@@ -23,7 +23,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   late KeyboardHandler handler;
   int _lastSelectedItemIndex = -1;
 
-  // TODO: Add buttons to rotate the selected image(s)
   @override
   Widget build(BuildContext context) {
     Set<FileOfInterest> previewEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
@@ -123,7 +122,8 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
       var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
       previewEntities.delete(entities[_lastSelectedItemIndex]);
 
-      if (previewEntities.state.isEmpty) {
+      var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane));
+      if (selectedEntities.isEmpty) {
         exit();
       }
     }
