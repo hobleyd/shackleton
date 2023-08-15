@@ -15,7 +15,6 @@ Future<void> loadCachedStorage() async {
   await db.openDatabase();
   await AppSettingsRepository(db).getSettings();
   await FolderSettingsRepository(db).getSettings();
-  await FileTagsRepository(db).getTags();
 }
 
 void main() async {

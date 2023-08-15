@@ -10,8 +10,8 @@ import 'entity_context_menu.dart';
 import 'metadata_editor.dart';
 
 class PreviewPane extends ConsumerStatefulWidget {
-  FileOfInterest initialEntity;
-  PreviewPane({Key? key, required this.initialEntity}) : super(key: key);
+  final FileOfInterest initialEntity;
+  const PreviewPane({Key? key, required this.initialEntity}) : super(key: key);
 
   @override
   ConsumerState<PreviewPane> createState() => _PreviewPane();
@@ -51,7 +51,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             ),
           ),
           const VerticalDivider(),
-          SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem,)),
+          const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem,)),
         ]));
   }
 

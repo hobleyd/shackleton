@@ -1,21 +1,20 @@
+import 'dart:collection';
 import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/providers/tag_queue.dart';
+import 'package:synchronized/synchronized.dart';
 
 import '../database/app_database.dart';
 import '../models/entity.dart';
-import '../models/tag.dart';
 
-class FileTagsRepository {
-  late AppDatabase db;
-  Map<String, Set<String>> cachedTags = {};
+part 'file_tags_repository.g.dart';
 
-  // I know Riverpod says that we should not be using Singletons, but the provider pattern keeps creating
-  // new instances. If someone can tell me what I am doing wrong, I'd appreciate it.
-  FileTagsRepository._privateConstructor();
-  static final FileTagsRepository _instance = FileTagsRepository._privateConstructor();
-  factory FileTagsRepository(AppDatabase db) {
-    _instance.db = db;
-    return _instance;
-  }
+@riverpod
+class FileTagsRepository extends _$FileTagsRepository {
+  // ignore: avoid_public_notifier_properties
+  var lock = Lock();
 
   static const String tableName = 'app_settings';
   static const String createFiles = '''
@@ -40,40 +39,56 @@ class FileTagsRepository {
 
   static const String createFilesIndex = 'create index files_idx on files(path);';
 
+  @override
+  AppDatabase build(AppDatabase db) {
+    var queue = ref.watch(tagQueueProvider);
+    pop(db, queue);
+    return db;
+  }
+
   Future<void> getTags() async {
 
   }
 
-  Future<void> writeTags(FileSystemEntity entity, Set<Tag> tags) async {
+  Future<void> pop(AppDatabase db, Queue<Entity> queue) async {
+    await lock.synchronized(() async {
+      if (queue.isNotEmpty) {
+        Entity entity = queue.removeFirst();
+        if (entity.tags.isNotEmpty) {
+          await writeTags(db, entity);
+        }
+      }
+    });
+  }
+
+  Future<void> writeTags(AppDatabase db, Entity entity) async {
+    // Get the id for the FSE
+    List<Map<String, dynamic>> result = await db.query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
+    if (result.isNotEmpty) {
+      entity.id = result.first['id'];
+    } else {
+      entity.id = await db.insert('files', entity.toMap());
+    }
+
+    // TODO: how do I remove all tags?
     // Insert all the Tags, updating the id for the next foreign key
-    if (tags.isNotEmpty) {
-      for (var tag in tags) {
-        List<Map> result = await db.query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
-        if (result.isNotEmpty) {
-          tag.id = result.first['id'] as int;
+    if (entity.tags.isNotEmpty) {
+      for (var tag in entity.tags) {
+        if (tag.tag.isEmpty) continue;
+
+        List<Map> tagRecords = await db.query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+        if (tagRecords.isNotEmpty) {
+          tag.id = tagRecords.first['id'] as int;
         }
         else {
           tag.id = await db.insert('tags', tag.toMap());
         }
-      }
 
-      // Get the id for the FSE
-      int entityId = -1;
-      List<Map> result = await db.query('files', columns: ['id', 'path'], where: 'path = ?', whereArgs: [entity.path]);
-      if (result.isNotEmpty) {
-        entityId = result.first['id'];
-      } else {
-        entityId = await db.insert('files', Entity(path: entity.path).toMap());
-      }
-
-      // Insert the many-many relationship into file_tags.
-      for (var tag in tags) {
-        List<Map> result = await db.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entityId]);
-        if (result.isEmpty) {
-          db.insert('file_tags', { 'tagId': tag.id, 'fileId': entityId});
+        List<Map> fileTagRecords = await db.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
+        if (fileTagRecords.isEmpty) {
+          db.insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
         }
       }
     }
   }
-
 }

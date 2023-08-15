@@ -32,6 +32,7 @@ dependencies:
   super_context_menu: ^0.5.0
   super_drag_and_drop: ^0.5.0
   syncfusion_flutter_pdfviewer: ^22.2.7
+  synchronized: ^3.1.0
   url_launcher: ^6.1.12
 
 dev_dependencies:

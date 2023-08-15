@@ -289,6 +289,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       } else {
         _lastSelectedItemIndex = index;
 
+        debugPrint('selecting entity: ${entity.path}');
         _clearSelectedEntities();
         _addSelectedEntity(entity);
       }

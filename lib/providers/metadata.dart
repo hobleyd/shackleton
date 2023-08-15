@@ -2,22 +2,22 @@ import 'dart:io';
 
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/database/app_database.dart';
 
-import '../database/app_database.dart';
+import '../models/entity.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
+import '../providers/tag_queue.dart';
 import '../repositories/file_tags_repository.dart';
 
 part 'metadata.g.dart';
 
 @riverpod
 class Metadata extends _$Metadata {
-  late FileTagsRepository fileTagsRepository;
-
   @override
   FileMetaData build(FileOfInterest entity) {
-    fileTagsRepository = FileTagsRepository(ref.read(appDbProvider));
+    ref.watch(fileTagsRepositoryProvider(AppDatabase()));
 
     loadMetadataFromFile(entity);
     return const FileMetaData(tags: []);
@@ -33,7 +33,6 @@ class Metadata extends _$Metadata {
         ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-subject', entity.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           Set<Tag> tagList = {};
-
           tagList.addAll(getTagsFromString(output.stdout));
 
           return tagList;
@@ -41,6 +40,16 @@ class Metadata extends _$Metadata {
       }
     }
     return {};
+  }
+
+  String getStringFromTags(List<Tag> tags) {
+    String tagString = "";
+    if (tags.isNotEmpty) {
+      tagString = tags.toString();
+      tagString = tagString.substring(1, tagString.length-1);
+    }
+
+    return tagString;
   }
 
   Set<Tag> getTagsFromString(String tags) {
@@ -51,7 +60,7 @@ class Metadata extends _$Metadata {
     if (entity.isMetadataSupported) {
       Set<Tag> tags = await getTagsFromFile(entity);
 
-      replaceTags(entity, tags, update: false);
+      await replaceTags(entity, tags, update: false);
     }
   }
 
@@ -62,22 +71,21 @@ class Metadata extends _$Metadata {
           t
     ];
 
-    String tagString = "";
-    if (tags.isNotEmpty) {
-      tagString = tags.toString();
-      tagString = tagString.substring(1, tagString.length-1);
-    }
-
-    saveMetadataToFile(entity, tagString);
+    saveMetadata(entity, tags);
 
     state = FileMetaData(tags: tags);
   }
 
-  Future<bool> saveMetadataToFile(FileOfInterest entity, String tags) async {
+  Future<bool> saveMetadata(FileOfInterest entity, List<Tag> tags) async {
     bool hasExiftool = whichSync('exiftool') != null ? true : false;
 
+    // Always write tags to DB even if file writing fails? I feel like this makes sense.
+    // ignore: avoid_manual_providers_as_generated_provider_dependency
+    ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, tags: tags.toSet()));
+
+    String tagString = getStringFromTags(tags);
     if (hasExiftool) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tags', entity.path]);
+      ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', entity.path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         if (output.outText.trim() == '1 image files updated') {
           return true;
@@ -88,12 +96,11 @@ class Metadata extends _$Metadata {
     return false;
   }
 
-  void replaceTags(FileOfInterest entity, Set<Tag> tags, {bool update = true}) async {
-    fileTagsRepository.writeTags(entity.entity, tags);
+  Future<void> replaceTags(FileOfInterest entity, Set<Tag> tags, {bool update = true}) async {
     updateTags(entity, tags, tagSet: {}, update: update);
   }
 
-  void replaceTagsFromString(FileOfInterest entity, String tags) {
+  Future<void> replaceTagsFromString(FileOfInterest entity, String tags) {
     return replaceTags(entity, getTagsFromString(tags));
   }
 
@@ -104,14 +111,8 @@ class Metadata extends _$Metadata {
     tagList.sort();
 
     if (update) {
-      String tagString = "";
-      if (tagList.isNotEmpty) {
-        tagString = tagList.toString();
-        tagString = tagString.substring(1, tagString.length - 1);
-      }
-
       // If we want to save to file, then we only update state once the file is written.
-      if (await saveMetadataToFile(entity, tagString)) {
+      if (await saveMetadata(entity, tagList)) {
         state = state.copyWith(tags: tagList, isEditing: false);
       }
     } else {

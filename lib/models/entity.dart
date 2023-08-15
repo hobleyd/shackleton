@@ -1,16 +1,31 @@
+import 'package:path/path.dart';
+
+import '../models/tag.dart';
+
 class Entity  {
   int? id;
   String path;
+  Set<Tag> tags;
 
   Entity({
-    this.id,
     required this.path,
+    this.id,
+    required this.tags,
   });
+
+  Entity copyWith({required Entity entity, Set<Tag>? tags}) {
+    return Entity(
+      id: entity.id,
+      path: entity.path,
+      tags: tags ?? {},
+    );
+  }
 
   static Entity fromMap(Map<String, dynamic> entity) {
     return Entity(
       id: entity['id'],
       path: entity['path'],
+      tags: {},
     );
   }
 
@@ -19,5 +34,9 @@ class Entity  {
       'id': id,
       'path': path,
     };
+  }
+
+  String toString() {
+    return '${basename(path)}: $id ($tags)';
   }
 }

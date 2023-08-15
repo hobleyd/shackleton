@@ -8,10 +8,10 @@ import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
 
 class MetadataEditor extends ConsumerWidget {
-  FileType completeListType;
-  FileType selectedListType;
+  final FileType completeListType;
+  final FileType selectedListType;
 
-  MetadataEditor({Key? key, required this.completeListType, required this.selectedListType}) : super(key: key);
+  const MetadataEditor({Key? key, required this.completeListType, required this.selectedListType}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

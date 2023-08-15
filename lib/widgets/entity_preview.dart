@@ -15,9 +15,9 @@ import '../providers/selected_entities.dart';
 class EntityPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final FileType selectionType;
-  bool displayMetadata;
+  final bool displayMetadata;
 
-  EntityPreview({Key? key, required this.entity, required this.selectionType, this.displayMetadata = true}) : super(key: key);
+  const EntityPreview({Key? key, required this.entity, required this.selectionType, this.displayMetadata = true}) : super(key: key);
 
   @override
   ConsumerState<EntityPreview> createState() => _EntityPreview();
@@ -26,9 +26,11 @@ class EntityPreview extends ConsumerStatefulWidget {
 class _EntityPreview extends ConsumerState<EntityPreview> {
   late Set<FileOfInterest> selectedEntities;
   late FileMetaData metadata;
+  late Widget _imagePreview;
+  late Color _background;
 
-  bool? _isRotatingImage;
-  Widget? _imagePreview;
+  bool _isRotatingImage = false;
+  Uint8List? _rotatedBytes;
 
   get displayMetaData => widget.displayMetadata;
   get selectedEntity  => widget.entity;
@@ -38,12 +40,12 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget build(BuildContext context) {
     selectedEntities = ref.watch(selectedEntitiesProvider(selectionType));
     metadata = ref.watch(metadataProvider(selectedEntity));
-    Color background = (selectionType != FileType.previewItem && selectedEntities.contains(selectedEntity))
+
+    _imagePreview = selectedEntity.canPreview ? _getPreview() : Expanded(child: Text(selectedEntity.name));
+
+    _background = (selectionType != FileType.previewItem && selectedEntities.contains(selectedEntity))
         ? Theme.of(context).textSelectionTheme.selectionHandleColor!
         : Colors.transparent;
-
-    _isRotatingImage ??= false;
-    _imagePreview ??= selectedEntity.canPreview ? _getPreview() : Expanded(child: Text(selectedEntity.name));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -51,20 +53,25 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
       children: [
         Row(
           children: [
-            _getIconButton(Icons.rotate_left, height: 16, toolTip: 'Rotate left...', callback: () => _rotateLeft()),
+            if (selectedEntity.isImage) _getIconButton(Icons.rotate_left, height: 16, toolTip: 'Rotate left...', callback: () => _rotateLeft()),
             Expanded(child: Container(alignment: Alignment.center, child: Text(selectedEntity.name, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall,))),
-            _getIconButton(Icons.rotate_right, height: 16, toolTip: 'Rotate Right...', callback: () => _rotateRight()),
+            if (selectedEntity.isImage) _getIconButton(Icons.rotate_right, height: 16, toolTip: 'Rotate Right...', callback: () => _rotateRight()),
           ],
         ),
-        _isRotatingImage!
+        _isRotatingImage
             ? const Expanded(child: CircularProgressIndicator.adaptive(strokeWidth: 8,))
-            : Expanded(child: Container(alignment: Alignment.center, color: background, padding: const EdgeInsets.symmetric(vertical: 10), child: _imagePreview)),
+            : Expanded(child: Container(alignment: Alignment.center, color: _background, padding: const EdgeInsets.symmetric(vertical: 10), child: _imagePreview)),
         if (displayMetaData) ...[
-          SizedBox(height: 5, child: Container(color: background)),
+          SizedBox(height: 5, child: Container(color: _background)),
           metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref),
         ],
       ],
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   Widget _getEditableMetadata(BuildContext context, WidgetRef ref) {
@@ -146,7 +153,10 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
       return SfPdfViewer.file(selectedEntity.entity as File);
     }
 
-    return Image.file(File.fromUri(selectedEntity.uri), alignment: Alignment.center, fit: BoxFit.contain);
+    if (_rotatedBytes != null) {
+      return Image.memory(_rotatedBytes!, alignment: Alignment.center, fit: BoxFit.contain);
+    }
+    return Image.file(selectedEntity.entity as File, alignment: Alignment.center, fit: BoxFit.contain);
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
@@ -164,17 +174,17 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
     Uint8List originalBytes = await imageFile.readAsBytes();
     img.Image decodedImage  = img.decodeImage(originalBytes)!;
     img.Image rotatedImage  = img.copyRotate(decodedImage, angle: degrees);
-    Uint8List rotatedBytes  = switch (selectedEntity.extension) {
+    _rotatedBytes  = switch (selectedEntity.extension) {
       'jpg' || 'jpeg' => img.encodeJpg(rotatedImage),
       'png'           => img.encodePng(rotatedImage),
       'tiff'          => img.encodeTiff(rotatedImage),
       'gif'           => img.encodeGif(rotatedImage),
       _               => originalBytes,
     };
-    await imageFile.writeAsBytes(rotatedBytes);
+    await imageFile.writeAsBytes(_rotatedBytes!);
+    await ref.read(metadataProvider(selectedEntity).notifier).saveMetadata(selectedEntity, metadata.tags);
 
     setState(() {
-      _imagePreview = Image.memory(rotatedBytes, alignment: Alignment.center, fit: BoxFit.contain);
       _isRotatingImage = false;
     });
   }

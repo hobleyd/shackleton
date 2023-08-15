@@ -12,22 +12,18 @@ import 'metadata_editor.dart';
 import 'preview_pane.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
-  final int columnCount;
-
-  const PreviewGrid({Key? key, required this.columnCount}) : super(key: key);
+  const PreviewGrid({Key? key}) : super(key: key);
 
   @override
   ConsumerState<PreviewGrid> createState() => _PreviewGrid();
 }
 
 class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallback {
-  final ScrollController _controller = ScrollController();
   late List<FileOfInterest> entities;
   late KeyboardHandler handler;
 
   int _lastSelectedItemIndex = -1;
 
-  // TODO: Add buttons to rotate the selected image(s)
   // TODO: Add key navigation
   @override
   Widget build(BuildContext context) {
@@ -36,11 +32,11 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     entities.removeWhere((element) => !element.canPreview);
     entities.sort();
 
-    return selectedEntities.isEmpty
-        ? const Padding(
-            padding: EdgeInsets.only(top: 50),
+    return entities.isEmpty
+        ? Padding(
+            padding: const EdgeInsets.only(top: 50),
             child: Text(
-              'Select one or more files to preview!',
+              selectedEntities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!',
               textAlign: TextAlign.center,
             ))
         : Row(children: [
@@ -50,12 +46,36 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
-                  child: _getGridView(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return GridView.builder(
+                        itemCount: entities.length,
+                        itemBuilder: (context, i) => GestureDetector(
+                            onTap: () => _selectEntity(entities[i]),
+                            onDoubleTap: () => _previewEntities(entities[i]),
+                            child: EntityPreview(
+                              entity: entities[i],
+                              selectionType: FileType.previewPane,
+                            )),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: switch (constraints.maxWidth) {
+                            < 1024 => 3,
+                            < 2048 => 5,
+                            _ => 7
+                          },
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        primary: false,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
             const VerticalDivider(),
-            SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane,)),
+            const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane,)),
           ]);
   }
 
@@ -73,25 +93,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     handler.register();
   }
 
-  Widget _getGridView() {
-    return GridView.count(
-        controller: _controller,
-        crossAxisCount: widget.columnCount,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        padding: const EdgeInsets.only(left: 20, right: 20),
-        primary: false,
-        children: entities.map((e) =>
-            GestureDetector(
-                onTap: () => _selectEntity(e),
-                onDoubleTap: () => _previewEntities(e),
-                child: EntityPreview(
-                  entity: e,
-                  selectionType: FileType.previewPane,
-                )
-            )
-        ).toList());
-  }
 
   void _previewEntities(FileOfInterest tappedEntity) {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);

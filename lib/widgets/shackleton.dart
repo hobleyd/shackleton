@@ -39,7 +39,7 @@ class Shackleton extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 6, bottom: 6),
             child: Column(children: [
               if (preview.visible) ...{
-                SizedBox(height: preview.height, child: const PreviewGrid(columnCount: 5)),
+                SizedBox(height: preview.height, child: const PreviewGrid()),
                 MouseRegion(
                     cursor: SystemMouseCursors.resizeRow,
                     child: GestureDetector(
@@ -80,7 +80,7 @@ class Shackleton extends ConsumerWidget {
     } else {
       var metadata = ref.read(metadataProvider(foi).notifier);
       Set<Tag> tags = await metadata.getTagsFromFile(foi);
-      metadata.replaceTags(foi, tags, update: false);
+      await metadata.replaceTags(foi, tags, update: false);
     }
   }
 
@@ -105,7 +105,7 @@ class Shackleton extends ConsumerWidget {
       } else {
         if (getFileSha256(libraryEntity) != getFileSha256(foi.entity as File)) {
           await moveFile(foi.entity as File, path);
-          _cacheFileOfInterest(ref, FileOfInterest(entity: libraryEntity));
+          await _cacheFileOfInterest(ref, FileOfInterest(entity: libraryEntity));
         }
       }
     }
