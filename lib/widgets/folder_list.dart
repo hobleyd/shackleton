@@ -219,7 +219,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           formats: Formats.standardFormats,
           hitTestBehavior: HitTestBehavior.opaque,
           onDropOver: (event) {
-            ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
+            _selectEntry(entities, entities.indexOf(entity), editing: false);
             return _onDropOver(event);
           },
           onDropEnter: (event) {},
@@ -274,7 +274,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     entity.rename(filename);
   }
 
-  void _selectEntry(List <FileOfInterest> entities, int index) {
+  void _selectEntry(List <FileOfInterest> entities, int index, {bool editing = true}) {
     FileOfInterest entity = entities[index];
 
     // Cancel editing in the PreviewGrid if we are making selections.
@@ -303,16 +303,18 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         }
       }
     } else {
-      if (_lastSelectedItemIndex == index) {
+      if (_lastSelectedItemIndex == index && editing) {
         // We want to edit the name....
         FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
         contents.setEditableState(entity, true);
         handler.setEditing(true);
       } else {
-        _lastSelectedItemIndex = index;
+        if (_lastSelectedItemIndex != index) {
+          _lastSelectedItemIndex = index;
 
-        _clearSelectedEntities();
-        _addSelectedEntity(entity);
+          _clearSelectedEntities();
+          _addSelectedEntity(entity);
+        }
       }
     }
   }
