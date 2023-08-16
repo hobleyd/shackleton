@@ -57,6 +57,10 @@ class SelectedEntities extends _$SelectedEntities {
     }
   }
 
+  void removeAll() {
+    state = {};
+  }
+
   void replace(FileOfInterest entity) {
     state = { entity };
   }

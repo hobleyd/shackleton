@@ -13,8 +13,7 @@ part 'file_tags_repository.g.dart';
 
 @riverpod
 class FileTagsRepository extends _$FileTagsRepository {
-  // ignore: avoid_public_notifier_properties
-  var lock = Lock();
+  final _lock = Lock();
 
   static const String tableName = 'app_settings';
   static const String createFiles = '''
@@ -51,7 +50,7 @@ class FileTagsRepository extends _$FileTagsRepository {
   }
 
   Future<void> pop(AppDatabase db, Queue<Entity> queue) async {
-    await lock.synchronized(() async {
+    await _lock.synchronized(() async {
       if (queue.isNotEmpty) {
         Entity entity = queue.removeFirst();
         if (entity.tags.isNotEmpty) {
@@ -86,9 +85,10 @@ class FileTagsRepository extends _$FileTagsRepository {
 
         List<Map> fileTagRecords = await db.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
         if (fileTagRecords.isEmpty) {
-          db.insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
+          await db.insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
         }
       }
     }
   }
+
 }
