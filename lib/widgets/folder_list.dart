@@ -56,7 +56,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           onDropLeave: (event) {
             fsNotifier.setDropZone(false);
           },
-          onPerformDrop: (event) => _onPerformDrop(event),
+          onPerformDrop: (event) => _onPerformDrop(event, destination: widget.path),
           child: MouseRegion(
             onEnter: (_) => handler.hasFocus = true,
             onExit: (_) => handler.hasFocus = false,
@@ -99,16 +99,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                                   : DraggableWidget(
                                       child: Container(
                                         color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                                        child: Row(children: [
-                                          FileIcon(entity.path),
-                                          Expanded(
-                                            child: Text(
-                                                entity.path.split('/').last,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: Theme.of(context).textTheme.bodySmall),
-                                          ),],
-                                        ),
+                                        child: _getNonEditableEntity(context, entity)
                                       ),
                               ),
                             )
@@ -209,6 +200,37 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     ]);
   }
 
+  Widget _getEntityRow(BuildContext context, FileOfInterest entity) {
+    return Row(children: [
+      FileIcon(entity.path),
+      Expanded(
+        child: Text(
+            entity.path.split('/').last,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall),
+      ),],
+    );
+  }
+
+  Widget _getNonEditableEntity(BuildContext context, FileOfInterest entity) {
+    if (entity.isDirectory) {
+      return DropRegion(
+          formats: Formats.standardFormats,
+          hitTestBehavior: HitTestBehavior.opaque,
+          onDropOver: (event) {
+            ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
+            return _onDropOver(event);
+          },
+          onDropEnter: (event) {},
+          onDropLeave: (event) {},
+          onPerformDrop: (event) => _onPerformDrop(event, destination: entity.entity as Directory),
+          child: _getEntityRow(context, entity));
+    }
+
+    return _getEntityRow(context, entity);
+  }
+
   DropOperation _onDropOver(DropOverEvent event) {
     final item = event.session.items.first;
     if (item.canProvide(Formats.fileUri)) {
@@ -217,13 +239,13 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     return DropOperation.none;
   }
 
-  Future<void> _onPerformDrop(PerformDropEvent event) async {
+  Future<void> _onPerformDrop(PerformDropEvent event, {required Directory destination}) async {
     final item = event.session.items.first;
     final reader = item.dataReader!;
     if (reader.canProvide(Formats.fileUri)) {
       reader.getValue(Formats.fileUri, (uri) async {
         if (uri != null) {
-          Uri toFileUri = Uri.parse('${widget.path.uri}${basename(Uri.decodeComponent(uri.path))}');
+          Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
 
           final type = await FileSystemEntity.type(Uri.decodeComponent(uri.path));
           switch (type) {
@@ -289,7 +311,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       } else {
         _lastSelectedItemIndex = index;
 
-        debugPrint('selecting entity: ${entity.path}');
         _clearSelectedEntities();
         _addSelectedEntity(entity);
       }
