@@ -131,6 +131,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void exit() {
+    ref.read(selectedEntitiesProvider(FileType.previewPane).notifier).removeAll();
     Navigator.of(context, rootNavigator: true).maybePop(context);
   }
 
