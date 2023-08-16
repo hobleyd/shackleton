@@ -5,7 +5,6 @@ import 'database/app_database.dart';
 import 'misc/provider_logger.dart';
 import 'providers/theme.dart';
 import 'repositories/app_settings_repository.dart';
-import 'repositories/file_tags_repository.dart';
 import 'repositories/folder_settings_repository.dart';
 import 'widgets/shackleton.dart';
 

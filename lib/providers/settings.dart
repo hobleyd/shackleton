@@ -9,14 +9,12 @@ part 'settings.g.dart';
 
 @riverpod
 class Settings extends _$Settings {
-    late AppSettingsRepository repository;
+    late AppSettingsRepository _repository;
 
     @override
     AppSettings build() {
-        repository = AppSettingsRepository(ref.read(appDbProvider));
+        _repository = AppSettingsRepository(ref.read(appDbProvider));
 
-        return repository.appSettings;
+        return _repository.appSettings;
     }
-
-    get appSettings => repository.appSettings;
 }

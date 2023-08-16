@@ -36,6 +36,7 @@ class Entity  {
     };
   }
 
+  @override
   String toString() {
     return '${basename(path)}: $id ($tags)';
   }
