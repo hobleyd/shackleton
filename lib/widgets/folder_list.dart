@@ -33,6 +33,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   late KeyboardHandler handler;
 
   int _lastSelectedItemIndex = -1;
+  int _lastSelectedTimestamp = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -303,11 +304,18 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         }
       }
     } else {
-      if (_lastSelectedItemIndex == index && editing) {
-        // We want to edit the name....
-        FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
-        contents.setEditableState(entity, true);
-        handler.setEditing(true);
+      int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
+      if (_lastSelectedItemIndex == index) {
+        if (currentTimestamp - _lastSelectedTimestamp < 2000) {
+          if (editing) {
+            // We want to edit the name....
+            FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
+            contents.setEditableState(entity, true);
+            handler.setEditing(true);
+          }
+        } else {
+          ref.read(selectedEntitiesProvider(FileType.folderList).notifier).remove(entity);
+        }
       } else {
         if (_lastSelectedItemIndex != index) {
           _lastSelectedItemIndex = index;
@@ -316,6 +324,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           _addSelectedEntity(entity);
         }
       }
+      _lastSelectedTimestamp = currentTimestamp;
     }
   }
 
