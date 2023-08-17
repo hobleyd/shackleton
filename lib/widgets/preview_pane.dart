@@ -120,6 +120,10 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   void delete() {
     if (_lastSelectedItemIndex != -1) {
       var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
+
+      if (_lastSelectedItemIndex == entities.length) {
+        _lastSelectedItemIndex--;
+      }
       previewEntities.delete(entities[_lastSelectedItemIndex]);
 
       var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane));
