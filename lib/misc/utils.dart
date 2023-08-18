@@ -124,3 +124,13 @@ Future<File> moveFile(File sourceFile, String newPath) async {
   }
 }
 
+Future<Link> moveLink(Link sourceLink, String newPath) async {
+  try {
+    return await sourceLink.rename(newPath);
+  } on FileSystemException {
+    final newLink = Link(newPath);
+    newLink.createSync(sourceLink.targetSync());
+    return newLink;
+  }
+}
+

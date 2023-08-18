@@ -249,19 +249,11 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
 
           final type = await FileSystemEntity.type(Uri.decodeComponent(uri.path));
-          switch (type) {
-            case FileSystemEntityType.file:
-              moveFile(File.fromUri(uri), Uri.decodeComponent(toFileUri.path));
-              break;
-            case FileSystemEntityType.directory:
-              moveDirectory(Directory.fromUri(uri), Uri.decodeComponent(toFileUri.path));
-              break;
-            default:
-              if (Link(uri.path).existsSync()) {
-                debugPrint('got a link, what now?');
-              }
-              break;
-          }
+          var fse = switch (type) {
+            FileSystemEntityType.file      => moveFile(File.fromUri(uri), Uri.decodeComponent(toFileUri.path)),
+            FileSystemEntityType.directory => moveDirectory(Directory.fromUri(uri), Uri.decodeComponent(toFileUri.path)),
+            _                              => moveLink(Link(uri.path), Uri.decodeComponent(toFileUri.path)),
+          };
         }
       });
     }
