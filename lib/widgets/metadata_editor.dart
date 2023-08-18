@@ -27,6 +27,8 @@ class MetadataEditor extends ConsumerWidget {
       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
       child: Column(
         children: [
+          Text('Metadata', style: Theme.of(context).textTheme.labelSmall,),
+          const SizedBox(height: 10),
           Expanded(
               child: ListView.builder(
                   itemCount: tags.length,
@@ -58,7 +60,7 @@ class MetadataEditor extends ConsumerWidget {
                 child: TextField(
                   autofocus: true,
                   controller: tagController,
-                  decoration: const InputDecoration(border: InputBorder.none, isDense: true),
+                  decoration: const InputDecoration(border: InputBorder.none, hintText: 'Add tags here', isDense: true),
                   keyboardType: TextInputType.text,
                   maxLines: 1,
                   onSubmitted: (tags) => _updateTags(ref, entities, tags),
