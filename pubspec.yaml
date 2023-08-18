@@ -16,7 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   exif: ^3.1.4
   file_icon: ^1.0.0
-  flutter_riverpod: ^2.3.6
+  flutter_riverpod: ^2.3.7
   freezed: ^2.4.2
   freezed_annotation: ^2.4.1
   image: ^4.0.17
@@ -25,13 +25,13 @@ dependencies:
   json_annotation: ^4.8.1
   logger: ^2.0.1
   path: ^1.8.3
-  path_provider: ^2.0.15
+  path_provider: ^2.1.0
   process_run: ^0.13.1
-  riverpod_annotation: ^2.1.1
-  sqflite_common_ffi: ^2.3.0
-  super_context_menu: ^0.5.0
-  super_drag_and_drop: ^0.5.0
-  syncfusion_flutter_pdfviewer: ^22.2.7
+  riverpod_annotation: ^2.1.2
+  sqflite_common_ffi: ^2.3.0+2
+  super_context_menu: ^0.6.0
+  super_drag_and_drop: ^0.6.0
+  syncfusion_flutter_pdfviewer: ^22.2.9
   synchronized: ^3.1.0
   url_launcher: ^6.1.12
 
@@ -43,8 +43,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   json_serializable: ^6.7.1
-  riverpod_lint: ^2.0.0
-  riverpod_generator: ^2.2.5
+  riverpod_lint: ^2.0.1
+  riverpod_generator: ^2.2.6
 
 flutter:
   uses-material-design: true
