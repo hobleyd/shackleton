@@ -1,12 +1,12 @@
 import 'dart:io';
 
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../providers/selected_entities.dart';
 import '../providers/settings.dart';
+
 part 'folder_contents.g.dart';
 
 @riverpod

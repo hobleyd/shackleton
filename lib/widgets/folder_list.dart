@@ -250,9 +250,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
           final type = await FileSystemEntity.type(Uri.decodeComponent(uri.path));
           var fse = switch (type) {
-            FileSystemEntityType.file      => moveFile(File.fromUri(uri), Uri.decodeComponent(toFileUri.path)),
-            FileSystemEntityType.directory => moveDirectory(Directory.fromUri(uri), Uri.decodeComponent(toFileUri.path)),
-            _                              => moveLink(Link(uri.path), Uri.decodeComponent(toFileUri.path)),
+            FileSystemEntityType.file      => FileOfInterest(entity: File.fromUri(uri)).moveFile(Uri.decodeComponent(toFileUri.path)),
+            FileSystemEntityType.directory => FileOfInterest(entity: Directory.fromUri(uri)).moveDirectory(Uri.decodeComponent(toFileUri.path)),
+            _                              => FileOfInterest(entity: Link.fromUri(uri)).moveLink(Uri.decodeComponent(toFileUri.path)),
           };
         }
       });

@@ -67,66 +67,14 @@ class Shackleton extends ConsumerWidget {
   void _cacheMetadata(WidgetRef ref) async {
     Set<FileOfInterest> selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList));
     for (FileOfInterest foi in selectedEntities) {
-      await _cacheFileOfInterest(ref, foi);
-    }
-  }
-
-  Future<void> _cacheFileOfInterest(WidgetRef ref, FileOfInterest foi) async {
-    if (foi.isDirectory) {
-      Directory d = foi.entity as Directory;
-      for (var entity in d.listSync()) {
-        await _cacheFileOfInterest(ref, FileOfInterest(entity: entity));
-      }
-    } else {
-      var metadata = ref.read(metadataProvider(foi).notifier);
-      Set<Tag> tags = await metadata.getTagsFromFile(foi);
-      await metadata.replaceTags(foi, tags, update: false);
+      await foi.cacheFileOfInterest(ref);
     }
   }
 
   void _importImages(WidgetRef ref) async {
     Set<FileOfInterest> selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList));
     for (FileOfInterest foi in selectedEntities) {
-      await _importImagesFromFolder(ref, foi);
+      await foi.importImagesFromFolder(ref);
     }
-  }
-
-  Future<void> _importImagesFromFolder(WidgetRef ref, FileOfInterest foi) async {
-    if (foi.isDirectory) {
-      Directory d = foi.entity as Directory;
-      for (var entity in d.listSync()) {
-        await _importImagesFromFolder(ref, FileOfInterest(entity: entity));
-      }
-    } else if (foi.isFile && foi.isImage){
-      String path = await _getPathInLibrary(foi);
-      File libraryEntity = File(path);
-      if (!libraryEntity.existsSync()) {
-        libraryEntity = await moveFile(foi.entity as File, path);
-      } else {
-        if (getFileSha256(libraryEntity) != getFileSha256(foi.entity as File)) {
-          await moveFile(foi.entity as File, path);
-          await _cacheFileOfInterest(ref, FileOfInterest(entity: libraryEntity));
-        }
-      }
-    }
-  }
-
-  Future<String> _getPathInLibrary(FileOfInterest foi) async {
-    if (foi.isImage && foi.exists) {
-      bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-      if (hasExiftool) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-CreateDate', foi.path]);
-        if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          // Create Date: 2016:06:26 14:46:58
-          String creationDate = output.stdout.split(':').last.trim();
-          DateTime creationDateTime = DateFormat("yyyy:mm:dd HH:mm:ss").parse(creationDate);
-          String year = DateFormat('yyyy').format(creationDateTime);
-          String month = DateFormat('mm - MMMM').format(creationDateTime);
-        }
-      }
-    }
-
-    return "";
   }
 }
