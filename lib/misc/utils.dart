@@ -36,32 +36,6 @@ FileSystemEntity getEntity(String path) {
   return File(path);
 }
 
-Future<Digest> getFileSha256(File entity) async {
-  final reader = ChunkedStreamReader(entity.openRead());
-  const chunkSize = 4096;
-  var output = AccumulatorSink<Digest>();
-  var input = sha256.startChunkedConversion(output);
-
-  try {
-    while (true) {
-      final chunk = await reader.readChunk(chunkSize);
-      if (chunk.isEmpty) {
-        // indicate end of file
-        break;
-      }
-      input.add(chunk);
-    }
-  } finally {
-    // We always cancel the ChunkedStreamReader,
-    // this ensures the underlying stream is cancelled.
-    reader.cancel();
-  }
-
-  input.close();
-
-  return output.events.single;
-}
-
 String getHomeFolder() {
   return Platform.environment['HOME'] ?? Platform.environment['USERPROFILE']!;
 }

@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:async/async.dart';
+import 'package:convert/convert.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -39,6 +42,7 @@ class FileOfInterest implements Comparable {
 
   @override
   bool operator ==(other) => other is FileOfInterest && entity.path == other.entity.path;
+  Future<bool> different(FileOfInterest other) async => await getFileSha256() != await other.getFileSha256();
 
   @override
   int compareTo(other) => path.compareTo(other.path);
@@ -90,6 +94,33 @@ class FileOfInterest implements Comparable {
     }
   }
 
+  Future<Digest> getFileSha256() async {
+    File file = entity as File;
+    final reader = ChunkedStreamReader(file.openRead());
+    const chunkSize = 4096;
+    var output = AccumulatorSink<Digest>();
+    var input = sha256.startChunkedConversion(output);
+
+    try {
+      while (true) {
+        final chunk = await reader.readChunk(chunkSize);
+        if (chunk.isEmpty) {
+          // indicate end of file
+          break;
+        }
+        input.add(chunk);
+      }
+    } finally {
+      // We always cancel the ChunkedStreamReader,
+      // this ensures the underlying stream is cancelled.
+      reader.cancel();
+    }
+
+    input.close();
+
+    return output.events.single;
+  }
+
   Future<void> importImagesFromFolder(WidgetRef ref) async {
     if (isDirectory) {
       Directory d = entity as Directory;
@@ -98,12 +129,12 @@ class FileOfInterest implements Comparable {
       }
     } else if (isFile && isImage){
       String destinationPath = await _getPathInLibrary();
-      File libraryEntity = _getFile(destinationPath);
+      FileOfInterest libraryEntity = FileOfInterest(entity: _getFile(destinationPath));
 
-      if (!libraryEntity.existsSync() || getFileSha256(libraryEntity) != getFileSha256(entity as File)) {
+      if (!libraryEntity.exists || await different(libraryEntity)) {
         await moveFile(destinationPath);
       }
-      await FileOfInterest(entity: libraryEntity).cacheFileOfInterest(ref);
+      await libraryEntity.cacheFileOfInterest(ref);
     }
   }
 
