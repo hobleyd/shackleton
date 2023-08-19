@@ -9,7 +9,6 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
-import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../providers/folder_contents.dart';
@@ -306,7 +305,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
             handler.setEditing(true);
           }
         } else {
-          ref.read(selectedEntitiesProvider(FileType.folderList).notifier).remove(entity);
+          _toggleSelectedEntity(entity);
         }
       } else {
         if (_lastSelectedItemIndex != index) {
