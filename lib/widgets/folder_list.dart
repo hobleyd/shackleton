@@ -305,26 +305,34 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
             handler.setEditing(true);
           }
         } else {
-          _toggleSelectedEntity(entity);
+          _toggleSelectedEntity(entity, reset: true);
         }
       } else {
-        if (_lastSelectedItemIndex != index) {
-          _lastSelectedItemIndex = index;
+        _lastSelectedItemIndex = index;
 
-          _clearSelectedEntities();
-          _addSelectedEntity(entity);
-        }
+        _clearSelectedEntities();
+        _addSelectedEntity(entity);
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
   }
 
-  void _toggleSelectedEntity(FileOfInterest entity) {
+  void _toggleSelectedEntity(FileOfInterest entity, {bool reset = false}) {
     var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    folderListSelection.contains(entity) ? folderListSelection.remove(entity) : folderListSelection.add(entity);
-
     var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-    previewGridSelection.contains(entity) ? previewGridSelection.remove(entity) : previewGridSelection.add(entity);
+
+    if (folderListSelection.contains(entity)) {
+      if (reset) {
+        folderListSelection.removeAll();
+        previewGridSelection.removeAll();
+      } else {
+        folderListSelection.remove(entity);
+        previewGridSelection.remove(entity);
+      }
+    } else {
+      folderListSelection.add(entity);
+      previewGridSelection.add(entity);
+    }
   }
 
   @override
