@@ -20,9 +20,12 @@ class AppSettingsRepository {
   static const String tableName = 'app_settings';
   static const String createAppSettings = '''
         create table if not exists $tableName(
-          id              integer primary key, 
-          libraryPath     text    not null,
-          showHiddenFiles int     not null);
+          id                integer primary key, 
+          detailedView      int     not null,
+          libraryPath       text    not null,
+          showFolderButtons int     not null,
+          showHiddenFiles   int     not null,
+          );
           ''';
 
   Future<void> getSettings() async {

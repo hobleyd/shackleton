@@ -22,6 +22,7 @@ class FolderSettingsRepository {
           entity       text    primary key,
           width        int     not null,
           isDropZone   int     not null,
+          detailView   int     not null,
           unique (entity) on conflict ignore);
         ''';
   static const String folderSettingsIndex = 'create index ${tableName}_idx on $tableName(entity);';
@@ -39,5 +40,4 @@ class FolderSettingsRepository {
     folderSettings[settings.entity.path] = settings;
     return db.insert(tableName, settings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
-
 }

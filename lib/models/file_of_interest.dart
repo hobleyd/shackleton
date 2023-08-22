@@ -38,6 +38,7 @@ class FileOfInterest implements Comparable {
   get isMetadataSupported => imageExtensions.contains(extension);
   get name => basename(path);
   get path => entity.path;
+  get stat => entity.statSync();
   get uri => entity.uri;
 
   @override

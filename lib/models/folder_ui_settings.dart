@@ -18,6 +18,9 @@ class FolderUISettings with _$FolderUISettings {
   const factory FolderUISettings({
     @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson) required FileSystemEntity entity,
     required double width,
+    @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) required bool detailedView,
+    @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) required bool showFolderButtons,
+    @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) required bool showHiddenFiles,
     @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) required bool isDropZone}) = _FolderUISettings;
 
   factory FolderUISettings.fromJson(Map<String, Object?> json) => _$FolderUISettingsFromJson(json);

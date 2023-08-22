@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:async/async.dart';
-import 'package:convert/convert.dart';
-import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';

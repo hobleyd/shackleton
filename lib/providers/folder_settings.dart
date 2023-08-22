@@ -10,16 +10,16 @@ part 'folder_settings.g.dart';
 
 @riverpod
 class FolderSettings extends _$FolderSettings {
-  late FolderSettingsRepository repository;
+  late FolderSettingsRepository _repository;
 
   @override
   FolderUISettings build(FileSystemEntity entity) {
-    repository = FolderSettingsRepository(ref.read(appDbProvider));
+    _repository = FolderSettingsRepository(ref.read(appDbProvider));
 
-    if (!repository.folderSettings.containsKey(entity.path)) {
-      repository.update(FolderUISettings(entity: entity, width: 200, isDropZone: false));
+    if (!_repository.folderSettings.containsKey(entity.path)) {
+      _repository.update(FolderUISettings(entity: entity, width: 200, detailedView: false, isDropZone: false, showHiddenFiles: false, showFolderButtons: false));
     }
-    return repository.folderSettings[entity.path]!;
+    return _repository.folderSettings[entity.path]!;
   }
 
   void changeWidth(double delta) {
@@ -29,12 +29,30 @@ class FolderSettings extends _$FolderSettings {
   }
 
   void saveFolderSettings() {
-    repository.update(state);
+    _repository.update(state);
+  }
+
+  void setDetailedView(bool detailedView) {
+    if (state.detailedView != detailedView) {
+      state = state.copyWith(detailedView: detailedView);
+    }
   }
 
   void setDropZone(bool isDropZone) {
     if (state.isDropZone != isDropZone) {
       state = state.copyWith(isDropZone: isDropZone);
+    }
+  }
+
+  void showFolderButtons(bool showFolderButtons) {
+    if (state.showFolderButtons != showFolderButtons) {
+      state = state.copyWith(showFolderButtons: showFolderButtons);
+    }
+  }
+
+  void showHiddenFiles(bool showHiddenFiles) {
+    if (state.showHiddenFiles != showHiddenFiles) {
+      state = state.copyWith(showHiddenFiles: showHiddenFiles);
     }
   }
 }

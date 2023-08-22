@@ -1,9 +1,12 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
+import 'package:pluto_grid/pluto_grid.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 
@@ -37,7 +40,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   @override
   Widget build(BuildContext context) {
     entities = ref.watch(folderContentsProvider(widget.path));
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
     var fsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
 
@@ -58,8 +60,14 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           },
           onPerformDrop: (event) => _onPerformDrop(event, destination: widget.path),
           child: MouseRegion(
-            onEnter: (_) => handler.hasFocus = true,
-            onExit: (_) => handler.hasFocus = false,
+            onEnter: (_) {
+              handler.hasFocus = true;
+              fsNotifier.showFolderButtons(true);
+            },
+            onExit: (_) {
+              handler.hasFocus = false;
+              fsNotifier.showFolderButtons(false);
+            },
             child: Container(
               alignment: Alignment.topLeft,
               decoration: folderSettings.isDropZone
@@ -77,37 +85,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                 folder: FileOfInterest(entity: widget.path),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                  child: ListView.builder(
-                      itemCount: entities.length,
-                      itemBuilder: (context, index) {
-                        FileOfInterest entity = entities[index];
-
-                        return InkWell(
-                            onTap: () => _selectEntry(entities, index),
-                            onDoubleTap: () => entity.openFile(),
-                            child: DragItemWidget(
-                              allowedOperations: () => [DropOperation.move],
-                              canAddItemToExistingSession: true,
-                              dragItemProvider: (request) async {
-                                final item = DragItem();
-                                item.add(Formats.fileUri(entity.uri));
-                                item.add(Formats.htmlText.lazy(() => entity.path));
-                                return item;
-                              },
-                              child: entity.editing
-                                  ? _getEditableEntity(context, entity)
-                                  : DraggableWidget(
-                                      child: Container(
-                                        color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                                        child: _getNonEditableEntity(context, entity)
-                                      ),
-                              ),
-                            )
-                        );
-                      },
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true),
-                ),
+                  child: Column(
+                    children: [
+                      Expanded(child: folderSettings.detailedView ? _getComplexGridView(context) : _getSimpleListView()),
+                      _getFolderIcons(folderSettings),
+                    ],
+                  ),),
               ),
             ),
           ),
@@ -201,16 +184,36 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   }
 
   Widget _getEntityRow(BuildContext context, FileOfInterest entity) {
-    return Row(children: [
-      FileIcon(entity.path),
-      Expanded(
-        child: Text(
-            entity.path.split('/').last,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall),
-      ),],
+    return Row(
+      children: [
+        FileIcon(entity.path),
+        Expanded(
+          child: Text(entity.path.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+        ),
+      ],
     );
+  }
+
+  Widget _getFolderIcons(FolderUISettings settings) {
+    return settings.showFolderButtons
+        ? Row(
+              children: [
+                const Spacer(),
+                IconButton(
+                  onPressed: () => ref.read(folderSettingsProvider(widget.path).notifier).setDetailedView(!settings.detailedView),
+                  tooltip: settings.detailedView ? 'Show simple file list' : 'Show detailed file list',
+                  icon: Icon(settings.detailedView ? Icons.more_vert : Icons.more_horiz),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => ref.read(folderSettingsProvider(widget.path).notifier).showHiddenFiles(!settings.showHiddenFiles),
+                  tooltip: settings.showHiddenFiles ? 'Hide hidden files' : 'Show hidden files',
+                  icon: Icon(settings.showHiddenFiles ? Icons.hdr_weak : Icons.hdr_strong),
+                ),
+                const Spacer(),
+              ],
+            )
+        : const SizedBox(height: 1);
   }
 
   Widget _getNonEditableEntity(BuildContext context, FileOfInterest entity) {
@@ -229,6 +232,81 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     }
 
     return _getEntityRow(context, entity);
+  }
+
+  Widget _getComplexGridView(BuildContext context) {
+    handler.deregister();
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    List<PlutoColumn> columns = [
+      PlutoColumn(title: 'name', field: 'name', type: PlutoColumnType.text(), width: 200),
+      PlutoColumn(title: 'size', field: 'size', type: PlutoColumnType.number(), width: 80, textAlign: PlutoColumnTextAlign.right),
+      PlutoColumn(title: 'modified', field: 'modified', type: PlutoColumnType.time(), width: 150),
+    ];
+
+    List<PlutoRow> rows = entities.map((entity) => PlutoRow(
+      cells: {
+        'name': PlutoCell(value: entity),
+        'size': PlutoCell(value: entity.stat.size),
+        'modified': PlutoCell(value: DateFormat('yyyy-MM-dd\tHH:mm:ss').format(entity.stat.modified)),
+      },
+      checked: selectedEntities.contains(entity),
+    )).toList();
+
+    return PlutoGrid(
+        columns: columns,
+        configuration: PlutoGridConfiguration(
+          style: PlutoGridStyleConfig(
+            enableCellBorderVertical: true,
+            enableColumnBorderVertical: true,
+            enableCellBorderHorizontal: false,
+            cellTextStyle: Theme.of(context).textTheme.bodySmall!,
+            columnTextStyle: Theme.of(context).textTheme.labelSmall!,
+            defaultCellPadding: const EdgeInsets.symmetric(horizontal: 5),
+            defaultColumnFilterPadding: const EdgeInsets.symmetric(horizontal: 5),
+            defaultColumnTitlePadding: const EdgeInsets.symmetric(horizontal: 5),
+            rowHeight: 20,
+          ),
+        ),
+        mode: PlutoGridMode.multiSelect,
+        onSelected: (PlutoGridOnSelectedEvent event) => _addSelectedEntity(event.cell!.value),
+        onRowDoubleTap: (var event) => event.cell.value.openFile(),
+        rows: rows,
+      );
+  }
+
+  Widget _getSimpleListView() {
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+
+    return ListView.builder(
+        itemCount: entities.length,
+        itemBuilder: (context, index) {
+          FileOfInterest entity = entities[index];
+
+          return InkWell(
+              onTap: () => _selectEntry(entities, index),
+              onDoubleTap: () => entity.openFile(),
+              child: DragItemWidget(
+                allowedOperations: () => [DropOperation.move],
+                canAddItemToExistingSession: true,
+                dragItemProvider: (request) async {
+                  final item = DragItem();
+                  item.add(Formats.fileUri(entity.uri));
+                  item.add(Formats.htmlText.lazy(() => entity.path));
+                  return item;
+                },
+                child: entity.editing
+                    ? _getEditableEntity(context, entity)
+                    : DraggableWidget(
+                        child: Container(
+                          color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
+                          child: _getNonEditableEntity(context, entity)
+                        ),
+                      ),
+              ),
+          );
+        },
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true);
   }
 
   DropOperation _onDropOver(DropOverEvent event) {

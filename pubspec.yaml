@@ -26,6 +26,7 @@ dependencies:
   logger: ^2.0.1
   path: ^1.8.3
   path_provider: ^2.1.0
+  pluto_grid: ^7.0.2
   process_run: ^0.13.1
   riverpod_annotation: ^2.1.2
   sqflite_common_ffi: ^2.3.0+2

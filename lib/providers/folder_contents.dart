@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../providers/selected_entities.dart';
-import '../providers/settings.dart';
+import 'folder_settings.dart';
 
 part 'folder_contents.g.dart';
 
@@ -13,7 +13,9 @@ part 'folder_contents.g.dart';
 class FolderContents extends _$FolderContents {
   @override
   List<FileOfInterest> build(Directory path) {
-    getFolderContents(path);
+    var folderSettings = ref.watch(folderSettingsProvider(path));
+
+    getFolderContents(path, folderSettings.showHiddenFiles);
     watchFolder(path);
     return state;
   }
@@ -23,9 +25,7 @@ class FolderContents extends _$FolderContents {
     state = [...sort(entities)];
   }
 
-  void getFolderContents(Directory path) {
-    bool showHiddenFiles = ref.read(settingsProvider).showHiddenFiles;
-
+  void getFolderContents(Directory path, bool showHiddenFiles) {
     List<FileOfInterest> files = [];
     for (var file in path.listSync()) {
       FileOfInterest foi = FileOfInterest(entity: file);
