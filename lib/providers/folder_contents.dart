@@ -9,8 +9,14 @@ import 'folder_settings.dart';
 
 part 'folder_contents.g.dart';
 
+enum EntitySortField { name, size, modified }
+enum EntitySortOrder { asc, desc }
+
 @riverpod
 class FolderContents extends _$FolderContents {
+  EntitySortField defaultSort = EntitySortField.name;
+  EntitySortOrder defaultSortOrder = EntitySortOrder.asc;
+
   @override
   List<FileOfInterest> build(Directory path) {
     var folderSettings = ref.watch(folderSettingsProvider(path));
@@ -22,7 +28,7 @@ class FolderContents extends _$FolderContents {
 
   void add(FileOfInterest entity) {
     List<FileOfInterest> entities = [...state, entity];
-    state = [...sort(entities)];
+    state = [...sort(entities, defaultSort)];
   }
 
   void getFolderContents(Directory path, bool showHiddenFiles) {
@@ -34,7 +40,7 @@ class FolderContents extends _$FolderContents {
       }
       files.add(foi);
     }
-    state = [...sort(files)];
+    state = [...sort(files, defaultSort)];
   }
 
   void setEditableState(FileOfInterest entity, bool editable) {
@@ -45,10 +51,29 @@ class FolderContents extends _$FolderContents {
     state = files;
   }
 
-  List<FileOfInterest> sort(List<FileOfInterest> entities) {
-    entities.sort((a, b) =>
-        a.path.split('/').last.compareTo(b.path.split('/').last));
+  List<FileOfInterest> sort(List<FileOfInterest> entities, EntitySortField sortField) {
+    var _ = switch (sortField) {
+      EntitySortField.name => defaultSortOrder == EntitySortOrder.asc
+          ? entities.sort((a, b) => a.path.split('/').last.compareTo(b.path.split('/').last))
+          : entities.sort((b, a) => a.path.split('/').last.compareTo(b.path.split('/').last)),
+      EntitySortField.size => defaultSortOrder == EntitySortOrder.asc
+          ? entities.sort((a, b) => a.stat.size.compareTo(b.stat.size))
+          : entities.sort((b, a) => a.stat.size.compareTo(b.stat.size)),
+      EntitySortField.modified => defaultSortOrder == EntitySortOrder.asc
+          ? entities.sort((a, b) => a.stat.modified.compareTo(b.stat.modified))
+          : entities.sort((b, a) => a.stat.modified.compareTo(b.stat.modified))
+    };
+
     return entities;
+  }
+
+  void sortBy(EntitySortField sortField) {
+    if (sortField == defaultSort) {
+      defaultSortOrder = defaultSortOrder == EntitySortOrder.asc ? EntitySortOrder.desc : EntitySortOrder.asc;
+    } else {
+      defaultSort = sortField;
+    }
+    state = [...sort(state, defaultSort)];
   }
 
   void watchFolder(Directory path) async {
