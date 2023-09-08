@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shackleton/providers/folder_path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../database/app_database.dart';
@@ -37,8 +38,7 @@ class NavigationFavourites extends ConsumerWidget {
                     onDropLeave: (event) {},
                     onPerformDrop: (event) => _onPerformDrop(ref, event, favourites, index),
                     child: InkWell(
-                      onTap: () => {},
-                      onDoubleTap: () => {},
+                      onTap: () => ref.read(folderPathProvider.notifier).setFolder(favourites[index].directory),
                       child: DragItemWidget(
                         allowedOperations: () => [DropOperation.move],
                         canAddItemToExistingSession: true,

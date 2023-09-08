@@ -9,7 +9,8 @@ class Favourite  {
   String? name;
   int sortOrder;
 
-  get uri => Directory(path).uri;
+  get directory => Directory(path);
+  get uri => directory.uri;
 
   Favourite({
     required this.path,

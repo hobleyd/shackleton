@@ -32,4 +32,8 @@ class FolderPath extends _$FolderPath {
       ];
     }
   }
+
+  void setFolder(Directory dir) {
+    state = [ dir ];
+  }
 }
