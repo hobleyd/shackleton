@@ -14,7 +14,8 @@ class ShackletonTheme {
 
   static const TextTheme normalTextTheme = TextTheme(
     titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-    bodyMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+    bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+    labelMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
     bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: Colors.black),
     labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.black),
   );

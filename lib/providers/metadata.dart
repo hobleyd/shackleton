@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/database/app_database.dart';
 
 import '../models/entity.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 import '../providers/tag_queue.dart';
-import '../repositories/file_tags_repository.dart';
 
 part 'metadata.g.dart';
 
@@ -17,8 +15,6 @@ part 'metadata.g.dart';
 class Metadata extends _$Metadata {
   @override
   FileMetaData build(FileOfInterest entity) {
-    ref.watch(fileTagsRepositoryProvider(AppDatabase()));
-
     loadMetadataFromFile(entity);
     return const FileMetaData(tags: []);
   }

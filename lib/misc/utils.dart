@@ -1,9 +1,34 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';
+
+extension StringFuncs on String {
+  String trimCharLeft(String pattern) {
+    if (isEmpty || pattern.isEmpty || pattern.length > length) return this;
+    var tmp = this;
+    while (tmp.startsWith(pattern)) {
+      tmp = substring(pattern.length);
+    }
+    return tmp;
+  }
+
+  String trimCharRight(String pattern) {
+    if (isEmpty || pattern.isEmpty || pattern.length > length) return this;
+    var tmp = this;
+    while (tmp.endsWith(pattern)) {
+      tmp = substring(0, length - pattern.length);
+    }
+    return tmp;
+  }
+
+  String trimChar(String pattern) {
+    return trimCharLeft(pattern).trimCharRight(pattern);
+  }
+}
 
 Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> filesToZip) async {
   if (filesToZip.isEmpty) {
@@ -31,6 +56,20 @@ FileSystemEntity getEntity(String path) {
   }
 
   return File(path);
+}
+
+String getSizeString(int size, { int decimals = 0 }) {
+  const suffixes = ["b", "k", "m", "g", "t"];
+  if (size == 0) {
+    return '0${suffixes[0]}';
+  }
+
+  var i = (log(size) / log(1024)).floor();
+  return ((size / pow(1024, i)).toStringAsFixed(decimals)) + suffixes[i];
+}
+
+String getEntitySizeString({required FileOfInterest entity, int decimals = 0}) {
+  return getSizeString(entity.stat.size, decimals: decimals);
 }
 
 String getHomeFolder() {

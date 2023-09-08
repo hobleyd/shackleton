@@ -17,4 +17,8 @@ class Settings extends _$Settings {
 
         return _repository.appSettings;
     }
+
+    void setFontSize(int size) {
+
+    }
 }

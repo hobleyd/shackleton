@@ -23,7 +23,7 @@ class AppSettingsRepository {
           id                integer primary key, 
           detailedView      int     not null,
           libraryPath       text    not null,
-          showFolderButtons int     not null,
+          fontSize          int     not null,
           showHiddenFiles   int     not null,
           );
           ''';
@@ -33,7 +33,7 @@ class AppSettingsRepository {
     if (rows.isNotEmpty) {
       appSettings = AppSettings.fromJson(rows.first);
     } else {
-      appSettings = AppSettings(id: 0, libraryPath: getHomeFolder(), showHiddenFiles: false);
+      appSettings = AppSettings(id: 0, libraryPath: getHomeFolder(), fontSize: 12);
     }
   }
 

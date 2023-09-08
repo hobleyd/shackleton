@@ -9,9 +9,11 @@ import '../providers/folder_path.dart';
 import '../providers/folder_settings.dart';
 import '../providers/preview.dart';
 import '../providers/selected_entities.dart';
-import 'import_folder.dart';
-import 'preview_grid.dart';
 import 'folder_list.dart';
+import 'import_folder.dart';
+import 'navigation.dart';
+import 'preview_grid.dart';
+import 'shackleton_settings.dart';
 
 class Shackleton extends ConsumerWidget {
   const Shackleton({Key? key}) : super(key: key);
@@ -28,7 +30,8 @@ class Shackleton extends ConsumerWidget {
           actions: <Widget>[
             IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => _importImages(context, ref)),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
-            IconButton(icon: const Icon(Icons.preview_sharp), tooltip: 'Show the Preview pane...', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
+            IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
+            IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ShackletonSettings()))),
           ],
         ),
         body: Padding(
@@ -52,8 +55,12 @@ class Shackleton extends ConsumerWidget {
                     child: ListView(
                         controller: scrollController,
                         scrollDirection: Axis.horizontal,
-                        children:
-                            paths.map((e) => SizedBox(width: ref.watch(folderSettingsProvider(e)).width, child: FolderList(path: e))).toList())),
+                        children: [
+                            const Navigation(),
+                            ...paths.map((e) => SizedBox(width: ref.watch(folderSettingsProvider(e)).width, child: FolderList(path: e))).toList(),
+                        ],
+                    ),
+                ),
               ),
             ]),
         ),

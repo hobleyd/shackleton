@@ -62,14 +62,16 @@ class FileOfInterest implements Comparable {
   }
 
   void copyDirectory(Directory source, Directory destination) {
-    for (var entity in source.listSync(recursive: false)) {
-      if (entity is Directory) {
-        var newDirectory = Directory(join(destination.absolute.path, basename(entity.path)));
-        newDirectory.createSync();
+    if (source != destination) {
+      for (var entity in source.listSync(recursive: false)) {
+        if (entity is Directory) {
+          var newDirectory = Directory(join(destination.absolute.path, basename(entity.path)));
+          newDirectory.createSync();
 
-        copyDirectory(entity.absolute, newDirectory);
-      } else if (entity is File) {
-        entity.copySync(join(destination.path, basename(entity.path)));
+          copyDirectory(entity.absolute, newDirectory);
+        } else if (entity is File) {
+          entity.copySync(join(destination.path, basename(entity.path)));
+        }
       }
     }
   }
@@ -139,16 +141,37 @@ class FileOfInterest implements Comparable {
     }
   }
 
-  Future<Directory> moveDirectory(String destination) async {
+  bool isValidMoveLocation(String destination) {
+    // Needs to be a directory.
+    if (!FileSystemEntity.isDirectorySync(dirname(destination)))  {
+      return false;
+    }
+
+    // Can't move /a/b/c to /a/b/c
+    if (entity.path.trimCharRight('/') == destination.trimCharRight('/')) {
+      return false;
+    }
+
+    // Can't move /a/b/c to /a/b/c/d
+    if (destination.startsWith(path)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> moveDirectory(String destination) async {
     Directory dir = entity as Directory;
-    try {
-      // prefer using rename as it is probably faster
-      return await dir.rename(destination);
-    } on FileSystemException {
-      // if rename fails, recursively copy the directory and all it's contents.
-      copyDirectory(dir, Directory(destination));
-      dir.delete(recursive: true);
-      return dir;
+
+    if (isValidMoveLocation(destination)) {
+      try {
+        // prefer using rename as it is probably faster
+        await dir.rename(destination);
+      } on FileSystemException {
+        // if rename fails, recursively copy the directory and all it's contents.
+        copyDirectory(dir, Directory(destination));
+        dir.delete(recursive: true);
+      }
     }
   }
 

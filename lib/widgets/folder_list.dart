@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
+import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../providers/folder_contents.dart';
@@ -41,9 +41,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     entities = ref.watch(folderContentsProvider(widget.path));
     var entitiesNotifier = ref.read(folderContentsProvider(widget.path).notifier);
     FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
-    var fsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
+    var folderSettingsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
 
-    Widget sortIcon = entitiesNotifier.defaultSortOrder == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
+    Widget sortIcon = entitiesNotifier.getSortOrder() == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
 
     return Row(children: [
       Expanded(
@@ -51,24 +51,24 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           formats: Formats.standardFormats,
           hitTestBehavior: HitTestBehavior.opaque,
           onDropOver: (event) {
-            fsNotifier.setDropZone(true);
+            folderSettingsNotifier.setDropZone(true);
             return _onDropOver(event);
           },
           onDropEnter: (event) {
-            fsNotifier.setDropZone(true);
+            folderSettingsNotifier.setDropZone(true);
           },
           onDropLeave: (event) {
-            fsNotifier.setDropZone(false);
+            folderSettingsNotifier.setDropZone(false);
           },
-          onPerformDrop: (event) => _onPerformDrop(event, destination: widget.path),
+          onPerformDrop: (event) => _onPerformDrop(event, destination: FileOfInterest(entity: widget.path)),
           child: MouseRegion(
             onEnter: (_) {
               handler.hasFocus = true;
-              fsNotifier.showFolderButtons(true);
+              folderSettingsNotifier.showFolderButtons(true);
             },
             onExit: (_) {
               handler.hasFocus = false;
-              fsNotifier.showFolderButtons(false);
+              folderSettingsNotifier.showFolderButtons(false);
             },
             child: Container(
               alignment: Alignment.topLeft,
@@ -92,20 +92,18 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                       Row(children: [
                         Expanded(child: TextButton.icon(
                           onPressed: () => entitiesNotifier.sortBy(EntitySortField.name),
-                          icon: entitiesNotifier.defaultSort == EntitySortField.name ? sortIcon : const Icon(Icons.remove),
+                          icon: entitiesNotifier.getSortField() == EntitySortField.name ? sortIcon : const Icon(Icons.remove),
                           label: Text('Name', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),
                         ),),
                         if (folderSettings.detailedView) ...[
-                          Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 2),
                           SizedBox(width: 80, child: TextButton.icon(
                             onPressed: () => entitiesNotifier.sortBy(EntitySortField.size),
-                            icon: entitiesNotifier.defaultSort == EntitySortField.size ? sortIcon : const Icon(Icons.remove),
+                            icon: entitiesNotifier.getSortField() == EntitySortField.size ? sortIcon : const Icon(Icons.remove),
                             label: Text('Size', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),),),
-                          Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 2),
                           const SizedBox(width: 10),
                           SizedBox(width: 120, child: TextButton.icon(
                             onPressed: () => entitiesNotifier.sortBy(EntitySortField.modified),
-                            icon: entitiesNotifier.defaultSort == EntitySortField.modified ? sortIcon : const Icon(Icons.remove),
+                            icon: entitiesNotifier.getSortField() == EntitySortField.modified ? sortIcon : const Icon(Icons.remove),
                             label: Text('Modified', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),),),
                         ],
                       ]),
@@ -123,7 +121,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           cursor: SystemMouseCursors.resizeColumn,
           child: GestureDetector(
             onHorizontalDragUpdate: (DragUpdateDetails details) {
-              fsNotifier.changeWidth(details.delta.dx);
+              folderSettingsNotifier.changeWidth(details.delta.dx);
             },
             child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
           )),
@@ -208,22 +206,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           ),
         ],
         if (showDetails) ...[
-          SizedBox(width: 40, child: Text(_getEntitySizeString(entity: entity, decimals: 0), textAlign: TextAlign.right, style: Theme.of(context).textTheme.bodySmall),),
+          SizedBox(width: 40, child: Text(getEntitySizeString(entity: entity, decimals: 0), textAlign: TextAlign.right, style: Theme.of(context).textTheme.bodySmall),),
           const SizedBox(width: 10),
           SizedBox(width: 120, child: Text(DateFormat('dd MMM yyyy HH:mm').format(entity.stat.modified), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.right),),
         ],
       ],
     );
-  }
-
-  static String _getEntitySizeString({required FileOfInterest entity, int decimals = 0}) {
-    const suffixes = ["b", "k", "m", "g", "t"];
-    if (entity.stat.size == 0) {
-      return '0${suffixes[0]}';
-    }
-
-    var i = (log(entity.stat.size) / log(1024)).floor();
-    return ((entity.stat.size / pow(1024, i)).toStringAsFixed(decimals)) + suffixes[i];
   }
 
   Widget _getEntityWidget(BuildContext context, FileOfInterest entity, bool showDetails) {
@@ -232,12 +220,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           formats: Formats.standardFormats,
           hitTestBehavior: HitTestBehavior.opaque,
           onDropOver: (event) {
-            _selectEntry(entities, entities.indexOf(entity), editing: false);
+            _selectIfValidDropLocation(event, entity);
             return _onDropOver(event);
           },
           onDropEnter: (event) {},
           onDropLeave: (event) {},
-          onPerformDrop: (event) => _onPerformDrop(event, destination: entity.entity as Directory),
+          onPerformDrop: (event) => _onPerformDrop(event, destination: entity),
           child: _getEntityRow(context, entity, showDetails));
     }
 
@@ -317,6 +305,25 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         shrinkWrap: true);
   }
 
+  void _selectIfValidDropLocation(DropOverEvent event, FileOfInterest destination) {
+    final item = event.session.items.first;
+    final reader = item.dataReader!;
+    if (item.canProvide(Formats.fileUri)) {
+      reader.getValue(Formats.fileUri, (uri) async {
+        if (uri != null) {
+          if (destination.isDirectory) {
+            FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
+            if (source.isValidMoveLocation(destination.path)) {
+              _selectEntry(entities, entities.indexOf(destination), editing: false);
+              return;
+            }
+          }
+          ref.read(selectedEntitiesProvider(FileType.folderList).notifier).removeAll();
+        }
+      });
+    }
+  }
+
   DropOperation _onDropOver(DropOverEvent event) {
     final item = event.session.items.first;
     if (item.canProvide(Formats.fileUri)) {
@@ -325,16 +332,16 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     return DropOperation.none;
   }
 
-  Future<void> _onPerformDrop(PerformDropEvent event, {required Directory destination}) async {
+  Future<void> _onPerformDrop(PerformDropEvent event, {required FileOfInterest destination}) async {
     if (event.session.items.isNotEmpty) {
-      var item = event.session.items.first;
+      final item = event.session.items.first;
       final reader = item.dataReader!;
       if (reader.canProvide(Formats.fileUri)) {
         reader.getValue(Formats.fileUri, (uri) async {
           if (uri != null) {
             Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
 
-            final type = await FileSystemEntity.type(Uri.decodeComponent(uri.path));
+            final type = FileSystemEntity.typeSync(Uri.decodeComponent(uri.path));
             var _ = switch (type) {
               FileSystemEntityType.file      => FileOfInterest(entity: File.fromUri(uri)).moveFile(Uri.decodeComponent(toFileUri.path)),
               FileSystemEntityType.directory => FileOfInterest(entity: Directory.fromUri(uri)).moveDirectory(Uri.decodeComponent(toFileUri.path)),

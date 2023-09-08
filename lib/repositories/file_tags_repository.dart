@@ -6,11 +6,13 @@ import 'package:synchronized/synchronized.dart';
 
 import '../database/app_database.dart';
 import '../models/entity.dart';
+import '../models/tag.dart';
 
 part 'file_tags_repository.g.dart';
 
 @riverpod
 class FileTagsRepository extends _$FileTagsRepository {
+  late AppDatabase _database;
   final _lock = Lock();
 
   static const String tableName = 'app_settings';
@@ -37,34 +39,38 @@ class FileTagsRepository extends _$FileTagsRepository {
   static const String createFilesIndex = 'create index files_idx on files(path);';
 
   @override
-  AppDatabase build(AppDatabase db) {
+  Future<List<Tag>> build(AppDatabase db) {
+    _database = db;
+
     var queue = ref.watch(tagQueueProvider);
-    pop(db, queue);
-    return db;
+    pop(queue);
+
+    return getTags();
   }
 
-  Future<void> getTags() async {
-
+  Future<List<Tag>> getTags() async {
+    List<Map<String, dynamic>> results = await _database.query('tags', columns: ['id', 'tag'], orderBy: 'tag');
+    return results.map((row) => Tag.fromMap(row)).toList();
   }
 
-  Future<void> pop(AppDatabase db, Queue<Entity> queue) async {
+  Future<void> pop(Queue<Entity> queue) async {
     await _lock.synchronized(() async {
       if (queue.isNotEmpty) {
         Entity entity = queue.removeFirst();
         if (entity.tags.isNotEmpty) {
-          await writeTags(db, entity);
+          await writeTags(entity);
         }
       }
     });
   }
 
-  Future<void> writeTags(AppDatabase db, Entity entity) async {
+  Future<void> writeTags(Entity entity) async {
     // Get the id for the FSE
-    List<Map<String, dynamic>> result = await db.query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
+    List<Map<String, dynamic>> result = await _database.query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
     if (result.isNotEmpty) {
       entity.id = result.first['id'];
     } else {
-      entity.id = await db.insert('files', entity.toMap());
+      entity.id = await _database.insert('files', entity.toMap());
     }
 
     // TODO: how do I remove all tags?
@@ -73,17 +79,17 @@ class FileTagsRepository extends _$FileTagsRepository {
       for (var tag in entity.tags) {
         if (tag.tag.isEmpty) continue;
 
-        List<Map> tagRecords = await db.query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+        List<Map> tagRecords = await _database.query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
         if (tagRecords.isNotEmpty) {
           tag.id = tagRecords.first['id'] as int;
         }
         else {
-          tag.id = await db.insert('tags', tag.toMap());
+          tag.id = await _database.insert('tags', tag.toMap());
         }
 
-        List<Map> fileTagRecords = await db.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
+        List<Map> fileTagRecords = await _database.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
         if (fileTagRecords.isEmpty) {
-          await db.insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
+          await _database.insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
         }
       }
     }

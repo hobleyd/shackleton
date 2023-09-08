@@ -18,6 +18,11 @@ class FolderPath extends _$FolderPath {
   }
 
   void addFolder(Directory clickedPath, Directory newPath) {
+    if (state.contains(newPath)) {
+      // Don't trigger a rebuild if the folder is already visible.
+      return;
+    }
+
     if (clickedPath == state.last) {
       state = [ ...state, newPath];
     } else {

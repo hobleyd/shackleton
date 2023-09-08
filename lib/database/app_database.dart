@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../repositories/app_settings_repository.dart';
+import '../repositories/favourites_repository.dart';
 import '../repositories/file_tags_repository.dart';
 import '../repositories/folder_settings_repository.dart';
 
@@ -34,9 +35,11 @@ class AppDatabase {
       db.execute(FileTagsRepository.createFileTags);
       db.execute(FolderSettingsRepository.createFolderSettings);
       db.execute(AppSettingsRepository.createAppSettings);
+      db.execute(FavouritesRepository.createFavourites);
 
       db.execute(FileTagsRepository.createFilesIndex);
       db.execute(FolderSettingsRepository.folderSettingsIndex);
+      db.execute(FavouritesRepository.createFavouritesIndex);
     }
     return;
   }
@@ -86,8 +89,11 @@ class AppDatabase {
     return _cachedStorage.insert(table, rows, conflictAlgorithm: conflictAlgorithm);
   }
 
-  Future<List<Map<String, dynamic>>> query(String table, { List<String>? columns, String? where, List<dynamic>? whereArgs }) async {
-    return _cachedStorage.query(table, columns: columns, where: where, whereArgs: whereArgs);
+  Future<List<Map<String, dynamic>>> query(String table, { List<String>? columns, String? where, List<dynamic>? whereArgs, String? orderBy }) async {
+    return _cachedStorage.query(table, columns: columns, where: where, whereArgs: whereArgs, orderBy: orderBy);
   }
 
+  Future<int> update(String table, Map<String, dynamic> values, String? where, List<String>? whereArgs) {
+    return _cachedStorage.update(table, values, where: where, whereArgs: whereArgs);
+  }
 }

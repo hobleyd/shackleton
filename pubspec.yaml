@@ -31,8 +31,10 @@ dependencies:
   sqflite_common_ffi: ^2.3.0+2
   super_context_menu: ^0.6.0
   super_drag_and_drop: ^0.6.0
+  syncfusion_flutter_gauges: ^22.2.11
   syncfusion_flutter_pdfviewer: ^22.2.9
   synchronized: ^3.1.0
+  universal_disk_space: ^0.2.3
   url_launcher: ^6.1.12
 
 dev_dependencies:
