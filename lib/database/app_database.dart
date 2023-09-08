@@ -93,6 +93,10 @@ class AppDatabase {
     return _cachedStorage.query(table, columns: columns, where: where, whereArgs: whereArgs, orderBy: orderBy);
   }
 
+  Future<List<Map<String, dynamic>>> rawQuery(String sql, List<Object?>? arguments) async {
+    return _cachedStorage.rawQuery(sql, arguments);
+  }
+
   Future<int> update(String table, Map<String, dynamic> values, String? where, List<String>? whereArgs) {
     return _cachedStorage.update(table, values, where: where, whereArgs: whereArgs);
   }
