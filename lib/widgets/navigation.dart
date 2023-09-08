@@ -11,16 +11,23 @@ import 'navigation_favourites.dart';
 import 'navigation_space.dart';
 import 'navigation_tags.dart';
 
-class Navigation extends ConsumerWidget {
-  const Navigation({Key? key}) : super(key: key);
+class Navigation extends ConsumerStatefulWidget {
+  const Navigation({Key? key,}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Navigation> createState() => _Navigation();
+}
+
+class _Navigation extends ConsumerState<Navigation> {
+  double _width = 250;
+
+  @override
+  Widget build(BuildContext context) {
     ScrollController controller = ScrollController();
 
     return Row(children: [
       SizedBox(
-        width: 250,
+        width: _width,
         child: MouseRegion(
           onEnter: (_) {},
           onExit: (_) {},
@@ -62,7 +69,11 @@ class Navigation extends ConsumerWidget {
       MouseRegion(
           cursor: SystemMouseCursors.resizeColumn,
           child: GestureDetector(
-            onHorizontalDragUpdate: (DragUpdateDetails details) {},
+            onHorizontalDragUpdate: (DragUpdateDetails details) {
+              setState(() {
+                _width += details.delta.dx;
+              });
+            },
             child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
           )),
     ]);
