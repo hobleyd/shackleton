@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:shackleton/models/file_of_interest.dart';
 
 class Favourite  {
   int? id;

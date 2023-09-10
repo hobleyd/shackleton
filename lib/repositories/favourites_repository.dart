@@ -23,8 +23,8 @@ class FavouritesRepository extends _$FavouritesRepository {
   static const String createFavouritesIndex = 'create index files_idx on favourites(path);';
 
   @override
-  Future<List<Favourite>> build(AppDatabase db) async {
-    _database = db;
+  Future<List<Favourite>> build() async {
+    _database = AppDatabase();
 
     return _getFavourites();
   }

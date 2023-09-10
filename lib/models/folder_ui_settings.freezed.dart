@@ -26,11 +26,7 @@ mixin _$FolderUISettings {
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   bool get detailedView => throw _privateConstructorUsedError;
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get showFolderButtons => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   bool get showHiddenFiles => throw _privateConstructorUsedError;
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get isDropZone => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -50,10 +46,7 @@ abstract class $FolderUISettingsCopyWith<$Res> {
       double width,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showFolderButtons,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showHiddenFiles,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool isDropZone});
+      bool showHiddenFiles});
 }
 
 /// @nodoc
@@ -72,9 +65,7 @@ class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
     Object? entity = null,
     Object? width = null,
     Object? detailedView = null,
-    Object? showFolderButtons = null,
     Object? showHiddenFiles = null,
-    Object? isDropZone = null,
   }) {
     return _then(_value.copyWith(
       entity: null == entity
@@ -89,17 +80,9 @@ class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
           ? _value.detailedView
           : detailedView // ignore: cast_nullable_to_non_nullable
               as bool,
-      showFolderButtons: null == showFolderButtons
-          ? _value.showFolderButtons
-          : showFolderButtons // ignore: cast_nullable_to_non_nullable
-              as bool,
       showHiddenFiles: null == showHiddenFiles
           ? _value.showHiddenFiles
           : showHiddenFiles // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDropZone: null == isDropZone
-          ? _value.isDropZone
-          : isDropZone // ignore: cast_nullable_to_non_nullable
               as bool,
     ) as $Val);
   }
@@ -119,10 +102,7 @@ abstract class _$$_FolderUISettingsCopyWith<$Res>
       double width,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showFolderButtons,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showHiddenFiles,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool isDropZone});
+      bool showHiddenFiles});
 }
 
 /// @nodoc
@@ -139,9 +119,7 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
     Object? entity = null,
     Object? width = null,
     Object? detailedView = null,
-    Object? showFolderButtons = null,
     Object? showHiddenFiles = null,
-    Object? isDropZone = null,
   }) {
     return _then(_$_FolderUISettings(
       entity: null == entity
@@ -156,17 +134,9 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
           ? _value.detailedView
           : detailedView // ignore: cast_nullable_to_non_nullable
               as bool,
-      showFolderButtons: null == showFolderButtons
-          ? _value.showFolderButtons
-          : showFolderButtons // ignore: cast_nullable_to_non_nullable
-              as bool,
       showHiddenFiles: null == showHiddenFiles
           ? _value.showHiddenFiles
           : showHiddenFiles // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDropZone: null == isDropZone
-          ? _value.isDropZone
-          : isDropZone // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
@@ -182,11 +152,7 @@ class _$_FolderUISettings implements _FolderUISettings {
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
       required this.detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required this.showFolderButtons,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required this.showHiddenFiles,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required this.isDropZone});
+      required this.showHiddenFiles});
 
   factory _$_FolderUISettings.fromJson(Map<String, dynamic> json) =>
       _$$_FolderUISettingsFromJson(json);
@@ -201,17 +167,11 @@ class _$_FolderUISettings implements _FolderUISettings {
   final bool detailedView;
   @override
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  final bool showFolderButtons;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   final bool showHiddenFiles;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  final bool isDropZone;
 
   @override
   String toString() {
-    return 'FolderUISettings(entity: $entity, width: $width, detailedView: $detailedView, showFolderButtons: $showFolderButtons, showHiddenFiles: $showHiddenFiles, isDropZone: $isDropZone)';
+    return 'FolderUISettings(entity: $entity, width: $width, detailedView: $detailedView, showHiddenFiles: $showHiddenFiles)';
   }
 
   @override
@@ -223,18 +183,14 @@ class _$_FolderUISettings implements _FolderUISettings {
             (identical(other.width, width) || other.width == width) &&
             (identical(other.detailedView, detailedView) ||
                 other.detailedView == detailedView) &&
-            (identical(other.showFolderButtons, showFolderButtons) ||
-                other.showFolderButtons == showFolderButtons) &&
             (identical(other.showHiddenFiles, showHiddenFiles) ||
-                other.showHiddenFiles == showHiddenFiles) &&
-            (identical(other.isDropZone, isDropZone) ||
-                other.isDropZone == isDropZone));
+                other.showHiddenFiles == showHiddenFiles));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, entity, width, detailedView,
-      showFolderButtons, showHiddenFiles, isDropZone);
+  int get hashCode =>
+      Object.hash(runtimeType, entity, width, detailedView, showHiddenFiles);
 
   @JsonKey(ignore: true)
   @override
@@ -258,11 +214,7 @@ abstract class _FolderUISettings implements FolderUISettings {
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
       required final bool detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool showFolderButtons,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool showHiddenFiles,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool isDropZone}) = _$_FolderUISettings;
+      required final bool showHiddenFiles}) = _$_FolderUISettings;
 
   factory _FolderUISettings.fromJson(Map<String, dynamic> json) =
       _$_FolderUISettings.fromJson;
@@ -277,13 +229,7 @@ abstract class _FolderUISettings implements FolderUISettings {
   bool get detailedView;
   @override
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get showFolderButtons;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   bool get showHiddenFiles;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get isDropZone;
   @override
   @JsonKey(ignore: true)
   _$$_FolderUISettingsCopyWith<_$_FolderUISettings> get copyWith =>

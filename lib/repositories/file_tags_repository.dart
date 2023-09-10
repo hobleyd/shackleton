@@ -39,8 +39,8 @@ class FileTagsRepository extends _$FileTagsRepository {
   static const String createFilesIndex = 'create index files_idx on files(path);';
 
   @override
-  Future<List<Tag>> build(AppDatabase db) {
-    _database = db;
+  Future<List<Tag>> build() {
+    _database = AppDatabase();
 
     var queue = ref.watch(tagQueueProvider);
     pop(queue);
@@ -94,5 +94,4 @@ class FileTagsRepository extends _$FileTagsRepository {
       }
     }
   }
-
 }

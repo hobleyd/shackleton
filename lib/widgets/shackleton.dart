@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/file_of_interest.dart';
 import '../models/preview_settings.dart';
 import '../providers/folder_path.dart';
-import '../providers/folder_settings.dart';
 import '../providers/preview.dart';
 import '../providers/selected_entities.dart';
 import 'folder_list.dart';
@@ -31,7 +30,7 @@ class Shackleton extends ConsumerWidget {
             IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => _importImages(context, ref)),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
             IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
-            IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ShackletonSettings()))),
+            IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
           ],
         ),
         body: Padding(
@@ -57,7 +56,7 @@ class Shackleton extends ConsumerWidget {
                         scrollDirection: Axis.horizontal,
                         children: [
                             const Navigation(),
-                            ...paths.map((e) => SizedBox(width: ref.watch(folderSettingsProvider(e)).width, child: FolderList(path: e))).toList(),
+                            ...paths.map((e) => FolderList(path: e)).toList(),
                         ],
                     ),
                 ),

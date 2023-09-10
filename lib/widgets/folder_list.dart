@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../misc/utils.dart';
@@ -15,9 +14,9 @@ import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../providers/folder_contents.dart';
 import '../providers/folder_path.dart';
-import '../providers/folder_settings.dart';
 import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
+import '../repositories/folder_settings_repository.dart';
 import 'entity_context_menu.dart';
 
 class FolderList extends ConsumerStatefulWidget {
@@ -32,6 +31,8 @@ class FolderList extends ConsumerStatefulWidget {
 class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback {
   late List<FileOfInterest> entities;
   late KeyboardHandler handler;
+  bool isDropZone = false;
+  bool showFolderButtons = false;
 
   int _lastSelectedItemIndex = -1;
   int _lastSelectedTimestamp = -1;
@@ -40,92 +41,90 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   Widget build(BuildContext context) {
     entities = ref.watch(folderContentsProvider(widget.path));
     var entitiesNotifier = ref.read(folderContentsProvider(widget.path).notifier);
-    FolderUISettings folderSettings = ref.watch(folderSettingsProvider(widget.path));
-    var folderSettingsNotifier = ref.read(folderSettingsProvider(widget.path).notifier);
 
-    Widget sortIcon = entitiesNotifier.getSortOrder() == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
-
-    return Row(children: [
-      Expanded(
-        child: DropRegion(
-          formats: Formats.standardFormats,
-          hitTestBehavior: HitTestBehavior.opaque,
-          onDropOver: (event) {
-            folderSettingsNotifier.setDropZone(true);
-            return _onDropOver(event);
-          },
-          onDropEnter: (event) {
-            folderSettingsNotifier.setDropZone(true);
-          },
-          onDropLeave: (event) {
-            folderSettingsNotifier.setDropZone(false);
-          },
-          onPerformDrop: (event) => _onPerformDrop(event, destination: FileOfInterest(entity: widget.path)),
-          child: MouseRegion(
-            onEnter: (_) {
-              handler.hasFocus = true;
-              folderSettingsNotifier.showFolderButtons(true);
-            },
-            onExit: (_) {
-              handler.hasFocus = false;
-              folderSettingsNotifier.showFolderButtons(false);
-            },
-            child: Container(
-              alignment: Alignment.topLeft,
-              decoration: folderSettings.isDropZone
-                  ? BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.teal,
-                        width: 2,
-                      ),
-                    )
-                  : null,
-              child: EntityContextMenu(
-                fileType: FileType.folderList,
-                folder: FileOfInterest(entity: widget.path),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                  child: Column(
-                    children: [
-                      Row(children: [
-                        Expanded(child: TextButton.icon(
-                          onPressed: () => entitiesNotifier.sortBy(EntitySortField.name),
-                          icon: entitiesNotifier.getSortField() == EntitySortField.name ? sortIcon : const Icon(Icons.remove),
-                          label: Text('Name', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),
-                        ),),
-                        if (folderSettings.detailedView) ...[
-                          SizedBox(width: 80, child: TextButton.icon(
-                            onPressed: () => entitiesNotifier.sortBy(EntitySortField.size),
-                            icon: entitiesNotifier.getSortField() == EntitySortField.size ? sortIcon : const Icon(Icons.remove),
-                            label: Text('Size', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),),),
-                          const SizedBox(width: 10),
-                          SizedBox(width: 120, child: TextButton.icon(
-                            onPressed: () => entitiesNotifier.sortBy(EntitySortField.modified),
-                            icon: entitiesNotifier.getSortField() == EntitySortField.modified ? sortIcon : const Icon(Icons.remove),
-                            label: Text('Modified', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),),),
+    return Consumer(builder: (context, watch, child) {
+      var folderSettings = ref.watch(folderSettingsRepositoryProvider(widget.path.path));
+      return folderSettings.when(error: (error, stackTrace) {
+        return Text('Failed to get settings', style: Theme.of(context).textTheme.bodySmall);
+      }, loading: () {
+        return const CircularProgressIndicator();
+      }, data: (FolderUISettings folderSettings) {
+        return SizedBox(width: folderSettings.width, child: Row(children: [
+          Expanded(
+            child: DropRegion(
+              formats: Formats.standardFormats,
+              hitTestBehavior: HitTestBehavior.opaque,
+              onDropOver: (event) {
+                return _onDropOver(event);
+              },
+              onDropEnter: (event) {
+                setState(() {
+                  isDropZone = true;
+                });
+              },
+              onDropLeave: (event) {
+                setState(() {
+                  isDropZone = false;
+                });
+              },
+              onPerformDrop: (event) => _onPerformDrop(event, destination: FileOfInterest(entity: widget.path)),
+              child: MouseRegion(
+                onEnter: (_) {
+                  handler.hasFocus = true;
+                  setState(() {
+                    showFolderButtons = true;
+                  });
+                },
+                onExit: (_) {
+                  handler.hasFocus = false;
+                  setState(() {
+                    showFolderButtons = false;
+                  });
+                },
+                child: Container(
+                  alignment: Alignment.topLeft,
+                  decoration: isDropZone
+                      ? BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.teal,
+                            width: 2,
+                          ),
+                        )
+                      : null,
+                  child: EntityContextMenu(
+                    fileType: FileType.folderList,
+                    folder: FileOfInterest(entity: widget.path),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                      child: Column(
+                        children: [
+                          _getFolderColumnHeaders(context, entitiesNotifier, folderSettings),
+                          Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
+                          Expanded(child: _getListView(folderSettings)),
+                          _getFolderSettingsIcons(folderSettings),
                         ],
-                      ]),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
-                      Expanded(child: _getListView(folderSettings.detailedView)),
-                      _getFolderIcons(folderSettings),
-                    ],
-                  ),),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
-      MouseRegion(
-          cursor: SystemMouseCursors.resizeColumn,
-          child: GestureDetector(
-            onHorizontalDragUpdate: (DragUpdateDetails details) {
-              folderSettingsNotifier.changeWidth(details.delta.dx);
-            },
-            child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
-          )),
-    ]);
+          MouseRegion(
+              cursor: SystemMouseCursors.resizeColumn,
+              child: GestureDetector(
+                onHorizontalDragUpdate: (DragUpdateDetails details) {
+                  var folderNotifier = ref.read(folderSettingsRepositoryProvider(widget.path.path).notifier);
+                  folderNotifier.updateSettings(folderSettings.copyWith(width: folderSettings.width + details.delta.dx));
+                },
+                child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+              )),
+        ]),
+        );
+      });
+    });
   }
 
   @override
@@ -232,15 +231,16 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     return _getEntityRow(context, entity, showDetails);
   }
 
-  Widget _getFolderIcons(FolderUISettings settings) {
-    return settings.showFolderButtons
+  Widget _getFolderSettingsIcons(FolderUISettings settings) {
+    var folderNotifier = ref.read(folderSettingsRepositoryProvider(widget.path.path).notifier);
+    return showFolderButtons
         ? Row(
               children: [
                 const Spacer(),
                 IconButton(
                   constraints: const BoxConstraints(minHeight: 14, maxHeight: 14),
                   iconSize: 14,
-                  onPressed: () => ref.read(folderSettingsProvider(widget.path).notifier).setDetailedView(!settings.detailedView),
+                  onPressed: () => folderNotifier.updateSettings(settings.copyWith(detailedView: !settings.detailedView)),
                   padding: const EdgeInsets.only(top: 5),
                   splashRadius: 0.0001,
                   tooltip: settings.detailedView ? 'Show simple file list' : 'Show detailed file list',
@@ -250,7 +250,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                 IconButton(
                   constraints: const BoxConstraints(minHeight: 14, maxHeight: 14),
                   iconSize: 14,
-                  onPressed: () => ref.read(folderSettingsProvider(widget.path).notifier).showHiddenFiles(!settings.showHiddenFiles),
+                  onPressed: () => folderNotifier.updateSettings(settings.copyWith(showHiddenFiles: !settings.showHiddenFiles)),
                   padding: const EdgeInsets.only(top: 5),
                   splashRadius: 0.0001,
                   tooltip: settings.showHiddenFiles ? 'Hide hidden files' : 'Show hidden files',
@@ -272,16 +272,51 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         : const SizedBox(height: 1);
   }
 
-  Widget _getListView(bool showDetails) {
+  Widget _getFolderColumnHeaders(BuildContext context, entitiesNotifier, folderSettings) {
+    Widget sortIcon = entitiesNotifier.getSortOrder() == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
+
+    return Row(children: [
+      Expanded(
+        child: TextButton.icon(
+          onPressed: () => entitiesNotifier.sortBy(EntitySortField.name),
+          icon: entitiesNotifier.getSortField() == EntitySortField.name ? sortIcon : const Icon(Icons.remove),
+          label: Text('Name', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),
+        ),
+      ),
+      if (folderSettings.detailedView) ...[
+        SizedBox(
+          width: 80,
+          child: TextButton.icon(
+            onPressed: () => entitiesNotifier.sortBy(EntitySortField.size),
+            icon: entitiesNotifier.getSortField() == EntitySortField.size ? sortIcon : const Icon(Icons.remove),
+            label: Text('Size', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 120,
+          child: TextButton.icon(
+            onPressed: () => entitiesNotifier.sortBy(EntitySortField.modified),
+            icon: entitiesNotifier.getSortField() == EntitySortField.modified ? sortIcon : const Icon(Icons.remove),
+            label: Text('Modified', textAlign: TextAlign.center, style: Theme.of(context).textTheme.labelSmall),
+          ),
+        ),
+      ],
+    ]);
+  }
+
+  Widget _getListView(FolderUISettings settings) {
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    List<FileOfInterest> entityList = List.from(entities);
+    entityList.removeWhere((element) => !settings.showHiddenFiles && element.isHidden == true);
 
     return ListView.builder(
-        itemCount: entities.length,
+        itemCount: entityList.length,
         itemBuilder: (context, index) {
-          FileOfInterest entity = entities[index];
+          FileOfInterest entity = entityList[index];
 
           return InkWell(
-              onTap: () => _selectEntry(entities, index),
+              onTap: () => _selectEntry(entityList, index),
               onDoubleTap: () => entity.openFile(),
               child: DragItemWidget(
                 allowedOperations: () => [DropOperation.move],
@@ -295,7 +330,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                 child: DraggableWidget(
                         child: Container(
                           color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                          child: _getEntityWidget(context, entity, showDetails)
+                          child: _getEntityWidget(context, entity, settings.detailedView)
                         ),
                       ),
               ),

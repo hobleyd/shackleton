@@ -3,18 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/providers/folder_path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-import '../database/app_database.dart';
 import '../misc/utils.dart';
 import '../models/favourite.dart';
 import '../repositories/favourites_repository.dart';
 
-class NavigationFavourites extends ConsumerWidget {
-  const NavigationFavourites({Key? key}) : super(key: key);
+class NavigationFavourites extends ConsumerStatefulWidget {
+  const NavigationFavourites({Key? key,}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NavigationFavourites> createState() => _NavigationFavourites();
+}
+
+class _NavigationFavourites extends ConsumerState<NavigationFavourites> {
+  List<String> hoverPaths = [];
+
+  @override
+  Widget build(BuildContext context) {
     return Consumer(builder: (context, watch, child) {
-      var favouritesAsync = ref.watch(favouritesRepositoryProvider(AppDatabase()));
+      var favouritesAsync = ref.watch(favouritesRepositoryProvider);
       return favouritesAsync.when(error: (error, stackTrace) {
         return Text(getHomeFolder(), style: Theme.of(context).textTheme.bodySmall);
       }, loading: () {
@@ -34,26 +40,37 @@ class NavigationFavourites extends ConsumerWidget {
                     onDropOver: (event) {
                       return _onDropOver(event);
                     },
-                    onDropEnter: (event) {},
-                    onDropLeave: (event) {},
+                    onDropEnter: (event) {
+                      setState(() {
+                        hoverPaths.add(favourites[index].path);
+                      });
+                    },
+                    onDropLeave: (event) {
+                      setState(() {
+                        hoverPaths.remove(favourites[index].path);
+                      });
+                    },
                     onPerformDrop: (event) => _onPerformDrop(ref, event, favourites, index),
-                    child: InkWell(
-                      onTap: () => ref.read(folderPathProvider.notifier).setFolder(favourites[index].directory),
-                      child: DragItemWidget(
-                        allowedOperations: () => [DropOperation.move],
-                        canAddItemToExistingSession: true,
-                        dragItemProvider: (request) async {
-                          final item = DragItem();
-                          item.add(Formats.fileUri(favourites[index].uri));
-                          item.add(Formats.htmlText.lazy(() => favourites[index].path));
-                          return item;
-                        },
-                        child: DraggableWidget(
-                            child: Text(
-                          favourites[index].name!,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        )),
+                    child: Material(
+                      color: hoverPaths.contains(favourites[index].path) ? const Color.fromRGBO(217, 217, 217, 100) : Colors.transparent,
+                      child: InkWell(
+                        onTap: () => ref.read(folderPathProvider.notifier).setFolder(favourites[index].directory),
+                        child: DragItemWidget(
+                          allowedOperations: () => [DropOperation.move],
+                          canAddItemToExistingSession: true,
+                          dragItemProvider: (request) async {
+                            final item = DragItem();
+                            item.add(Formats.fileUri(favourites[index].uri));
+                            item.add(Formats.htmlText.lazy(() => favourites[index].path));
+                            return item;
+                          },
+                          child: DraggableWidget(
+                              child: Text(
+                            favourites[index].name!,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          )),
+                        ),
                       ),
                     ),
                   );
@@ -85,7 +102,7 @@ class NavigationFavourites extends ConsumerWidget {
             favourites.insert(newFave.sortOrder, newFave);
             for (int i = 0; i < favourites.length; i++) {
               favourites[i].sortOrder = i;
-              ref.read(favouritesRepositoryProvider(AppDatabase()).notifier).insertFavourite(favourites[i]);
+              ref.read(favouritesRepositoryProvider.notifier).insertFavourite(favourites[i]);
             }
           }
         });

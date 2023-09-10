@@ -20,6 +20,7 @@ class Navigation extends ConsumerStatefulWidget {
 
 class _Navigation extends ConsumerState<Navigation> {
   double _width = 250;
+  bool mouseHover = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,21 +30,17 @@ class _Navigation extends ConsumerState<Navigation> {
       SizedBox(
         width: _width,
         child: MouseRegion(
-          onEnter: (_) {},
-          onExit: (_) {},
+          onEnter: (_) {
+            setState(() {
+              mouseHover = true;
+            });
+          },
+          onExit: (_) {
+            mouseHover = false;
+          },
           child: Container(
             alignment: Alignment.topLeft,
             color: const Color.fromRGBO(217, 217, 217, 100),
-            decoration: false
-                ? BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.teal,
-                      width: 2,
-                    ),
-                  )
-                : null,
             child: EntityContextMenu(
               fileType: FileType.folderList,
               folder: FileOfInterest(entity: Directory(getHomeFolder())),

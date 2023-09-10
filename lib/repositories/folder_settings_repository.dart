@@ -1,43 +1,50 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/misc/utils.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
 import '../models/folder_ui_settings.dart';
 
-class FolderSettingsRepository {
-  late AppDatabase db;
-  Map<String, FolderUISettings> folderSettings = {};
+part 'folder_settings_repository.g.dart';
 
-  // I know Riverpod says that we should not be using Singletons, but the provider pattern keeps creating
-  // new instances. If someone can tell me what I am doing wrong, I'd appreciate it.
-  FolderSettingsRepository._privateConstructor();
-  static final FolderSettingsRepository _instance = FolderSettingsRepository._privateConstructor();
-  factory FolderSettingsRepository(AppDatabase db) {
-    _instance.db = db;
-    return _instance;
-  }
+@riverpod
+class FolderSettingsRepository extends _$FolderSettingsRepository {
+  late AppDatabase _database;
 
   static const String tableName = 'folder_settings';
   static const String createFolderSettings = '''
         create table if not exists $tableName(
           entity       text    primary key,
           width        int     not null,
-          isDropZone   int     not null,
           detailView   int     not null,
           unique (entity) on conflict ignore);
         ''';
   static const String folderSettingsIndex = 'create index ${tableName}_idx on $tableName(entity);';
 
-  Future<void> getSettings() async {
-    List<Map<String, dynamic>> rows = await db.query(tableName);
+  @override
+  Future<FolderUISettings> build(String path) {
+    _database = AppDatabase();
 
-    for (var row in rows) {
-      FolderUISettings fuss = FolderUISettings.fromJson(row);
-      folderSettings[fuss.entity.path] = fuss;
+    return getSettings(path);
+  }
+
+  Future<FolderUISettings> getSettings(String path) async {
+    List<Map<String, dynamic>> rows = await _database.query(tableName, where: 'entity = ?', whereArgs: [ path ]);
+
+    if (rows.isNotEmpty) {
+      return FolderUISettings.fromJson(rows.first);
+    } else {
+      return FolderUISettings(
+          entity: getEntity(path),
+          width: 200,
+          detailedView: false,
+          showHiddenFiles: false);
     }
   }
 
-  Future<int> update(FolderUISettings settings) async {
-    folderSettings[settings.entity.path] = settings;
-    return db.insert(tableName, settings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+  Future<int> updateSettings(FolderUISettings folderSettings) async {
+    int rowId = await _database.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    state = await AsyncValue.guard(() => getSettings(folderSettings.entity.path));
+    return rowId;
   }
 }
