@@ -18,7 +18,7 @@ class NavigationSpace extends ConsumerWidget {
           return const Text('Wow! A diskless computer!');
         },
         loading: () {
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         },
         data: (Disk disk) {
           return Row(

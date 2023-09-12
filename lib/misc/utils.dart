@@ -50,12 +50,15 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
   return foi;
 }
 
-FileSystemEntity getEntity(String path) {
-  if (FileSystemEntity.typeSync(path) == FileSystemEntityType.directory) {
-    return Directory(path);
-  }
+FileSystemEntity? getEntity(String path) {
+  var entity = switch (FileSystemEntity.typeSync(path)) {
+    FileSystemEntityType.directory => Directory(path),
+    FileSystemEntityType.link => Link(path),
+    FileSystemEntityType.file  => File(path),
+    _ => null,
+  };
 
-  return File(path);
+  return entity;
 }
 
 String getSizeString(int size, { int decimals = 0 }) {

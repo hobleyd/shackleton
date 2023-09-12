@@ -35,7 +35,7 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
       return FolderUISettings.fromJson(rows.first);
     } else {
       return FolderUISettings(
-          entity: getEntity(path),
+          entity: getEntity(path)!,
           width: 200,
           detailedView: false,
           showHiddenFiles: false);

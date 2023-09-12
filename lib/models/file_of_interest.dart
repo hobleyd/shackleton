@@ -36,8 +36,10 @@ class FileOfInterest implements Comparable {
   get isImage => imageExtensions.contains(extension);
   get isHidden => entity.path.split('/').last.startsWith('.');
   get isMetadataSupported => imageExtensions.contains(extension);
+  get isVideo => videoExtensions.contains(extension);
   get name => basename(path);
   get path => entity.path;
+  get shouldImport => isImage || isVideo;
   get stat => entity.statSync();
   get uri => entity.uri;
 
@@ -124,23 +126,6 @@ class FileOfInterest implements Comparable {
     return output.events.single;
   }
 
-  Future<void> importImagesFromFolder(WidgetRef ref) async {
-    if (isDirectory) {
-      Directory d = entity as Directory;
-      for (var entity in d.listSync()) {
-        await FileOfInterest(entity: entity).importImagesFromFolder(ref);
-      }
-    } else if (isFile && isImage){
-      String destinationPath = await _getPathInLibrary();
-      FileOfInterest libraryEntity = FileOfInterest(entity: _getFile(destinationPath));
-
-      if (!libraryEntity.exists || await different(libraryEntity)) {
-        await moveFile(destinationPath);
-      }
-      await libraryEntity.cacheFileOfInterest(ref);
-    }
-  }
-
   bool isValidMoveLocation(String destination) {
     // Needs to be a directory.
     if (!FileSystemEntity.isDirectorySync(dirname(destination)))  {
@@ -175,13 +160,13 @@ class FileOfInterest implements Comparable {
     }
   }
 
-  Future<File> moveFile(String newPath) async {
+  File moveFile(String newPath) {
     File file = entity as File;
     try {
-      return file.rename(newPath);
+      return file.renameSync(newPath);
     } on FileSystemException {
-      final newFile = await file.copy(newPath);
-      await entity.delete();
+      final newFile = file.copySync(newPath);
+      entity.deleteSync();
       return newFile;
     }
   }
@@ -219,25 +204,5 @@ class FileOfInterest implements Comparable {
     }
 
     return File(destinationPath);
-  }
-
-  Future<String> _getPathInLibrary() async {
-    if (isImage && exists) {
-      bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-      if (hasExiftool) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-CreateDate', path]);
-        if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          // Create Date: 2016:06:26 14:46:58
-          String creationDate = output.stdout;
-          DateTime creationDateTime = DateFormat("yyyy:MM:dd HH:mm:ss").parse(creationDate);
-          String year = DateFormat('yyyy').format(creationDateTime);
-          String month = DateFormat('MM - MMMM').format(creationDateTime);
-          return join(getHomeFolder(), 'Pictures', year, month, name);
-        }
-      }
-    }
-
-    return "";
   }
 }
