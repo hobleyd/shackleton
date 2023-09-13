@@ -34,17 +34,6 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
             }, data: (List<ImportEntity> filesToImport) {
               return Stack(
                 children: [
-                  Center(
-                    child: IconButton(
-                      constraints: const BoxConstraints(minHeight: 48, maxHeight: 48),
-                      iconSize: 48,
-                      onPressed: () => _moveFiles(filesToImport),
-                      padding: const EdgeInsets.only(top: 5),
-                      splashRadius: 0.0001,
-                      tooltip: 'Import files',
-                      icon: const Icon(Icons.arrow_circle_right_outlined),
-                    ),
-                  ),
                   Column(
                     children: [
                       Padding(
@@ -78,6 +67,17 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
                       ),
                       const SizedBox(height: 10),
                     ],
+                  ),
+                  Center(
+                    child: IconButton(
+                      constraints: const BoxConstraints(minHeight: 48, maxHeight: 48),
+                      iconSize: 48,
+                      onPressed: () => _moveFiles(filesToImport),
+                      padding: const EdgeInsets.only(top: 5),
+                      splashRadius: 0.0001,
+                      tooltip: 'Import files',
+                      icon: const Icon(Icons.arrow_circle_right_outlined),
+                    ),
                   ),
                 ],
               );
@@ -119,11 +119,11 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
 
   Widget _getRenamedFilesList(List<ImportEntity> filesToImport) {
     return ListView.builder(
-            itemCount: filesToImport.length,
-            itemBuilder: (context, index) {
-              ImportEntity entity = filesToImport[index];
-              TextEditingController dest = TextEditingController();
-              dest.text = entity.renamedFile;
+        itemCount: filesToImport.length,
+        itemBuilder: (context, index) {
+          ImportEntity entity = filesToImport[index];
+          TextEditingController dest = TextEditingController();
+          dest.text = entity.error.isNotEmpty ? entity.error : entity.renamedFile;
           return InkWell(
             onTap: () => {},
             onDoubleTap: () => {},
@@ -147,24 +147,24 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
                 ),
                 if (entity.hasConflict) ...[
                   IconButton(
-                      icon: const Icon(Icons.done),
-                      constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
-                      iconSize: 12,
-                      padding: EdgeInsets.zero,
-                      splashRadius: 0.0001,
-                      tooltip: 'Ignore conflict and copy file...',
-                      onPressed: () => setState(() {
-                        filesToImport[index] = entity.copyWith(hasConflict: false, willImport: true);
-                      }),
+                    icon: const Icon(Icons.done),
+                    constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                    iconSize: 12,
+                    padding: EdgeInsets.zero,
+                    splashRadius: 0.0001,
+                    tooltip: 'Ignore conflict and copy file...',
+                    onPressed: () => setState(() {
+                      filesToImport[index] = entity.copyWith(hasConflict: false, willImport: true);
+                    }),
                   ),
                 ],
               ],
             ),
           );
         },
-            physics: const NeverScrollableScrollPhysics(),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true);
+        physics: const NeverScrollableScrollPhysics(),
+        scrollDirection: Axis.vertical,
+        shrinkWrap: true);
   }
 
   void _moveFiles(List<ImportEntity> entities) {
@@ -172,11 +172,15 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
       try {
         if (entity.willImport) {
           entity.fileToImport.moveFile(entity.renamedFile);
-          entities.remove(entity);
+          setState(() {
+            entities.remove(entity);
+          });
         }
       } on Exception catch (e) {
         // Not sure what Exceptions file operations can throw. Improve your documentation, please.
-        entities[entities.indexOf(entity)] = entity.copyWith(error: e.toString());
+        setState(() {
+          entities[entities.indexOf(entity)] = entity.copyWith(error: e.toString());
+        });
       }
     }
   }

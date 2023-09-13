@@ -15,6 +15,9 @@ class ImportEntity {
   bool willImport = false;
   bool hasConflict = false;
 
+  @override
+  bool operator ==(other) => other is ImportEntity && fileToImport.path == other.fileToImport.path;
+
   ImportEntity({ required this.fileToImport, String? renamedFile, bool? willImport, bool? hasConflict, String? error}) {
     this.willImport = willImport ?? fileToImport.shouldImport;
     this.renamedFile = renamedFile ?? "";
@@ -70,6 +73,6 @@ class ImportEntity {
 
   @override
   String toString() {
-    return 'path: $fileToImport with import flag $willImport';
+    return 'path: $fileToImport with import flag $willImport, and error $error';
   }
 }
