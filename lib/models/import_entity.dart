@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:process_run/process_run.dart';
@@ -14,6 +13,9 @@ class ImportEntity {
   String renamedFile = "";
   bool willImport = false;
   bool hasConflict = false;
+
+  @override
+  get hashCode => fileToImport.path.hashCode;
 
   @override
   bool operator ==(other) => other is ImportEntity && fileToImport.path == other.fileToImport.path;
@@ -62,12 +64,10 @@ class ImportEntity {
   }
 
   Future<void> validateEntityName() async {
-    FileSystemEntity? dest = getEntity(renamedFile);
-    if (dest != null) {
-      hasConflict = dest.existsSync() && await fileToImport.different(FileOfInterest(entity: dest));
+    FileSystemEntity dest = getEntity(renamedFile);
+    hasConflict = dest.existsSync() && await fileToImport.different(FileOfInterest(entity: dest));
+    if (hasConflict) {
       willImport = false;
-    } else {
-      hasConflict = false;
     }
   }
 

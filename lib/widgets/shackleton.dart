@@ -27,7 +27,7 @@ class Shackleton extends ConsumerWidget {
         appBar: AppBar(
           title: Text(paths.map((e) => e.path.split('/').last).toList().toString(), style: Theme.of(context).textTheme.labelSmall),
           actions: <Widget>[
-            IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ImportFolder()))),
+            IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
             IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
             IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
@@ -71,15 +71,5 @@ class Shackleton extends ConsumerWidget {
     for (FileOfInterest foi in selectedEntities) {
       await foi.cacheFileOfInterest(ref);
     }
-  }
-
-  void _importImages(BuildContext context, WidgetRef ref) async {
-
-
-/*
-    for (FileOfInterest foi in selectedEntities) {
-      await foi.importImagesFromFolder(ref);
-    }
- */
   }
 }

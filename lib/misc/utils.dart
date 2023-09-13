@@ -50,12 +50,11 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
   return foi;
 }
 
-FileSystemEntity? getEntity(String path) {
+FileSystemEntity getEntity(String path) {
   var entity = switch (FileSystemEntity.typeSync(path)) {
     FileSystemEntityType.directory => Directory(path),
     FileSystemEntityType.link => Link(path),
-    FileSystemEntityType.file  => File(path),
-    _ => null,
+    _  => File(path),
   };
 
   return entity;

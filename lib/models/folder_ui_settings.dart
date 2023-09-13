@@ -7,7 +7,7 @@ import '../misc/utils.dart';
 part 'folder_ui_settings.freezed.dart';
 part 'folder_ui_settings.g.dart';
 
-FileSystemEntity _fseFromJson(String path) => getEntity(path)!;
+FileSystemEntity _fseFromJson(String path) => getEntity(path);
 String _fseToJson(FileSystemEntity entity) => entity.path;
 
 bool _boolFromJson(int value) => value.isOdd;

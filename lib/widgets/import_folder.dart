@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/providers/selected_entities.dart';
@@ -16,6 +14,8 @@ class ImportFolder extends ConsumerStatefulWidget {
 }
 
 class _ImportFolder extends ConsumerState<ImportFolder> {
+  bool isImporting = false;
+
   @override
   Widget build(BuildContext context) {
     Set<FileOfInterest> entities = ref.watch(selectedEntitiesProvider(FileType.folderList));
@@ -69,7 +69,9 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
                     ],
                   ),
                   Center(
-                    child: IconButton(
+                    child: isImporting
+                    ? const CircularProgressIndicator()
+                    : IconButton(
                       constraints: const BoxConstraints(minHeight: 48, maxHeight: 48),
                       iconSize: 48,
                       onPressed: () => _moveFiles(filesToImport),
@@ -168,7 +170,13 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
   }
 
   void _moveFiles(List<ImportEntity> entities) {
-    for (var entity in entities) {
+    setState(() {
+      isImporting = true;
+    });
+
+    // Copy the list or we'll have a modification exception while looping...
+    List<ImportEntity> entitiesToProcess = List.from(entities);
+    for (var entity in entitiesToProcess) {
       try {
         if (entity.willImport) {
           entity.fileToImport.moveFile(entity.renamedFile);
@@ -183,5 +191,9 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
         });
       }
     }
+
+    setState(() {
+      isImporting = false;
+    });
   }
 }

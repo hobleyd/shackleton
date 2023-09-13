@@ -4,8 +4,8 @@ import 'package:shackleton/models/app_settings.dart';
 import 'package:shackleton/repositories/app_settings_repository.dart';
 
 class ShackletonSettings extends ConsumerWidget {
-  TextEditingController fontSizeController = TextEditingController();
-  TextEditingController libraryFolderController = TextEditingController();
+  final TextEditingController fontSizeController = TextEditingController();
+  final TextEditingController libraryFolderController = TextEditingController();
 
   ShackletonSettings({Key? key,}) : super(key: key);
 

@@ -5,9 +5,7 @@ import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart';
-import 'package:process_run/process_run.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../misc/utils.dart';
@@ -145,38 +143,43 @@ class FileOfInterest implements Comparable {
     return true;
   }
 
-  Future<void> moveDirectory(String destination) async {
-    Directory dir = entity as Directory;
+  Future<void> moveDirectory(String destinationPath) async {
+    _createParentFolders(destinationPath);
 
-    if (isValidMoveLocation(destination)) {
+    Directory dir = entity as Directory;
+    if (isValidMoveLocation(destinationPath)) {
       try {
         // prefer using rename as it is probably faster
-        await dir.rename(destination);
+        await dir.rename(destinationPath);
       } on FileSystemException {
         // if rename fails, recursively copy the directory and all it's contents.
-        copyDirectory(dir, Directory(destination));
+        copyDirectory(dir, Directory(destinationPath));
         dir.delete(recursive: true);
       }
     }
   }
 
-  File moveFile(String newPath) {
+  File moveFile(String destinationPath) {
+    _createParentFolders(destinationPath);
+
     File file = entity as File;
     try {
-      return file.renameSync(newPath);
+      return file.renameSync(destinationPath);
     } on FileSystemException {
-      final newFile = file.copySync(newPath);
+      final newFile = file.copySync(destinationPath);
       entity.deleteSync();
       return newFile;
     }
   }
 
-  Future<Link> moveLink(String newPath) async {
+  Future<Link> moveLink(String destinationPath) async {
+    _createParentFolders(destinationPath);
+
     Link sourceLink = entity as Link;
     try {
-      return await sourceLink.rename(newPath);
+      return await sourceLink.rename(destinationPath);
     } on FileSystemException {
-      final newLink = Link(newPath);
+      final newLink = Link(destinationPath);
       newLink.createSync(sourceLink.targetSync());
       return newLink;
     }
@@ -197,12 +200,10 @@ class FileOfInterest implements Comparable {
     return name;
   }
 
-  File _getFile(String destinationPath) {
+  void _createParentFolders(String destinationPath) {
     Directory parentFolder = Directory(dirname(destinationPath));
     if (!parentFolder.existsSync()) {
       parentFolder.createSync(recursive: true);
     }
-
-    return File(destinationPath);
   }
 }

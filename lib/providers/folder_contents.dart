@@ -80,9 +80,9 @@ class FolderContents extends _$FolderContents {
   void watchFolder(Directory path) async {
     Stream<FileSystemEvent> events = path.watch(events: FileSystemEvent.all);
     events.listen((FileSystemEvent event) {
+      FileOfInterest foi = FileOfInterest(entity: getEntity(event.path));
       switch (event.type) {
         case FileSystemEvent.create:
-          FileOfInterest foi = FileOfInterest(entity: getEntity(event.path)!);
           if (!state.contains(foi)) {
             if (!foi.isHidden) {
               add(foi);
@@ -93,7 +93,6 @@ class FolderContents extends _$FolderContents {
         case FileSystemEvent.move:
           var folderEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
           var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-          FileOfInterest foi = FileOfInterest(entity: getEntity(event.path)!);
 
           if (folderEntities.contains(foi)) {
             folderEntities.remove(foi);
