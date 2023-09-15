@@ -21,4 +21,4 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           name: shackleton.zip
-          path: build\linux\runner\Release\
+          path: build/linux/runner/Release/
