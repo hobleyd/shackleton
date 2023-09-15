@@ -12,14 +12,10 @@ jobs:
          channel: 'stable'
          architecture: x64
          cache: true
-     - run: flutter config --enable-windows-desktop
-     - run: dart run build_runner build --delete-conflicting-outputs
-     - run: flutter pub run flutter_launcher_icons
-     - run: flutter build windows --release --no-tree-shake-icons
      - name: Set up .NET
        uses: actions/setup-dotnet@v1
        with:
-         dotnet-version: 6.0 # Adjust as needed
+         dotnet-version: 6.0.x # Adjust as needed
 
      - name: Install WiX Toolset
        run: |
@@ -27,6 +23,10 @@ jobs:
          Expand-Archive -Path 'wix311-binaries.zip' -DestinationPath 'C:\wix311'
          Add-Content -Path $env:GITHUB_PATH -Value 'C:\wix311'
        shell: powershell
+     - run: flutter config --enable-windows-desktop
+     - run: dart run build_runner build --delete-conflicting-outputs
+     - run: flutter pub run flutter_launcher_icons
+     - run: flutter build windows --release --no-tree-shake-icons
 
      - name: Build MSI
        run: |
