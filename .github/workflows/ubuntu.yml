@@ -12,12 +12,7 @@ jobs:
           channel: 'stable'
           architecture: x64
           cache: true
-      - name: Setup Ninja
-        uses: ashutoshvarma/setup-ninja@master
-        with:
-          # ninja version to download. Default: 1.10.0
-          version:
-            1.10.0
+      - uses: symbitic/install-cmake@master
       - run: flutter config --enable-linux-desktop
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter pub run flutter_launcher_icons
