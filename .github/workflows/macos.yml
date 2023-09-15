@@ -1,4 +1,4 @@
-name: shackleton-ci
+name: shackleton-macos-ci
 
 on: [push, workflow_dispatch]
       
@@ -12,7 +12,7 @@ jobs:
          channel: 'stable'
          architecture: x64
          cache: true
-     - run: flutter config --enable-macos-desktop --enable-windows-desktop
+     - run: flutter config --enable-macos-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: flutter pub run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons

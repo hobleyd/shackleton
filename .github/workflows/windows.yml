@@ -16,8 +16,25 @@ jobs:
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: flutter pub run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
+     - name: Set up .NET
+       uses: actions/setup-dotnet@v1
+       with:
+         dotnet-version: 5.0  # Adjust as needed
+
+     - name: Install WiX Toolset
+       run: |
+         Invoke-WebRequest -Uri 'https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip' -OutFile 'wix311-binaries.zip'
+         Expand-Archive -Path 'wix311-binaries.zip' -DestinationPath 'C:\wix311'
+         Add-Content -Path $env:GITHUB_PATH -Value 'C:\wix311'
+       shell: powershell
+
+     - name: Build MSI
+       run: |
+         candle -o out shackleton.wxs  # Compile your WiX source file
+         light -o out/shackleton.msi -sval out/*.wixobj  # Link your MSI package
+
      # Upload generated dmg to the artifacts.
      - uses: actions/upload-artifact@v1
        with:
-         name: shackleton.zip
-         path: build\windows\runner\Release\
+        name: shackleton
+        path: out/shackleton.msi
