@@ -31,7 +31,7 @@ jobs:
      - name: Build MSI
        run: |
          candle -o out shackleton.wxs  # Compile your WiX source file
-         light -o out/shackleton.msi -sval out/*.wixobj  # Link your MSI package
+         light -o out\shackleton.msi -sval out\*.wixobj  # Link your MSI package
 
      # Upload generated dmg to the artifacts.
      - uses: actions/upload-artifact@v1
