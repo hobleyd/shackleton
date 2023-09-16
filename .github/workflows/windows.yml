@@ -30,13 +30,11 @@ jobs:
 
      - name: Build MSI
        run: |
-         mkdir out
-         icacls out /grant %username%:F
-         candle -o out shackleton.wxs  # Compile your WiX source file
-         light -o out\shackleton.msi -sval out\*.wixobj  # Link your MSI package
+         candle -o ${{ runner.temp }} shackleton.wxs  # Compile your WiX source file
+         light -o ${{ runner.temp }}\shackleton.msi -sval ${{ runner.temp }}\*.wixobj  # Link your MSI package
 
      # Upload generated dmg to the artifacts.
      - uses: actions/upload-artifact@v1
        with:
         name: shackleton
-        path: out/shackleton.msi
+        path: ${{ runner.temp }}/shackleton.msi
