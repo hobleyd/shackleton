@@ -1,0 +1,39 @@
+I have a Riverpod provider created as such:
+
+```
+@riverpod
+class SelectedEntities extends _$SelectedEntities {
+  @override
+  Set<FileOfInterest> build(FileType type) {
+    return {};
+  }
+
+  void add(FileOfInterest entity) {
+    if (!state.contains(entity)) {
+      state = { ...state, entity};
+    }
+  }
+}
+```
+
+I can add to the provider as expected using ref.read, if I do so, the ProviderObserver shows the output as I would expect:
+
+```
+flutter: selectedEntitiesProvider(PreviewGrid): {picture.jpg}
+```
+
+I have a PreviewGrid which uses ref.watch to look for the data from the provider. If the PreviewGrid has never been opened (I need to click on a button to show it) and I then open it, the provider is showing as empty:
+
+```
+flutter: PreviewGrid.build(): {}
+```
+
+(from a debugPrint in the build function of the PreviewGrid). If the PreviewGrid is already open though, when I select the file, everything shows up as expected:
+
+```
+flutter: selectedEntitiesProvider(PreviewGrid): {picture.jpg} // ProviderObserver output
+flutter: PreviewGrid.build(): {picture.jpg}
+```
+
+What am I missing, please?:w
+
