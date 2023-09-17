@@ -26,4 +26,4 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           name: Shackleton-latest-x86_64.AppImage
-          path: .
+          path: /home/runner/work/shackleton/shackleton
