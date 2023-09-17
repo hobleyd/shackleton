@@ -25,5 +25,5 @@ jobs:
       # Upload generated dmg to the artifacts.
       - uses: actions/upload-artifact@v1
         with:
-          name: Shackleton-latest-x86_64.AppImage
-          path: /home/runner/work/shackleton/shackleton
+          name: shackleton
+          path: Shackleton-latest-x86_64.AppImage
