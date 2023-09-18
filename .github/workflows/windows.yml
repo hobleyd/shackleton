@@ -11,7 +11,6 @@ jobs:
        with:
          channel: 'stable'
          architecture: x64
-         cache: true
      - name: Set up .NET
        uses: actions/setup-dotnet@v1
        with:
@@ -30,8 +29,8 @@ jobs:
 
      - name: Build MSI
        run: |
-         candle -o . shackleton.wxs  # Compile your WiX source file
-         light -o shackleton.msi -sval *.wixobj  # Link your MSI package
+         candle shackleton.wxs -o shackleton.wixobj # Compile your WiX source file
+         light shackleton.wixobj -o shackleton.msi # Link your MSI package
 
      # Upload generated dmg to the artifacts.
      - uses: actions/upload-artifact@v1
