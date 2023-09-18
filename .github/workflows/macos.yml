@@ -7,10 +7,10 @@ jobs:
    runs-on: macos-latest
    steps:
      - name: Get the app version
-         id: get_version
-         uses: mikefarah/yq@master
-         with:
-           cmd: yq '.version' pubspec.yaml
+       id: get_version
+       uses: mikefarah/yq@master
+       with:
+         cmd: yq '.version' pubspec.yaml
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
        with:
