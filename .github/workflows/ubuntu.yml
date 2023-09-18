@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Get the version
+      - name: Get App version
         uses: mikefarah/yq@master
         with:
           cmd: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
@@ -26,8 +26,9 @@ jobs:
           recipe: "AppImageBuilder.yml"
         env:
           UPDATE_INFO: gh-releases-zsync|AppImageCrafters|appimage-demo-qt5|latest|*x86_64.AppImage.zsync
+          VERSION: ${{ env.VERSION }}
       # Upload generated dmg to the artifacts.
       - uses: actions/upload-artifact@v1
         with:
-          name: shackleton
+          name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
           path: Shackleton-${{ env.VERSION }}-x86_64.AppImage
