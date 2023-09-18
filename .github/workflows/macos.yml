@@ -6,7 +6,7 @@ jobs:
  build:
    runs-on: macos-latest
    steps:
-     - - name: Get an entry with a variable that might contain dots or spaces
+     - name: Get the app version
          id: get_version
          uses: mikefarah/yq@master
          with:
