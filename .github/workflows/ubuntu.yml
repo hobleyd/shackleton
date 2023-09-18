@@ -7,6 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Get the version
+        uses: mikefarah/yq@master
+        with:
+          cmd: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -26,4 +30,4 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           name: shackleton
-          path: Shackleton-latest-x86_64.AppImage
+          path: Shackleton-${{ env.VERSION }}-x86_64.AppImage
