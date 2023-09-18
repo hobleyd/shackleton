@@ -349,7 +349,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              _selectEntry(entities, entities.indexOf(destination), editing: false);
+              _selectEntry(entities, entities.indexOf(destination), shouldEditName: false);
               return;
             }
           }
@@ -396,7 +396,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     entity.rename(filename);
   }
 
-  void _selectEntry(List <FileOfInterest> entities, int index, {bool editing = true}) {
+  void _selectEntry(List <FileOfInterest> entities, int index, {bool shouldEditName = true}) {
     FileOfInterest entity = entities[index];
 
     // Cancel editing in the PreviewGrid if we are making selections.
@@ -428,20 +428,18 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
       if (_lastSelectedItemIndex == index) {
         if (currentTimestamp - _lastSelectedTimestamp < 2000) {
-          if (editing) {
-            // We want to edit the name....
+          if (shouldEditName) {
             FolderContents contents = ref.read(folderContentsProvider(widget.path).notifier);
             contents.setEditableState(entity, true);
             handler.setEditing(true);
           }
         } else {
-          _toggleSelectedEntity(entity, reset: true);
+          _toggleSelectedEntity(entity, reset: false);
         }
       } else {
         _lastSelectedItemIndex = index;
 
-        _clearSelectedEntities();
-        _addSelectedEntity(entity);
+        _toggleSelectedEntity(entity, reset: true);
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
@@ -451,17 +449,16 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
     var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
 
+    if (reset) {
+      folderListSelection.clear();
+      previewGridSelection.clear();
+    }
+
     if (folderListSelection.contains(entity)) {
-      if (reset) {
-        folderListSelection.removeAll();
-        previewGridSelection.removeAll();
-      } else {
-        folderListSelection.remove(entity);
-        previewGridSelection.remove(entity);
-      }
+      folderListSelection.remove(entity);
+      previewGridSelection.remove(entity);
     } else {
-      folderListSelection.add(entity);
-      previewGridSelection.add(entity);
+      _addSelectedEntity(entity);
     }
   }
 
