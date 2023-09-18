@@ -6,9 +6,7 @@ jobs:
  build:
    runs-on: macos-latest
    steps:
-     - run: |
-         wget https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_darwin_arm64 -O yq
-         chmod u+rx yq
+     - run: brew install yq
      - name: Get the app version
        id: get_version
        run: |
