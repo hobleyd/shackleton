@@ -10,7 +10,7 @@ jobs:
      - name: Get the app version
        id: get_version
        run: |
-         ./yq '.version' pubspec.yaml
+         yq '.version' pubspec.yaml
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
        with:
