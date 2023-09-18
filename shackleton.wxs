@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="*" Name="Shackleton" Language="1033" Version="1.0.0.0" Manufacturer="SharpBlue" UpgradeCode="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [Shackleton] is already installed." />
     
