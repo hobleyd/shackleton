@@ -6,7 +6,7 @@ part 'selected_entities.g.dart';
 
 enum FileType { folderList, previewGrid, previewPane, previewItem }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class SelectedEntities extends _$SelectedEntities {
   @override
   Set<FileOfInterest> build(FileType type) {
