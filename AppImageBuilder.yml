@@ -12,7 +12,7 @@ AppDir:
     id: au.com.sharpblue.shackleton
     name: Shackleton
     icon: explorer
-    version: !ENV ${{VERSION}}
+    version: {{VERSION}}
     exec: shackleton
     exec_args: $@
   apt:
