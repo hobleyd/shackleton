@@ -8,45 +8,63 @@
       Version="1.0.0">
 
     <Package InstallerVersion="200"
+        Comments="Shackleton installer"
         Compressed="yes"
         InstallScope="perUser" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [Shackleton] is already installed." />
   </Product>
 
-  <Fragment>
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="Shackleton">
-          <!-- Place your EXE and DLLs here -->
-          <Component Id="MainExecutable" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="YourAppExe" Source="build\windows\runner\Release\shackleton.exe" KeyPath="yes" />
-          </Component>
-          <Component Id="DllComponent1" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll1" Source="build\windows\runner\Release\flutter_windows.dll" />
-          </Component>
-          <Component Id="DllComponent2" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll2" Source="build\windows\runner\Release\irondash_engine_context_plugin.dll" />
-          </Component>
-          <Component Id="DllComponent3" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll3" Source="build\windows\runner\Release\pdfium.dll" />
-          </Component>
-          <Component Id="DllComponent4" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll4" Source="build\windows\runner\Release\super_native_extensions.dll" />
-          </Component>
-          <Component Id="DllComponent5" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll5" Source="build\windows\runner\Release\super_native_extensions_plugin.dll" />
-          </Component>
-          <Component Id="DllComponent6" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll6" Source="build\windows\runner\Release\syncfusion_pdfviewer_windows_plugin.dll" />
-          </Component>
-          <Component Id="DllComponent7" Guid="a7d20ffd-8aab-412e-81fe-d3e176c327b9">
-            <File Id="Dll7" Source="build\windows\runner\Release\url_launcher_windows_plugin.dll" />
-          </Component>
-          <!-- Add more components for each DLL -->
-        </Directory>
+  <Directory Id="TARGETDIR" Name="SourceDir">
+    <Directory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="Shackleton">
+        <!-- Place your EXE and DLLs here -->
+        <Component Guid="3c7f1f45-a293-4476-ab46-5c826c0f6e18" Id="MainExecutable">
+          <File Id="ShackletonExe" KeyPath="yes" Name="shackleton.exe"
+              Source="build\windows\runner\Release\shackleton.exe" />
+        </Component>
+        <Component Guid="*" Id="DllComponent1">
+          <File Id="Dll1" KeyPath="yes" Name="flutter_windows.dll"
+              Source="build\windows\runner\Release\flutter_windows.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent2">
+          <File Id="Dll2" KeyPath="yes"
+              Name="irondash_engine_context_plugin.dll" Source="build\windows\runner\Release\irondash_engine_context_plugin.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent3">
+          <File Id="Dll3" KeyPath="yes" Name="pdfium.dll" Source="build\windows\runner\Release\pdfium.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent4">
+          <File Id="Dll4" KeyPath="yes"
+              Name="super_native_extensions.dll" Source="build\windows\runner\Release\super_native_extensions.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent5">
+          <File Id="Dll5" KeyPath="yes"
+              Name="super_native_extensions_plugin.dll" Source="build\windows\runner\Release\super_native_extensions_plugin.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent6">
+          <File Id="Dll6" KeyPath="yes"
+              Name="syncfusion_pdfviewer_windows_plugin.dll" Source="build\windows\runner\Release\syncfusion_pdfviewer_windows_plugin.dll" />
+        </Component>
+        <Component Guid="*" Id="DllComponent7">
+          <File Id="Dll7" KeyPath="yes"
+              Name="url_launcher_windows_plugin.dll" Source="build\windows\runner\Release\url_launcher_windows_plugin.dll" />
+        </Component>
+        <!-- Add more components for each DLL -->
       </Directory>
     </Directory>
-  </Fragment>
+  </Directory>
+
+  <Directory Id="ProgramMenuFolder">
+    <Directory Id="ProgramMenuSubfolder" Name="Example">
+      <Component Id="ApplicationShortcuts" Guid="ef9bde79-5de0-48a1-bdde-77097a7bf755">
+        <Shortcut Id="ApplicationShortcut1" Name="Shackleton" Description="A metadata aware file explorer"
+            Target="[INSTALLDIR]shackleton.exe" WorkingDirectory="INSTALLDIR"/>
+        <RegistryValue Root="HKCU" Key="Software\SharpBlue\Shackleton"
+            Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+        <RemoveFolder Id="ProgramMenuSubfolder" On="uninstall"/>
+      </Component>
+    </Directory>
+  </Directory>
 </Wix>
 
