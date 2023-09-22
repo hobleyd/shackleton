@@ -201,7 +201,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         ],
         if (!entity.editing) ...[
           Expanded(
-            child: Text(entity.path.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(entity.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
         if (showDetails) ...[
