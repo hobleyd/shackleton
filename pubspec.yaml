@@ -24,7 +24,6 @@ dependencies:
   intl: ^0.18.1
   json_annotation: ^4.8.1
   logger: ^2.0.1
-  msix: ^3.16.2
   path: ^1.8.3
   path_provider: ^2.1.0
   process_run: ^0.13.1
@@ -46,6 +45,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   json_serializable: ^6.7.1
+  msix: ^3.16.2
   riverpod_lint: ^2.0.1
   riverpod_generator: ^2.2.6
 
