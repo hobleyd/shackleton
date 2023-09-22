@@ -32,7 +32,7 @@ class FileOfInterest implements Comparable {
   get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
   get isImage => imageExtensions.contains(extension);
-  get isHidden => entity.path.split('/').last.startsWith('.');
+  get isHidden => name.startsWith('.');
   get isMetadataSupported => imageExtensions.contains(extension);
   get isVideo => videoExtensions.contains(extension);
   get name => basename(path);
