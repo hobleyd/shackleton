@@ -24,6 +24,7 @@ dependencies:
   intl: ^0.18.1
   json_annotation: ^4.8.1
   logger: ^2.0.1
+  msix: ^3.16.2
   path: ^1.8.3
   path_provider: ^2.1.0
   process_run: ^0.13.1
@@ -64,3 +65,10 @@ flutter_launcher_icons:
   ios: false
   web:
     generate: false
+
+msix_config:
+  display_name: Shackleton
+  publisher_display_name: SharpBlue
+  identity_name: au.com.sharpblue.shackleton
+  install_certificate: false
+  logo_path: assets\explorer.png
