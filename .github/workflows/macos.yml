@@ -30,3 +30,4 @@ jobs:
        with:
          files: 'shackleton-${{ env.VERSION }}.dmg'
          name: 'shackleton-${{ env.VERSION }}.dmg'
+         tag_name: ${{ env.VERSION }}

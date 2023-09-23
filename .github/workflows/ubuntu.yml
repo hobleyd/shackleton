@@ -32,3 +32,4 @@ jobs:
         with:
           name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
           files: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+          tag_name: ${{ env.VERSION }}
