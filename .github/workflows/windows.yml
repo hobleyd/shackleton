@@ -27,6 +27,6 @@ jobs:
      - run: dart run msix:create --certificate-path sharpblue.txt
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
-         with:
-           name: 'shackleton-${{ env.VERSION }}.msix'
-           path: build/windows/runner/Release/shackleton.msix
+       with:
+         name: 'shackleton-${{ env.VERSION }}.msix'
+         path: build/windows/runner/Release/shackleton.msix

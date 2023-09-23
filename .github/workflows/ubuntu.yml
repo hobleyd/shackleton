@@ -29,6 +29,6 @@ jobs:
           VERSION: ${{ env.VERSION }}
       - name: Create Release
         uses: softprops/action-gh-release@v0.1.15
-          with:
-            name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
-            files: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+        with:
+          name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+          files: Shackleton-${{ env.VERSION }}-x86_64.AppImage
