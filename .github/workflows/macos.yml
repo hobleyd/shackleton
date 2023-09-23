@@ -25,7 +25,8 @@ jobs:
        with:
          name: 'shackleton-${{ env.VERSION }}'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
-     - uses: actions/upload-artifact@v1
-       with:
-         name: 'shackleton-${{ env.VERSION }}.dmg'
-         path: 'shackleton-${{ env.VERSION }}.dmg'
+     - name: Create Release
+       uses: softprops/action-gh-release@v0.1.15
+         with:
+             files: 'shackleton-${{ env.VERSION }}.dmg'
+             name: 'shackleton-${{ env.VERSION }}.dmg'

@@ -70,5 +70,4 @@ msix_config:
   display_name: Shackleton
   publisher_display_name: SharpBlue
   identity_name: au.com.sharpblue.shackleton
-  install_certificate: false
   logo_path: assets\explorer.png

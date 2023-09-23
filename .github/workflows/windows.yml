@@ -11,14 +11,22 @@ jobs:
        with:
          channel: 'stable'
          architecture: x64
+     - name: Get the app version
+       id: get_version
+       run: |
+         choco install yq
+         echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+     - name: Load certificate
+       shell: powershell
+       run: |
+         echo ${{ secrets.certificate }} | openssl enc -base64 -d -out sharpblue.txt
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
-     - run: dart run msix:create
-
-     # Upload generated dmg to the artifacts.
-     - uses: actions/upload-artifact@v1
-       with:
-        name: shackleton.msix
-        path: build/windows/runner/Release/shackleton.msix
+     - run: dart run msix:create --certificate-path sharpblue.txt
+     - name: Create Release
+       uses: softprops/action-gh-release@v0.1.15
+         with:
+           name: 'shackleton-${{ env.VERSION }}.msix'
+           path: build/windows/runner/Release/shackleton.msix

@@ -27,8 +27,8 @@ jobs:
         env:
           UPDATE_INFO: gh-releases-zsync|AppImageCrafters|appimage-demo-qt5|latest|*x86_64.AppImage.zsync
           VERSION: ${{ env.VERSION }}
-      # Upload generated dmg to the artifacts.
-      - uses: actions/upload-artifact@v1
-        with:
-          name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
-          path: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+      - name: Create Release
+        uses: softprops/action-gh-release@v0.1.15
+          with:
+            name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+            files: Shackleton-${{ env.VERSION }}-x86_64.AppImage
