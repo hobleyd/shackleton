@@ -11,6 +11,12 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+      - name: Bump version and push tag
+        uses: laputansoft/github-tag-action@v4.6
+        with:
+          github_token: ${{ env.github-token }}
+          tag:
+            ${{ env.VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'

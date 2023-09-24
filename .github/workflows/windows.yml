@@ -16,10 +16,16 @@ jobs:
        run: |
          choco install yq
          echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+     - name: Bump version and push tag
+       uses: laputansoft/github-tag-action@v4.6
+       with:
+         github_token: ${{ env.github-token }}
+         tag:
+           ${{ env.VERSION }}
      - name: Load certificate
        shell: powershell
        run: |
-         echo ${{ secrets.certificate }} | openssl enc -base64 -d -out sharpblue.txt
+         echo ${{ secrets.certificate }} | openssl enc -base64 -d -out build/windows/runner/Release/sharpblue.txt
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
