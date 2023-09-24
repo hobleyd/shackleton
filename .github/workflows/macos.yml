@@ -12,12 +12,10 @@ jobs:
        id: get_version
        run: |
          echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
-     - name: Bump version and push tag
-       uses: laputansoft/github-tag-action@v4.6
+     - name: "Push tag from pubspec.yaml"
+       uses: EndBug/latest-tag@latest
        with:
-         github_token: ${{ env.github-token }}
-         tag:
-           ${{ env.VERSION }}
+         tag-name: ${{ env.VERSION }}
      - uses: subosito/flutter-action@v2
        with:
          channel: 'stable'
