@@ -32,6 +32,6 @@ jobs:
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
-         name: 'shackleton-${{ env.VERSION }}.msix'
+         name: 'shackleton-${{ env.VERSION }}'
          files: build/windows/runner/Release/shackleton.msix
          tag_name: ${{ env.VERSION }}

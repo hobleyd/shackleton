@@ -33,5 +33,5 @@ jobs:
        uses: softprops/action-gh-release@v0.1.15
        with:
          files: 'shackleton-${{ env.VERSION }}.dmg'
-         name: 'shackleton-${{ env.VERSION }}.dmg'
+         name: 'shackleton-${{ env.VERSION }}'
          tag_name: ${{ env.VERSION }}
