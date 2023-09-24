@@ -310,15 +310,17 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     List<FileOfInterest> entityList = List.from(entities);
     entityList.removeWhere((element) => !settings.showHiddenFiles && element.isHidden == true);
 
+    List<GlobalKey> keys = [];
     return ListView.builder(
         itemCount: entityList.length,
         itemBuilder: (context, index) {
           FileOfInterest entity = entityList[index];
-
+          keys.add(GlobalKey<DragItemWidgetState>());
           return InkWell(
               onTap: () => _selectEntry(entityList, index),
               onDoubleTap: () => entity.openFile(),
               child: DragItemWidget(
+                key: keys[index],
                 allowedOperations: () => [DropOperation.move],
                 canAddItemToExistingSession: true,
                 dragItemProvider: (request) async {
@@ -328,7 +330,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                   return item;
                 },
                 child: DraggableWidget(
-                        child: Container(
+                  dragItemsProvider: (context) =>
+                    // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
+                    // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
+                    // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
+                    selectedEntities.map((e) => keys[entityList.indexOf(e)].currentState! as DragItemWidgetState).toList(),
+                  child: Container(
                           color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
                           child: _getEntityWidget(context, entity, settings.detailedView)
                         ),
@@ -369,21 +376,22 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
   Future<void> _onPerformDrop(PerformDropEvent event, {required FileOfInterest destination}) async {
     if (event.session.items.isNotEmpty) {
-      final item = event.session.items.first;
-      final reader = item.dataReader!;
-      if (reader.canProvide(Formats.fileUri)) {
-        reader.getValue(Formats.fileUri, (uri) async {
-          if (uri != null) {
-            Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
+      for (var item in event.session.items) {
+        final reader = item.dataReader!;
+        if (reader.canProvide(Formats.fileUri)) {
+          reader.getValue(Formats.fileUri, (uri) async {
+            if (uri != null) {
+              Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
 
-            final type = FileSystemEntity.typeSync(Uri.decodeComponent(uri.path));
-            var _ = switch (type) {
-              FileSystemEntityType.file      => FileOfInterest(entity: File.fromUri(uri)).moveFile(Uri.decodeComponent(toFileUri.path)),
-              FileSystemEntityType.directory => FileOfInterest(entity: Directory.fromUri(uri)).moveDirectory(Uri.decodeComponent(toFileUri.path)),
-              _                              => FileOfInterest(entity: Link.fromUri(uri)).moveLink(Uri.decodeComponent(toFileUri.path)),
-            };
-          }
-        });
+              final type = FileSystemEntity.typeSync(Uri.decodeComponent(uri.path));
+              var _ = switch (type) {
+                FileSystemEntityType.file => FileOfInterest(entity: File.fromUri(uri)).moveFile(Uri.decodeComponent(toFileUri.path)),
+                FileSystemEntityType.directory => FileOfInterest(entity: Directory.fromUri(uri)).moveDirectory(Uri.decodeComponent(toFileUri.path)),
+                _ => FileOfInterest(entity: Link.fromUri(uri)).moveLink(Uri.decodeComponent(toFileUri.path)),
+              };
+            }
+          });
+        }
       }
     }
   }
