@@ -23,12 +23,12 @@ jobs:
      - name: Load certificate
        shell: powershell
        run: |
-         echo ${{ secrets.certificate }} | openssl enc -base64 -d -out build/windows/runner/Release/sharpblue.txt
+         echo ${{ secrets.certificate }} | openssl enc -base64 -d -out sharpblue.txt
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
-     - run: dart run msix:create --certificate-path build/windows/runner/Release/sharpblue.txt
+     - run: dart run msix:create --certificate-path sharpblue.txt
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
