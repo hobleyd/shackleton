@@ -12,7 +12,7 @@ jobs:
        id: get_version
        run: |
          echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
-     - name: "Push tag from pubspec.yaml"
+     - name: "Push version tag from pubspec.yaml"
        uses: EndBug/latest-tag@latest
        with:
          tag-name: ${{ env.VERSION }}

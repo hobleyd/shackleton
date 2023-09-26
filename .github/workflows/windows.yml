@@ -6,14 +6,6 @@ jobs:
  build:
    runs-on: windows-latest
    steps:
-     - name: Restore certificate for app signing
-       uses: kitek/decode-base64-into-file-action@1.0
-       with:
-         encoded-value: ${{ secrets.CERTIFICATE }}
-         destination-file: sharpblue.pfx
-     - shell: powershell
-       run: |
-         dir sharpblue.pfx
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
        with:
@@ -24,7 +16,7 @@ jobs:
        run: |
          choco install yq
          echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
-     - name: "Push tag from pubspec.yaml"
+     - name: "Push version tag from pubspec.yaml"
        uses: EndBug/latest-tag@latest
        with:
          tag-name: ${{ env.VERSION }}
@@ -32,7 +24,12 @@ jobs:
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
-     - run: dart run msix:create --certificate-path .\sharpblue.pfx
+     - name: Restore certificate for app signing
+       uses: kitek/decode-base64-into-file-action@1.0
+       with:
+         encoded-value: ${{ secrets.CERTIFICATE }}
+         destination-file: sharpblue.pfx
+     - run: dart run msix:create --certificate-path sharpblue.pfx
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
