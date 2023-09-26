@@ -24,13 +24,13 @@ jobs:
        shell: powershell
        run: |
          pwd
-         echo ${{ secrets.certificate }} | base64 -d -o sharpblue.pfx
+         echo ${{ secrets.certificate }} | base64 -d -out sharpblue.pfx
          dir sharpblue.pfx
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
-     - run: dart run msix:create --certificate-path .\sharpblue.txt
+     - run: dart run msix:create --certificate-path .\sharpblue.pfx
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
