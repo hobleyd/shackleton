@@ -6,9 +6,12 @@ jobs:
  build:
    runs-on: windows-latest
    steps:
-     - shell: powershell
+     - name: Load certificate
+       shell: powershell
        run: |
-         echo ${{ secrets.CERTIFICATE }}
+         pwd
+         echo ${{ secrets.CERTIFICATE }} | base64 -d > sharpblue.pfx
+         dir sharpblue.pfx
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
        with:
@@ -23,12 +26,6 @@ jobs:
        uses: EndBug/latest-tag@latest
        with:
          tag-name: ${{ env.VERSION }}
-     - name: Load certificate
-       shell: powershell
-       run: |
-         pwd
-         echo ${{ secrets.CERTIFICATE }} | base64 -d > sharpblue.pfx
-         dir sharpblue.pfx
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
