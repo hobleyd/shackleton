@@ -10,7 +10,9 @@ jobs:
        shell: powershell
        run: |
          pwd
-         echo ${{ secrets.CERTIFICATE }} | base64 -d > sharpblue.pfx
+         echo ${{ secrets.CERTIFICATE }} > sharpblue.txt
+         cat sharpblue.txt
+         cat sharpblue.txt | base64 -d > sharpblue.pfx
          dir sharpblue.pfx
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
