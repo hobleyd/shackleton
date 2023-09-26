@@ -23,7 +23,9 @@ jobs:
      - name: Load certificate
        shell: powershell
        run: |
+         pwd
          echo ${{ secrets.certificate }} | openssl enc -base64 -d -out sharpblue.txt
+         dir
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
