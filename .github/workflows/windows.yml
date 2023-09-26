@@ -6,13 +6,13 @@ jobs:
  build:
    runs-on: windows-latest
    steps:
-     - name: Load certificate
-       shell: powershell
+     - name: Restore certificate for app signing
+       uses: kitek/decode-base64-into-file-action@1.0
+       with:
+         encoded-value: ${{ secrets.CERTIFICATE }}
+         destination-file: sharpblue.pfx
+     - shell: powershell
        run: |
-         pwd
-         echo ${{ secrets.CERTIFICATE }} > sharpblue.txt
-         cat sharpblue.txt
-         cat sharpblue.txt | base64 -d > sharpblue.pfx
          dir sharpblue.pfx
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
