@@ -6,11 +6,12 @@ jobs:
  build:
    runs-on: windows-latest
    steps:
-     shell: powershell
-     run: |
-       pwd
-       base64 --help
-       dir
+     - name: load cert
+       shell: powershell
+       run: |
+         pwd
+         base64 --help
+         dir
      - uses: actions/checkout@v3
      - uses: subosito/flutter-action@v2
        with:
