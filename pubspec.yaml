@@ -67,7 +67,7 @@ flutter_launcher_icons:
     generate: false
 
 msix_config:
-  certificate_password:
+  certificate_password: ""
   display_name: Shackleton
   identity_name: au.com.sharpblue.shackleton
   logo_path: assets\explorer.png
