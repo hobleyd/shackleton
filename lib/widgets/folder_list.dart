@@ -234,7 +234,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   Widget _getFolderSettingsIcons(FolderUISettings settings) {
     var folderNotifier = ref.read(folderSettingsRepositoryProvider(widget.path.path).notifier);
     return showFolderButtons
-        ? Row(
+        ? Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
               children: [
                 const Spacer(),
                 IconButton(
@@ -268,7 +270,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                 ),
                 const Spacer(),
               ],
-            )
+            ),
+          )
         : const SizedBox(height: 1);
   }
 
