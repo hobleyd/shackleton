@@ -8,6 +8,7 @@ import '../models/file_of_interest.dart';
 import '../providers/selected_entities.dart';
 import 'entity_context_menu.dart';
 import 'navigation_favourites.dart';
+import 'navigation_mounted_drives.dart';
 import 'navigation_space.dart';
 import 'navigation_tags.dart';
 
@@ -53,6 +54,13 @@ class _Navigation extends ConsumerState<Navigation> {
                       const NavigationSpace(),
                       Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
                       const NavigationFavourites(),
+                      if (Platform.isMacOS || Platform.isLinux) ...[
+                        const SizedBox(height: 10),
+                        if (Platform.isMacOS)
+                          NavigationMountedDrives(mountPoint: Directory('/Volumes')),
+                        if (Platform.isLinux)
+                          NavigationMountedDrives(mountPoint: Directory('/media')),
+                      ],
                       const SizedBox(height: 10),
                       const NavigationTags(),
                     ],
