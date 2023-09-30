@@ -89,11 +89,11 @@ class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
 }
 
 /// @nodoc
-abstract class _$$_FolderUISettingsCopyWith<$Res>
+abstract class _$$FolderUISettingsImplCopyWith<$Res>
     implements $FolderUISettingsCopyWith<$Res> {
-  factory _$$_FolderUISettingsCopyWith(
-          _$_FolderUISettings value, $Res Function(_$_FolderUISettings) then) =
-      __$$_FolderUISettingsCopyWithImpl<$Res>;
+  factory _$$FolderUISettingsImplCopyWith(_$FolderUISettingsImpl value,
+          $Res Function(_$FolderUISettingsImpl) then) =
+      __$$FolderUISettingsImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
@@ -106,11 +106,11 @@ abstract class _$$_FolderUISettingsCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_FolderUISettingsCopyWithImpl<$Res>
-    extends _$FolderUISettingsCopyWithImpl<$Res, _$_FolderUISettings>
-    implements _$$_FolderUISettingsCopyWith<$Res> {
-  __$$_FolderUISettingsCopyWithImpl(
-      _$_FolderUISettings _value, $Res Function(_$_FolderUISettings) _then)
+class __$$FolderUISettingsImplCopyWithImpl<$Res>
+    extends _$FolderUISettingsCopyWithImpl<$Res, _$FolderUISettingsImpl>
+    implements _$$FolderUISettingsImplCopyWith<$Res> {
+  __$$FolderUISettingsImplCopyWithImpl(_$FolderUISettingsImpl _value,
+      $Res Function(_$FolderUISettingsImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -121,7 +121,7 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
     Object? detailedView = null,
     Object? showHiddenFiles = null,
   }) {
-    return _then(_$_FolderUISettings(
+    return _then(_$FolderUISettingsImpl(
       entity: null == entity
           ? _value.entity
           : entity // ignore: cast_nullable_to_non_nullable
@@ -144,8 +144,8 @@ class __$$_FolderUISettingsCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_FolderUISettings implements _FolderUISettings {
-  const _$_FolderUISettings(
+class _$FolderUISettingsImpl implements _FolderUISettings {
+  const _$FolderUISettingsImpl(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
       required this.entity,
       required this.width,
@@ -154,8 +154,8 @@ class _$_FolderUISettings implements _FolderUISettings {
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
       required this.showHiddenFiles});
 
-  factory _$_FolderUISettings.fromJson(Map<String, dynamic> json) =>
-      _$$_FolderUISettingsFromJson(json);
+  factory _$FolderUISettingsImpl.fromJson(Map<String, dynamic> json) =>
+      _$$FolderUISettingsImplFromJson(json);
 
   @override
   @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
@@ -178,7 +178,7 @@ class _$_FolderUISettings implements _FolderUISettings {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_FolderUISettings &&
+            other is _$FolderUISettingsImpl &&
             (identical(other.entity, entity) || other.entity == entity) &&
             (identical(other.width, width) || other.width == width) &&
             (identical(other.detailedView, detailedView) ||
@@ -195,12 +195,13 @@ class _$_FolderUISettings implements _FolderUISettings {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_FolderUISettingsCopyWith<_$_FolderUISettings> get copyWith =>
-      __$$_FolderUISettingsCopyWithImpl<_$_FolderUISettings>(this, _$identity);
+  _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
+      __$$FolderUISettingsImplCopyWithImpl<_$FolderUISettingsImpl>(
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_FolderUISettingsToJson(
+    return _$$FolderUISettingsImplToJson(
       this,
     );
   }
@@ -214,10 +215,10 @@ abstract class _FolderUISettings implements FolderUISettings {
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
       required final bool detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool showHiddenFiles}) = _$_FolderUISettings;
+      required final bool showHiddenFiles}) = _$FolderUISettingsImpl;
 
   factory _FolderUISettings.fromJson(Map<String, dynamic> json) =
-      _$_FolderUISettings.fromJson;
+      _$FolderUISettingsImpl.fromJson;
 
   @override
   @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
@@ -232,6 +233,6 @@ abstract class _FolderUISettings implements FolderUISettings {
   bool get showHiddenFiles;
   @override
   @JsonKey(ignore: true)
-  _$$_FolderUISettingsCopyWith<_$_FolderUISettings> get copyWith =>
+  _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
