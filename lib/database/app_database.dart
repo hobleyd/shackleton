@@ -11,7 +11,7 @@ import '../repositories/folder_settings_repository.dart';
 
 part 'app_database.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AppDatabase appDb(AppDbRef ref) {
   return AppDatabase();
 }
