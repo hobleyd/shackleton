@@ -40,7 +40,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   @override
   Widget build(BuildContext context) {
     entities = ref.watch(folderContentsProvider(widget.path));
-    var entitiesNotifier = ref.read(folderContentsProvider(widget.path).notifier);
 
     return Consumer(builder: (context, watch, child) {
       var folderSettings = ref.watch(folderSettingsRepositoryProvider(widget.path.path));
@@ -100,7 +99,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
                       child: Column(
                         children: [
-                          _getFolderColumnHeaders(context, entitiesNotifier, folderSettings),
+                          _getFolderColumnHeaders(context, folderSettings),
                           Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
                           Expanded(child: _getListView(folderSettings)),
                           _getFolderSettingsIcons(folderSettings),
@@ -275,7 +274,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         : const SizedBox(height: 1);
   }
 
-  Widget _getFolderColumnHeaders(BuildContext context, entitiesNotifier, folderSettings) {
+  Widget _getFolderColumnHeaders(BuildContext context, folderSettings) {
+    var entitiesNotifier = ref.read(folderContentsProvider(widget.path).notifier);
+
     Widget sortIcon = entitiesNotifier.getSortOrder() == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
 
     return Row(children: [
@@ -313,12 +314,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     List<FileOfInterest> entityList = List.from(entities);
     entityList.removeWhere((element) => !settings.showHiddenFiles && element.isHidden == true);
 
-    List<GlobalKey> keys = [];
+    List<GlobalKey?> keys = List.filled(entityList.length, null, growable: false);
     return ListView.builder(
         itemCount: entityList.length,
         itemBuilder: (context, index) {
           FileOfInterest entity = entityList[index];
-          keys.add(GlobalKey<DragItemWidgetState>());
+          keys[index] = GlobalKey<DragItemWidgetState>();
           return InkWell(
               onTap: () => _selectEntry(entityList, index),
               onDoubleTap: () => entity.openFile(),
@@ -333,11 +334,21 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                   return item;
                 },
                 child: DraggableWidget(
-                  dragItemsProvider: (context) =>
+                  dragItemsProvider: (context) {
                     // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
                     // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
                     // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
-                    selectedEntities.map((e) => keys[entityList.indexOf(e)].currentState! as DragItemWidgetState).toList(),
+                    List<DragItemWidgetState> dragItems = [];
+                    for (var e in selectedEntities) {
+                      var itemIndex = entityList.indexOf(e);
+                      // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
+                      // folder; so double check that the index exists to avoid an Exception.
+                      if (itemIndex != -1) {
+                        dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+                      }
+                    }
+                    return dragItems;
+                  },
                   child: Container(
                           color: selectedEntities.contains(entity) ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
                           child: _getEntityWidget(context, entity, settings.detailedView)
