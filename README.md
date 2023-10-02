@@ -15,3 +15,24 @@ External Dependencies
 there is a Flutter package to do it in code. On MacOS, I install this using homebrew.
 - Rust is required to compile Shackleton due to downstream dependencies.
 
+MacOS
+=====
+```
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+$ brew install android-studio
+$ brew install exiftool
+$ brew install rustup
+$ rustup-init
+```
+
+Windows
+=======
+- Download the .zip file from https://exiftool.org/index.html; extract it and put the .exe in your PATH somewhere.
+```
+```
+
+Fedora
+=====
+```
+
+```
