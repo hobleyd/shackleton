@@ -17,7 +17,7 @@ class AppSettingsRepository extends _$AppSettingsRepository {
         create table if not exists $tableName(
           id                integer primary key, 
           libraryPath       text    not null,
-          fontSize          int     not null,
+          fontSize          int     not null
           );
           ''';
 

@@ -14,9 +14,10 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
   static const String tableName = 'folder_settings';
   static const String createFolderSettings = '''
         create table if not exists $tableName(
-          entity       text    primary key,
-          width        int     not null,
-          detailView   int     not null,
+          entity          text    primary key,
+          width           int     not null,
+          detailedView    int     not null,
+          showHiddenFiles int     not null,
           unique (entity) on conflict ignore);
         ''';
   static const String folderSettingsIndex = 'create index ${tableName}_idx on $tableName(entity);';

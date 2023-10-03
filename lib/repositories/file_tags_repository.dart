@@ -15,7 +15,6 @@ class FileTagsRepository extends _$FileTagsRepository {
   late AppDatabase _database;
   final _lock = Lock();
 
-  static const String tableName = 'app_settings';
   static const String createFiles = '''
         create table if not exists files(
           id integer primary key,

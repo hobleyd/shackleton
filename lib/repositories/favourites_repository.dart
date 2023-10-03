@@ -20,7 +20,7 @@ class FavouritesRepository extends _$FavouritesRepository {
           unique (path) on conflict ignore);
           ''';
 
-  static const String createFavouritesIndex = 'create index files_idx on favourites(path);';
+  static const String createFavouritesIndex = 'create index ${tableName}_idx on $tableName(path);';
 
   @override
   Future<List<Favourite>> build() async {
