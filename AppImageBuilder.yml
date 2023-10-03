@@ -11,7 +11,7 @@ AppDir:
   app_info:
     id: au.com.sharpblue.shackleton
     name: Shackleton
-    icon: explorer
+    icon: explorer.png
     version: "{{VERSION}}"
     exec: shackleton
     exec_args: $@
@@ -21,24 +21,9 @@ AppDir:
     allow_unauthenticated: true
     sources:
     - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy main restricted
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-updates main restricted
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy universe
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-updates universe
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy multiverse
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-updates multiverse
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-backports main restricted
-        universe multiverse
-    - sourceline: deb http://security.ubuntu.com/ubuntu jammy-security main restricted
-    - sourceline: deb http://security.ubuntu.com/ubuntu jammy-security universe
-    - sourceline: deb http://security.ubuntu.com/ubuntu jammy-security multiverse
-    - sourceline: 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable
-        main # disabled on upgrade to jammy'
-    - sourceline: deb https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu/ jammy
-        main
-    - sourceline: deb http://repo.netdata.cloud/repos/edge/ubuntu/ jammy/
-    - sourceline: deb http://repo.netdata.cloud/repos/repoconfig/ubuntu/ jammy/
     include:
     - libc6:amd64
+    - libsqlite3-dev:amd64
   files:
     include: []
     exclude:
