@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/providers/folder_path.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
@@ -91,8 +93,13 @@ class FolderContents extends _$FolderContents {
           break;
         case FileSystemEvent.delete:
         case FileSystemEvent.move:
+          var folderPaths = ref.read(folderPathProvider.notifier);
           var folderEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
           var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
+
+          if (folderPaths.contains(foi)) {
+            folderPaths.removeFolder(foi);
+          }
 
           if (folderEntities.contains(foi)) {
             folderEntities.remove(foi);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../misc/utils.dart';
+import '../models/file_of_interest.dart';
 
 part 'folder_path.g.dart';
 
@@ -18,8 +19,8 @@ class FolderPath extends _$FolderPath {
   }
 
   void addFolder(Directory clickedPath, Directory newPath) {
+    // Don't trigger a rebuild if the folder is already visible.
     if (state.contains(newPath)) {
-      // Don't trigger a rebuild if the folder is already visible.
       return;
     }
 
@@ -29,6 +30,23 @@ class FolderPath extends _$FolderPath {
       state = [
         ...state.sublist(0, state.indexOf(clickedPath) + 1),
         newPath,
+      ];
+    }
+  }
+
+  bool contains(FileOfInterest folder) {
+    try {
+      state.firstWhere((element) => element.path == folder.path);
+      return true;
+    } on StateError catch (_) {
+      return false;
+    }
+  }
+
+  void removeFolder(FileOfInterest folder) {
+    if (contains(folder)) {
+      state = [
+        ...state.sublist(0, state.indexWhere((element) => element.path == folder.path))
       ];
     }
   }
