@@ -34,7 +34,7 @@ $ sudo dnf install perl-Image-ExifTool
 ```
 #### Ubuntu
 ```
-$ sudo apt install libimage-exiftool-perl
+$ sudo apt install libimage-exiftool-perl libsqlite3-dev
 ```
 
 ### Compilation
