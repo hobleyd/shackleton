@@ -30,7 +30,7 @@ $ rustup-init
 ### Runtime
 #### Fedora
 ```
-$ sudo dnf install perl-Image-ExifTool
+$ sudo dnf install perl-Image-ExifTool sqlite-devel
 ```
 #### Ubuntu
 ```
