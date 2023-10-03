@@ -69,9 +69,8 @@ flutter_launcher_icons:
 msix_config:
   build_windows: false
   capabilities: broadFileSystemAccess
-  certificate_password: sharpblue
   display_name: Shackleton
   identity_name: au.com.sharpblue.shackleton
-  install_certificate: true
+  install_certificate: false
   logo_path: assets\explorer.png
   publisher_display_name: SharpBlue
