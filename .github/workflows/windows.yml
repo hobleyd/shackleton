@@ -11,11 +11,8 @@ jobs:
        with:
          channel: 'stable'
          architecture: x64
-     - name: Get the app version
-       id: get_version
-       run: |
-         choco install yq
-         echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+     - run: choco install yq
+     - run: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
      - name: "Push version tag from pubspec.yaml"
        uses: EndBug/latest-tag@latest
        with:
