@@ -85,6 +85,10 @@ class AppDatabase {
     _cachedStorage.close();
   }
 
+  void delete(String table) {
+    _cachedStorage.delete(table);
+  }
+
   Future<int> insert(String table, Map<String, dynamic> rows, { ConflictAlgorithm? conflictAlgorithm }) async {
     return _cachedStorage.insert(table, rows, conflictAlgorithm: conflictAlgorithm);
   }
