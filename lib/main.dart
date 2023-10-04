@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shackleton/repositories/app_settings_repository.dart';
 
 import 'database/app_database.dart';
 import 'misc/provider_logger.dart';
@@ -27,6 +28,9 @@ class ShackletonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get the Fontsize from the database.
+    ref.watch(appSettingsRepositoryProvider);
+    
     return MaterialApp(
       title: 'Shackleton',
       home: const Shackleton(),

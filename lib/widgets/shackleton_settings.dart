@@ -132,7 +132,6 @@ class ShackletonSettings extends ConsumerWidget {
     }
     size += delta;
 
-    ref.read(shackletonThemeProvider.notifier).setFontSize(size.toDouble());
     ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(fontSize: size));
     return true;
   }
