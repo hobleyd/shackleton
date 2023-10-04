@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'database/app_database.dart';
 import 'misc/provider_logger.dart';
-import 'providers/theme.dart';
+import 'providers/shackleton_theme.dart';
 import 'widgets/shackleton.dart';
 
 Future<void> openDatabase() async {
@@ -30,7 +30,7 @@ class ShackletonApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Shackleton',
       home: const Shackleton(),
-      theme: ref.watch(themeProvider).theme,
+      theme: ref.watch(shackletonThemeProvider),
     );
   }
 }

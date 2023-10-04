@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shackleton/providers/shackleton_theme.dart';
 
 import '../models/app_settings.dart';
 import '../repositories/app_settings_repository.dart';
@@ -14,8 +15,6 @@ class ShackletonSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var appSettingsRepository = ref.read(appSettingsRepositoryProvider.notifier);
-
     // Clear DB Cache
     // DB Statistics
     return Consumer(builder: (context, watch, child) {
@@ -52,7 +51,7 @@ class ShackletonSettings extends ConsumerWidget {
                             ),
                             keyboardType: TextInputType.text,
                             maxLines: 1,
-                            onSubmitted: (path) => appSettingsRepository.updateSettings(appSettings.copyWith(libraryPath: path)),
+                            onSubmitted: (path) => ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(libraryPath: path)),
                             style: Theme.of(context).textTheme.bodySmall),
                       ),
                     ],
@@ -73,7 +72,7 @@ class ShackletonSettings extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         splashRadius: 0.0001,
                         tooltip: 'Decrease font size...',
-                        onPressed: () => _changeFontSize(appSettingsRepository, appSettings, -1),
+                        onPressed: () => _changeFontSize(ref, appSettings, -1),
                       ),
                       const SizedBox(width: 10),
                       SizedBox(
@@ -86,7 +85,7 @@ class ShackletonSettings extends ConsumerWidget {
                           ),
                           keyboardType: TextInputType.text,
                           maxLines: 1,
-                          onSubmitted: (_) => _changeFontSize(appSettingsRepository, appSettings, 0),
+                          onSubmitted: (_) => _changeFontSize(ref, appSettings, 0),
                           style: Theme.of(context).textTheme.bodySmall,
                           textAlign: TextAlign.center,),
                       ),
@@ -98,7 +97,7 @@ class ShackletonSettings extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         splashRadius: 0.0001,
                         tooltip: 'Increase font size...',
-                        onPressed: () => _changeFontSize(appSettingsRepository, appSettings, 1),
+                        onPressed: () => _changeFontSize(ref, appSettings, 1),
                       ),
                     ],
                   ),
@@ -126,14 +125,15 @@ class ShackletonSettings extends ConsumerWidget {
     });
   }
 
-  bool _changeFontSize(var appSettingsRepository, AppSettings appSettings, int delta) {
+  bool _changeFontSize(WidgetRef ref, AppSettings appSettings, int delta) {
     int? size = int.tryParse(fontSizeController.text);
     if (size == null) {
       return false;
     }
     size += delta;
 
-    appSettingsRepository.updateSettings(appSettings.copyWith(fontSize: size));
+    ref.read(shackletonThemeProvider.notifier).setFontSize(size.toDouble());
+    ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(fontSize: size));
     return true;
   }
 
