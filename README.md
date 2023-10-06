@@ -22,19 +22,28 @@ $ rustup-init
 ```
 
 ## Windows
-- Download the .zip file from https://exiftool.org/index.html; extract it and put the .exe in your PATH somewhere.
+### Runtime
+Run a Powershell as an Administrator
 ```
+> Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+> choco install exiftool
 ```
+### Compilation
+Run a Powershell as an Administrator
+```
+> choco install rust
+```
+Then go to https://developer.android.com/studio/#downloads and download Android Studio.
 
 ## Linux
 ### Runtime
 #### Fedora
 ```
-$ sudo dnf install perl-Image-ExifTool sqlite-devel
+$ sudo dnf install perl-Image-ExifTool
 ```
 #### Ubuntu
 ```
-$ sudo apt install libimage-exiftool-perl libsqlite3-dev
+$ sudo apt install libimage-exiftool-perl
 ```
 
 ### Compilation
