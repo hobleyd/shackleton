@@ -51,7 +51,7 @@ class AppDatabase {
   Future<String> _getDatabasePath() async {
     String database = "";
     if (Platform.isWindows) {
-      database = Platform.environment['APPDATA']!;
+      database = path.join(Platform.environment['APPDATA']!, 'Shackleton');
     } else {
       database = path.join(Platform.environment['HOME']!, '.shackleton');
     }

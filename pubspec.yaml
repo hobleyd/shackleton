@@ -45,6 +45,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   json_serializable: ^6.7.1
+  innosetup: ^0.1.3
   msix: ^3.16.2
   riverpod_lint: ^2.0.1
   riverpod_generator: ^2.2.6
@@ -65,12 +66,3 @@ flutter_launcher_icons:
   ios: false
   web:
     generate: false
-
-msix_config:
-  build_windows: false
-  capabilities: broadFileSystemAccess
-  display_name: Shackleton
-  identity_name: au.com.sharpblue.shackleton
-  install_certificate: false
-  logo_path: assets\explorer.png
-  publisher_display_name: SharpBlue

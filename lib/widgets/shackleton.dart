@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/preview_settings.dart';
@@ -25,7 +26,7 @@ class Shackleton extends ConsumerWidget {
 
     return Scaffold(
         appBar: AppBar(
-          title: Text(paths.map((e) => e.path.split('/').last).toList().toString(), style: Theme.of(context).textTheme.labelSmall),
+          title: Text(paths.map((e) => basename(e.path)).toList().toString(), style: Theme.of(context).textTheme.labelSmall),
           actions: <Widget>[
             IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
