@@ -80,7 +80,7 @@ class Metadata extends _$Metadata {
     ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, tags: tags.toSet()));
 
     String tagString = getStringFromTags(tags);
-    if (hasExiftool) {
+    if (hasExiftool && entity.isMetadataSupported) {
       ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', entity.path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         if (output.outText.trim() == '1 image files updated') {
