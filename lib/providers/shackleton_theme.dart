@@ -22,7 +22,7 @@ class ShackletonTheme extends _$ShackletonTheme {
       primarySwatch: Colors.teal,
       splashColor: Colors.blueGrey,
       textTheme: TextTheme(
-        titleSmall:  TextStyle(fontSize: fontSize + 2, fontWeight: FontWeight.w700),
+        titleSmall:  TextStyle(fontSize: fontSize - 2, fontWeight: FontWeight.w700),
         bodyMedium:  TextStyle(fontSize: fontSize + 1, fontWeight: FontWeight.w400),
         labelMedium: TextStyle(fontSize: fontSize + 1, fontWeight: FontWeight.w700),
         bodySmall:   TextStyle(fontSize: fontSize, fontWeight: FontWeight.w400, color: Colors.black),
