@@ -313,6 +313,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
     List<FileOfInterest> entityList = List.from(entities);
     entityList.removeWhere((element) => !settings.showHiddenFiles && element.isHidden == true);
+    entityList.sort();
 
     List<GlobalKey?> keys = List.filled(entityList.length, null, growable: false);
     return ListView.builder(
