@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
@@ -46,31 +47,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return GridView.builder(
-                        itemCount: entities.length,
-                        itemBuilder: (context, i) => GestureDetector(
-                            onTap: () => _selectEntity(entities[i]),
-                            onDoubleTap: () => _previewEntities(entities[i]),
-                            child: EntityPreview(
-                              entity: entities[i],
-                              selectionType: FileType.previewPane,
-                            )),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: switch (constraints.maxWidth) {
-                            < 1024 => 3,
-                            < 2048 => 5,
-                            _ => 7
-                          },
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        padding: const EdgeInsets.only(left: 20, right: 20),
-                        primary: false,
-                      );
-                    },
-                  ),
+                  child: _getGridView(),
                 ),
               ),
             ),
@@ -93,6 +70,63 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     handler.register();
   }
 
+  Widget _getGridView() {
+    var selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
+    List<GlobalKey?> keys = List.filled(entities.length, null, growable: false);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          itemCount: entities.length,
+          itemBuilder: (context, index) {
+            keys[index] = GlobalKey<DragItemWidgetState>();
+
+            return InkWell(
+                onTap: () => _selectEntity(entities[index]),
+                onDoubleTap: () => _previewEntities(entities[index]),
+                child: DragItemWidget(
+                    key: keys[index],
+                    allowedOperations: () => [DropOperation.move],
+                    canAddItemToExistingSession: true,
+                    dragItemProvider: (request) async {
+                      final item = DragItem();
+                      item.add(Formats.fileUri(entities[index].uri));
+                      item.add(Formats.htmlText.lazy(() => entities[index].path));
+                      return item;
+                    },
+                    child: DraggableWidget(
+                      dragItemsProvider: (context) {
+                        // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
+                        // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
+                        // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
+                        List<DragItemWidgetState> dragItems = [];
+                        for (var e in selectedEntities) {
+                          var itemIndex = entities.indexOf(e);
+                          // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
+                          // folder; so double check that the index exists to avoid an Exception.
+                          if (itemIndex != -1) {
+                            dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+                          }
+                        }
+                        return dragItems;
+                      },
+                      child: EntityPreview(
+                        entity: entities[index],
+                        selectionType: FileType.previewPane,
+                      ),
+                    )));
+          },
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: switch (constraints.maxWidth) { < 1024 => 3, < 2048 => 5, _ => 7 },
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          padding: const EdgeInsets.only(left: 20, right: 20),
+          primary: false,
+        );
+      },
+    );
+  }
 
   void _previewEntities(FileOfInterest tappedEntity) {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
