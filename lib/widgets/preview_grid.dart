@@ -104,7 +104,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                           var itemIndex = entities.indexOf(e);
                           // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
                           // folder; so double check that the index exists to avoid an Exception.
-                          if (itemIndex != -1) {
+                          if (itemIndex != -1 && keys[itemIndex] != null) {
                             dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
                           }
                         }
