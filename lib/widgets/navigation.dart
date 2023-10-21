@@ -7,10 +7,10 @@ import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../providers/selected_entities.dart';
 import 'entity_context_menu.dart';
-import 'navigation_favourites.dart';
-import 'navigation_mounted_drives.dart';
-import 'navigation_space.dart';
-import 'navigation_tags.dart';
+import 'navigation/navigation_favourites.dart';
+import 'navigation/navigation_mounted_drives.dart';
+import 'navigation/navigation_space.dart';
+import 'navigation/navigation_tags.dart';
 
 class Navigation extends ConsumerStatefulWidget {
   const Navigation({Key? key,}) : super(key: key);

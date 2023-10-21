@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../database/app_database.dart';
-import '../misc/utils.dart';
-import '../models/entity.dart';
-import '../models/file_of_interest.dart';
-import '../models/tag.dart';
-import '../providers/selected_entities.dart';
-import '../repositories/file_tags_repository.dart';
+import '../../database/app_database.dart';
+import '../../misc/utils.dart';
+import '../../models/entity.dart';
+import '../../models/file_of_interest.dart';
+import '../../models/tag.dart';
+import '../../providers/selected_entities.dart';
+import '../../repositories/file_tags_repository.dart';
 
 class NavigationTags extends ConsumerWidget {
   const NavigationTags({Key? key,}) : super(key: key);

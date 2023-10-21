@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/providers/folder_path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-import '../misc/utils.dart';
-import '../models/favourite.dart';
-import '../repositories/favourites_repository.dart';
+import '../../misc/utils.dart';
+import '../../models/favourite.dart';
+import '../../repositories/favourites_repository.dart';
 
 class NavigationFavourites extends ConsumerStatefulWidget {
   const NavigationFavourites({Key? key,}) : super(key: key);

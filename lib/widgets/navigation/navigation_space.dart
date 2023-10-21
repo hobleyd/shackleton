@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:universal_disk_space/universal_disk_space.dart';
 
-import '../misc/utils.dart';
-import '../providers/disk_size_details.dart';
+import '../../misc/utils.dart';
+import '../../providers/disk_size_details.dart';
 
 class NavigationSpace extends ConsumerWidget {
   const NavigationSpace({Key? key,}) : super(key: key);
