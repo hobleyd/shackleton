@@ -208,6 +208,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           const SizedBox(width: 10),
           SizedBox(width: 120, child: Text(DateFormat('dd MMM yyyy HH:mm').format(entity.stat.modified), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.right),),
         ],
+        const SizedBox(width:10),
       ],
     );
   }
