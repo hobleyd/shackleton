@@ -158,7 +158,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           selectedFiles.add(foi);
         }
       }
-      previewGridSelection.addAll(selectedFiles);
+      previewGridSelection.replaceAll(selectedFiles);
     }
   }
 
