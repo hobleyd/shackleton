@@ -14,7 +14,7 @@ import '../providers/metadata.dart';
 
 const Set<String> documentExtensions = { 'pdf' };
 const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff' };
-const Set<String> videoExtensions = { 'gif' };
+const Set<String> videoExtensions = { 'gif', 'mp4', 'mkv' };
 
 @immutable
 class FileOfInterest implements Comparable {

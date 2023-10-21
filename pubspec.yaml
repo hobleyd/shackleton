@@ -24,6 +24,12 @@ dependencies:
   intl: ^0.18.1
   json_annotation: ^4.8.1
   logger: ^2.0.1
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.3
+  media_kit_libs_video: ^1.0.4
+  media_kit_libs_macos_video: ^1.1.0
+  media_kit_libs_windows_video: ^1.0.5
+  media_kit_libs_linux: ^1.1.0
   path: ^1.8.3
   path_provider: ^2.1.0
   process_run: ^0.13.1

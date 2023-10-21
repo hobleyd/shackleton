@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:intersperse/intersperse.dart';
+import 'package:shackleton/widgets/video_player.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../models/file_of_interest.dart';
@@ -151,6 +152,10 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget _getPreview() {
     if (selectedEntity.extension == 'pdf') {
       return SfPdfViewer.file(selectedEntity.entity as File);
+    }
+
+    if (selectedEntity.isVideo) {
+      return ShackletonVideoPlayer(path: selectedEntity.path);
     }
 
     if (_rotatedBytes != null) {
