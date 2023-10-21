@@ -13,7 +13,7 @@ import '../models/tag.dart';
 import '../providers/metadata.dart';
 
 const Set<String> documentExtensions = { 'pdf' };
-const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff' };
+const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff', 'tif' };
 const Set<String> videoExtensions = { 'gif', 'mp4', 'mkv' };
 
 @immutable
