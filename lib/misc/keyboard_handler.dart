@@ -26,8 +26,9 @@ class KeyboardHandler {
         (!Platform.isMacOS && (event.logicalKey == LogicalKeyboardKey.controlLeft || event.logicalKey == LogicalKeyboardKey.controlRight));
   }
 
-  KeyEventResult _handleKeyEvent(RawKeyEvent event) {
+  KeyEventResult _handleKeyEvent(RawKeyEvent event,) {
     if (!hasFocus) {
+      // All Keyboard Handlers listen all the time, so we only want to react to the one in focus.
       return KeyEventResult.ignored;
     }
 

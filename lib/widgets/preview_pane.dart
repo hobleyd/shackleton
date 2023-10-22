@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
+import '../providers/file_events.dart';
 import '../providers/selected_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
@@ -51,7 +52,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             ),
           ),
           const VerticalDivider(),
-          const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem,)),
+          SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem, callback: this,)),
         ]));
   }
 
@@ -90,11 +91,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             },
             itemCount: entities.length,
             itemBuilder: (BuildContext context, int pos) {
-              return EntityPreview(
-                    entity: entities[pos],
-                    selectionType: FileType.previewItem,
-                    displayMetadata: false,
-                  );
+              return EntityPreview(entity: entities[pos], isSelected: false, displayMetadata: false,);
             },
           ),
           Align(
@@ -119,15 +116,13 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   @override
   void delete() {
     if (_lastSelectedItemIndex != -1) {
-      var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
+      var fileEvents = ref.read(fileEventsProvider.notifier);
 
       if (_lastSelectedItemIndex == entities.length) {
         _lastSelectedItemIndex--;
       }
-      previewEntities.delete(entities[_lastSelectedItemIndex]);
-
-      var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane));
-      if (selectedEntities.isEmpty) {
+      fileEvents.delete(entities[_lastSelectedItemIndex]);
+      if (ref.watch(selectedEntitiesProvider(FileType.previewPane)).isEmpty) {
         exit();
       }
     }
@@ -141,6 +136,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void left() {
+    debugPrint('grid left: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex != 0) {
       _controller.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
     }
@@ -153,6 +149,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void right() {
+    debugPrint('grid right: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex < entities.length - 1) {
       _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
     }

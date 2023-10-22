@@ -5,6 +5,7 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
+import '../providers/file_events.dart';
 import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
 import 'entity_preview.dart';
@@ -26,6 +27,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   int _lastSelectedItemIndex = -1;
 
   // TODO: Add key navigation
+  // TODO: Moving a file keeps the old path in the previewed picture
+
   @override
   Widget build(BuildContext context) {
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
@@ -43,7 +46,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
         : Row(children: [
             Expanded(
               child: EntityContextMenu(
-                fileType: FileType.previewGrid,
+                fileType: FileType.previewPane,
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
@@ -52,7 +55,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
               ),
             ),
             const VerticalDivider(),
-            const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane,)),
+            SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane, callback: this)),
           ]);
   }
 
@@ -104,16 +107,13 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                           var itemIndex = entities.indexOf(e);
                           // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
                           // folder; so double check that the index exists to avoid an Exception.
-                          if (itemIndex != -1 && keys[itemIndex] != null) {
+                          if (itemIndex != -1 && keys[itemIndex] != null && keys[itemIndex]!.currentState != null) {
                             dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
                           }
                         }
                         return dragItems;
                       },
-                      child: EntityPreview(
-                        entity: entities[index],
-                        selectionType: FileType.previewPane,
-                      ),
+                      child: EntityPreview(entity: entities[index], isSelected: selectedEntities.contains(entities[index]), displayMetadata: true,),
                     )));
           },
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -170,8 +170,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void delete() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
-    selectedEntities.deleteAll();
+    var fileEvents = ref.read(fileEventsProvider.notifier);
+    fileEvents.deleteAll(ref.watch(selectedEntitiesProvider(FileType.previewPane)));
   }
 
   @override
@@ -181,6 +181,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void left() {
+    debugPrint('grid left: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex > 0) {
       _selectEntity(entities[--_lastSelectedItemIndex]);
     }
@@ -188,6 +189,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void right() {
+    debugPrint('grid right: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex < entities.length) {
       _selectEntity(entities[++_lastSelectedItemIndex]);
     }
