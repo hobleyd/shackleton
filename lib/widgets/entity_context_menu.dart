@@ -4,6 +4,7 @@ import 'package:super_context_menu/super_context_menu.dart';
 
 import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
+import '../providers/file_events.dart';
 import '../providers/folder_path.dart';
 import '../providers/selected_entities.dart';
 
@@ -20,6 +21,7 @@ class EntityContextMenu extends ConsumerWidget {
       child: child,
       menuProvider: (_) {
         var selectedPreviewEntities = ref.read(selectedEntitiesProvider(fileType).notifier);
+        var entities = ref.watch(selectedEntitiesProvider(fileType));
         return Menu(children: [
           MenuAction(
             callback: () => selectedPreviewEntities.clear(),
@@ -27,7 +29,7 @@ class EntityContextMenu extends ConsumerWidget {
             title: 'Deselect all',
           ),
           MenuAction(
-            callback: () => createZip(folder ?? FileOfInterest(entity: ref.read(folderPathProvider).first), ref.watch(selectedEntitiesProvider(fileType))),
+            callback: () => createZip(folder ?? FileOfInterest(entity: ref.read(folderPathProvider).first), entities),
             image: MenuImage.icon(Icons.archive_outlined),
             title: 'Create (Zip) Archive',
           ),
@@ -36,7 +38,7 @@ class EntityContextMenu extends ConsumerWidget {
             MenuAction(
               attributes: const MenuActionAttributes(destructive: true),
               image: MenuImage.icon(Icons.delete),
-              callback: () => selectedPreviewEntities.deleteAll(),
+              callback: () => ref.read(fileEventsProvider.notifier).deleteAll(entities),
               title: 'Delete selected files',
             ),
           ]
