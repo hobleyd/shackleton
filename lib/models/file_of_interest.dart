@@ -84,9 +84,13 @@ class FileOfInterest implements Comparable {
   }
 
   void delete() async {
-    if (Platform.isMacOS) {
-      String trash = join(getHomeFolder(), '.Trash', basename(path));
+    String? trash = switch (Platform.operatingSystem) {
+      'macos' => join(getHomeFolder(), '.Trash', basename(path)),
+      'linux' => join(getHomeFolder(), '.local', 'share', 'Trash', 'files', basename(path)),
+            _ => null,
+    };
 
+    if (trash != null) {
       if (isDirectory) {
         moveDirectory(trash);
       } else {
