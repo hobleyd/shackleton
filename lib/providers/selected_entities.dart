@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/providers/file_events.dart';
 
+import '../interfaces/file_events_callback.dart';
 import '../models/file_of_interest.dart';
 
 part 'selected_entities.g.dart';
@@ -7,7 +9,7 @@ part 'selected_entities.g.dart';
 enum FileType { folderList, previewGrid, previewPane, previewItem }
 
 @Riverpod(keepAlive: true)
-class SelectedEntities extends _$SelectedEntities {
+class SelectedEntities extends _$SelectedEntities implements FileEventsCallback {
   @override
   Set<FileOfInterest> build(FileType type) {
     return {};
@@ -31,22 +33,15 @@ class SelectedEntities extends _$SelectedEntities {
     return state.contains(entity);
   }
 
-  void delete(FileOfInterest entity) {
-    entity.delete();
-    remove(entity);
-  }
-
-  void deleteAll() {
-    for (var e in state) {
-      e.delete();
-    }
-    clear();
-  }
-
   bool isSelected(FileOfInterest entity) {
     return state.contains(entity);
   }
 
+  Future<void> register() async {
+    ref.read(fileEventsProvider.notifier).register(this);
+  }
+
+  @override
   void remove(FileOfInterest entity) {
     if (state.contains(entity)) {
       state = {

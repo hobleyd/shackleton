@@ -15,12 +15,18 @@ import 'navigation.dart';
 import 'preview_grid.dart';
 import 'shackleton_settings.dart';
 
-class Shackleton extends ConsumerWidget {
+class Shackleton extends ConsumerStatefulWidget {
   const Shackleton({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ScrollController scrollController = ScrollController();
+  ConsumerState<Shackleton> createState() => _Shackleton();
+}
+
+class _Shackleton extends ConsumerState<Shackleton> {
+  final ScrollController scrollController = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
     List<Directory> paths = ref.watch(folderPathProvider);
     PreviewSettings preview = ref.watch(previewProvider);
 
@@ -65,6 +71,18 @@ class Shackleton extends ConsumerWidget {
             ]),
         ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future(() {
+      ref.read(selectedEntitiesProvider(FileType.folderList).notifier).register();
+      ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).register();
+      ref.read(selectedEntitiesProvider(FileType.previewPane).notifier).register();
+      ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).register();
+    });
   }
 
   void _cacheMetadata(WidgetRef ref) async {

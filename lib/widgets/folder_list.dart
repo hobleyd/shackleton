@@ -12,6 +12,7 @@ import '../misc/keyboard_handler.dart';
 import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
+import '../providers/file_events.dart';
 import '../providers/folder_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/metadata.dart';
@@ -488,8 +489,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
   @override
   void delete() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    selectedEntities.deleteAll();
+    var fileEvents = ref.read(fileEventsProvider.notifier);
+    fileEvents.deleteAll(ref.watch(selectedEntitiesProvider(FileType.folderList)));
   }
 
   @override
