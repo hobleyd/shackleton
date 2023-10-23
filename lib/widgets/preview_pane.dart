@@ -136,7 +136,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void left() {
-    debugPrint('grid left: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex != 0) {
       _controller.previousPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
     }
@@ -144,7 +143,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void newEntity() {
-
   }
 
   @override
