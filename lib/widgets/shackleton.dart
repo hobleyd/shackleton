@@ -73,18 +73,6 @@ class _Shackleton extends ConsumerState<Shackleton> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    Future(() {
-      ref.read(selectedEntitiesProvider(FileType.folderList).notifier).register();
-      ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).register();
-      ref.read(selectedEntitiesProvider(FileType.previewPane).notifier).register();
-      ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).register();
-    });
-  }
-
   void _cacheMetadata(WidgetRef ref) async {
     Set<FileOfInterest> selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList));
     for (FileOfInterest foi in selectedEntities) {

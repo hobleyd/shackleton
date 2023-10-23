@@ -12,6 +12,9 @@ enum FileType { folderList, previewGrid, previewPane, previewItem }
 class SelectedEntities extends _$SelectedEntities implements FileEventsCallback {
   @override
   Set<FileOfInterest> build(FileType type) {
+    Future(() {
+      register();
+    });
     return {};
   }
 
