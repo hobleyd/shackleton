@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/selected_entities.dart';
 
-part 'photo_locations.g.dart';
+part 'photo_location.g.dart';
 
 @riverpod
 class PhotoLocation extends _$PhotoLocation {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shackleton/providers/photo_locations.dart';
+import 'package:shackleton/providers/photo_location.dart';
 
 class PhotoMap extends ConsumerWidget {
   const PhotoMap({super.key});
@@ -10,11 +10,11 @@ class PhotoMap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Consumer(builder: (context, watch, child) {
-      var appSettings = ref.watch(photoLocationProvider);
-      return appSettings.when(error: (error, stackTrace) {
+      var markers = ref.watch(photoLocationProvider);
+      return markers.when(error: (error, stackTrace) {
         return Text('Failed to get settings.', style: Theme.of(context).textTheme.bodySmall);
       }, loading: () {
-        return const CircularProgressIndicator();
+        return const Center(heightFactor: 1.0, child: CircularProgressIndicator());
       }, data: (List<Marker> photos) {
         return FlutterMap(
           options: MapOptions(
