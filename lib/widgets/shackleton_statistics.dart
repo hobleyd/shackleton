@@ -5,7 +5,7 @@ import 'package:shackleton/models/app_statistics.dart';
 import '../repositories/app_statistics_repository.dart';
 
 class ShackletonStatistics extends ConsumerWidget {
-  ShackletonStatistics({Key? key,}) : super(key: key);
+  const ShackletonStatistics({Key? key,}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
