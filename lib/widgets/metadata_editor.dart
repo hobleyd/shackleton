@@ -29,13 +29,14 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   get selectedListType => widget.selectedListType;
 
   // TODO: If I delete an image, the tags don't refresh on the image that replaces it!
-  // TODO: Sometimes, entering tags won't save.
+  // TODO: hitting enter on the textfield loses focus
+  // TODO: Ctrl-A for files not visible breaks dragging due to list creation optimisation.
 
   @override
   Widget build(BuildContext context,) {
     Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesProvider(selectedListType));
-    Set<FileOfInterest> gridEntries = ref.watch(selectedEntitiesProvider(completeListType));
-    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : gridEntries;
+    Set<FileOfInterest> allEntities = ref.watch(selectedEntitiesProvider(completeListType));
+    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : allEntities;
 
     final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataProvider(e)).tags}.toList();
 
@@ -146,6 +147,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
       ref.read(metadataProvider(e).notifier).updateTagsFromString(e, tags);
     }
 
+    tagController.text = '';
     return true;
   }
 
