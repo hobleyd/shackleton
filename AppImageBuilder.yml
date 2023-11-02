@@ -21,6 +21,7 @@ AppDir:
     allow_unauthenticated: true
     sources:
     - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy main restricted
+    - sourceline: deb http://au.archive.ubuntu.com/ubuntu jammy/universe
     include:
     - libc6:amd64
     - libsqlite3-dev:amd64
