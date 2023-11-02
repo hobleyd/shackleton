@@ -30,7 +30,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
             return importAsync.when(error: (error, stackTrace) {
               return Text('$error', style: Theme.of(context).textTheme.bodySmall);
             }, loading: () {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(heightFactor: 1.0, child: CircularProgressIndicator());
             }, data: (List<ImportEntity> filesToImport) {
               return Stack(
                 children: [
