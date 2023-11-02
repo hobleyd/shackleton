@@ -5,13 +5,16 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
+import '../models/map_settings.dart';
 import '../providers/file_events.dart';
+import '../providers/map_pane.dart';
 import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
 import 'metadata_editor.dart';
 import 'preview_pane.dart';
+import 'preview/photo_map.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
   const PreviewGrid({Key? key}) : super(key: key);
@@ -31,6 +34,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   Widget build(BuildContext context) {
+    MapSettings map = ref.watch(mapPaneProvider);
+
     Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
     entities = selectedEntities.toList();
     entities.removeWhere((element) => !element.canPreview);
@@ -54,6 +59,18 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                 ),
               ),
             ),
+            if (map.visible) ...[
+              MouseRegion(
+                cursor: SystemMouseCursors.resizeColumn,
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (DragUpdateDetails details) {
+                    ref.read(mapPaneProvider.notifier).changeWidth(details.delta.dx);
+                  },
+                  child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                ),
+              ),
+              SizedBox(width: map.width, child: const PhotoMap()),
+            ],
             const VerticalDivider(),
             SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane, callback: this)),
           ]);
@@ -181,7 +198,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void left() {
-    debugPrint('grid left: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex > 0) {
       _selectEntity(entities[--_lastSelectedItemIndex]);
     }
@@ -189,7 +205,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void right() {
-    debugPrint('grid right: $_lastSelectedItemIndex, length: ${entities.length}');
     if (_lastSelectedItemIndex < entities.length) {
       _selectEntity(entities[++_lastSelectedItemIndex]);
     }

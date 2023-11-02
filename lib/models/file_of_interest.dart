@@ -5,7 +5,9 @@ import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:path/path.dart';
+import 'package:process_run/process_run.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../misc/utils.dart';
@@ -145,6 +147,20 @@ class FileOfInterest implements Comparable {
     }
 
     return true;
+  }
+
+  Future<LatLng?> location() async {
+    bool hasExiftool = whichSync('exiftool') != null ? true : false;
+
+    if (hasExiftool && isImage) {
+      ProcessResult output = await runExecutableArguments('exiftool', ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
+      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
+        List<String> location = output.stdout.split('\n');
+        return LatLng(double.parse(location[0]), double.parse(location[1]));
+      }
+    }
+
+    return null;
   }
 
   Future<void> moveDirectory(String destinationPath) async {

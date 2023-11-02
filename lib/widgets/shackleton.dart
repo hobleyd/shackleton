@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';
+import '../models/map_settings.dart';
 import '../models/preview_settings.dart';
 import '../providers/folder_path.dart';
+import '../providers/map_pane.dart';
 import '../providers/preview.dart';
 import '../providers/selected_entities.dart';
 import 'folder_list.dart';
@@ -29,6 +31,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
   Widget build(BuildContext context) {
     List<Directory> paths = ref.watch(folderPathProvider);
     PreviewSettings preview = ref.watch(previewProvider);
+    MapSettings map = ref.watch(mapPaneProvider);
 
     return Scaffold(
         appBar: AppBar(
@@ -36,6 +39,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
           actions: <Widget>[
             IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
+            IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => ref.read(mapPaneProvider.notifier).setVisibility(!map.visible)),
             IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
             IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
           ],
