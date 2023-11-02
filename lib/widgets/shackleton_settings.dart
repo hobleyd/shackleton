@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shackleton/providers/shackleton_theme.dart';
 
 import '../models/app_settings.dart';
 import '../repositories/app_settings_repository.dart';

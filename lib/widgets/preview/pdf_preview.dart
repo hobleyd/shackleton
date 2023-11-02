@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../../models/file_of_interest.dart';
-import '../../providers/selected_entities.dart';
 
 class PDFPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;

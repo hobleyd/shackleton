@@ -1,13 +1,11 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/file_events.dart';
 import 'package:shackleton/providers/folder_path.dart';
 
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
-import '../providers/selected_entities.dart';
 
 part 'folder_contents.g.dart';
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/models/app_statistics.dart';
 
-import '../models/app_settings.dart';
 import '../repositories/app_statistics_repository.dart';
 
 class ShackletonStatistics extends ConsumerWidget {
