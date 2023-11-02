@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/map_settings.dart';
-import '../models/preview_settings.dart';
 
 part 'map_pane.g.dart';
 
