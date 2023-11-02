@@ -6,6 +6,7 @@ import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
 import '../providers/file_events.dart';
 import '../providers/selected_entities.dart';
+import '../providers/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
 import 'metadata_editor.dart';
@@ -26,9 +27,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> previewEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
-    entities = previewEntities.toList();
-    entities.sort();
+    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewPane));
 
     // First time through, we set the initial image to the one clicked on.
     if (_lastSelectedItemIndex == -1) {

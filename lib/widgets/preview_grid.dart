@@ -10,6 +10,7 @@ import '../providers/file_events.dart';
 import '../providers/map_pane.dart';
 import '../providers/metadata.dart';
 import '../providers/selected_entities.dart';
+import '../providers/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
 import 'metadata_editor.dart';
@@ -35,17 +36,13 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   @override
   Widget build(BuildContext context) {
     MapSettings map = ref.watch(mapPaneProvider);
-
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
-    entities = selectedEntities.toList();
-    entities.removeWhere((element) => !element.canPreview);
-    entities.sort();
+    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewGrid));
 
     return entities.isEmpty
         ? Padding(
             padding: const EdgeInsets.only(top: 50),
             child: Text(
-              selectedEntities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!',
+              entities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!',
               textAlign: TextAlign.center,
             ))
         : Row(children: [
