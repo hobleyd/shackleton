@@ -58,8 +58,7 @@ class FileOfInterest implements Comparable {
       }
     } else {
       var metadata = ref.read(metadataProvider(this).notifier);
-      Set<Tag> tags = await metadata.getTagsFromFile(this);
-      await metadata.replaceTags(this, tags, update: false);
+      await metadata.saveMetadata(this, updateFile: false);
     }
   }
 
@@ -147,20 +146,6 @@ class FileOfInterest implements Comparable {
     }
 
     return true;
-  }
-
-  Future<LatLng?> location() async {
-    bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-    if (hasExiftool && isImage) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
-      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-        List<String> location = output.stdout.split('\n');
-        return LatLng(double.parse(location[0]), double.parse(location[1]));
-      }
-    }
-
-    return null;
   }
 
   Future<void> moveDirectory(String destinationPath) async {

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../interfaces/keyboard_callback.dart';
-import '../misc/keyboard_handler.dart';
-import '../models/file_metadata.dart';
-import '../models/file_of_interest.dart';
-import '../models/tag.dart';
-import '../providers/metadata.dart';
-import '../providers/selected_entities.dart';
+import '../../interfaces/keyboard_callback.dart';
+import '../../misc/keyboard_handler.dart';
+import '../../models/file_metadata.dart';
+import '../../models/file_of_interest.dart';
+import '../../models/tag.dart';
+import '../../providers/metadata.dart';
+import '../../providers/selected_entities.dart';
+import 'metadata_location.dart';
 
 class MetadataEditor extends ConsumerStatefulWidget {
   final FileType completeListType;
@@ -23,22 +24,23 @@ class MetadataEditor extends ConsumerStatefulWidget {
 class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardCallback {
   late KeyboardHandler handler;
   late TextEditingController tagController;
+  late FocusNode focusNode;
 
   get callback => widget.callback;
   get completeListType => widget.completeListType;
   get selectedListType => widget.selectedListType;
 
   // TODO: If I delete an image, the tags don't refresh on the image that replaces it!
-  // TODO: hitting enter on the textfield loses focus
   // TODO: Ctrl-A for files not visible breaks dragging due to list creation optimisation.
 
   @override
   Widget build(BuildContext context,) {
-    Set<FileOfInterest> previewSelectedEntities = ref.watch(selectedEntitiesProvider(selectedListType));
-    Set<FileOfInterest> allEntities = ref.watch(selectedEntitiesProvider(completeListType));
-    Set<FileOfInterest> entities = previewSelectedEntities.isNotEmpty ? previewSelectedEntities : allEntities;
+    Set<FileOfInterest> entities = ref.watch(selectedEntitiesProvider(selectedListType));
+    if (entities.isEmpty) {
+      entities = ref.watch(selectedEntitiesProvider(completeListType));
+    }
 
-    final List<Tag> tags = {for (var e in entities) ...ref.watch(metadataProvider(e)).tags}.toList();
+    final List<Tag> tags = [...{ for (var e in entities) ...ref.watch(metadataProvider(e)).tags }];
 
     return MouseRegion(
       onEnter: (_) => handler.hasFocus = true,
@@ -76,6 +78,8 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                           ]));
                     })),
             const Spacer(),
+            MetadataLocation(entities: entities,),
+            const SizedBox(height: 30),
             Row(
               children: [
                 Expanded(
@@ -83,6 +87,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     autofocus: true,
                     controller: tagController,
                     decoration: const InputDecoration(border: InputBorder.none, hintText: 'Add tags here', isDense: true),
+                    focusNode: focusNode,
                     keyboardType: TextInputType.text,
                     maxLines: 1,
                     onSubmitted: (tags) => _updateTags(ref, entities, tags),
@@ -108,6 +113,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   @override
   void dispose() {
     handler.deregister();
+    focusNode.dispose();
 
     super.dispose();
   }
@@ -116,6 +122,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   void initState() {
     super.initState();
     tagController = TextEditingController();
+    focusNode = FocusNode();
 
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
     handler.register();
@@ -126,8 +133,8 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
     Set<FileOfInterest> gridEntries = ref.watch(selectedEntitiesProvider(completeListType));
     for (var e in gridEntries) {
-      FileMetaData metadata = ref.watch(metadataProvider(e));
-      if (metadata.contains(tag)) {
+      FileMetaData meta = ref.watch(metadataProvider(e));
+      if (meta.contains(tag)) {
         filteredEntities.add(e);
       }
     }
@@ -148,12 +155,15 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     }
 
     tagController.text = '';
+    focusNode.requestFocus();
+
     return true;
   }
 
   @override
   void delete() {
-    if (tagController.text.isEmpty) callback.delete();
+    // I think that passing this back would result in people accidentally deleting files, so no.
+    //if (tagController.text.isEmpty) callback.delete();
   }
 
   @override

@@ -1,23 +1,27 @@
 import 'package:path/path.dart';
+import 'package:shackleton/models/file_metadata.dart';
 
 import '../models/tag.dart';
 
 class Entity  {
   int? id;
   String path;
-  Set<Tag> tags;
+  FileMetaData? metadata;
+
+  get hasTags => metadata?.hasTags;
+  get tags => metadata?.tags;
 
   Entity({
     required this.path,
     this.id,
-    required this.tags,
+    this.metadata,
   });
 
-  Entity copyWith({required Entity entity, Set<Tag>? tags}) {
+  Entity copyWith({required Entity entity, FileMetaData? metadata}) {
     return Entity(
       id: entity.id,
       path: entity.path,
-      tags: tags ?? {},
+      metadata: metadata,
     );
   }
 
@@ -25,7 +29,6 @@ class Entity  {
     return Entity(
       id: entity['id'],
       path: entity['path'],
-      tags: {},
     );
   }
 
@@ -38,6 +41,6 @@ class Entity  {
 
   @override
   String toString() {
-    return '${basename(path)}: $id ($tags)';
+    return '${basename(path)}: $id ($metadata)';
   }
 }

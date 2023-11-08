@@ -13,7 +13,7 @@ import '../providers/selected_entities.dart';
 import '../providers/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
-import 'metadata_editor.dart';
+import 'metadata/metadata_editor.dart';
 import 'preview_pane.dart';
 import 'preview/photo_map.dart';
 
@@ -32,6 +32,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   // TODO: Add key navigation
   // TODO: Moving a file keeps the old path in the previewed picture
+  // TODO: Dismounting a drive keeps the preview images visible.
 
   @override
   Widget build(BuildContext context) {

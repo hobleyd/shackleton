@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart';
 
+import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 
 extension StringFuncs on String {
@@ -50,6 +51,18 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
   return foi;
 }
 
+String convertLatLng(double decimal, bool isLat) {
+  String degree = "${decimal.toString().split(".")[0]} deg";
+
+  double minutesBeforeConversion = double.parse("0.${decimal.toString().split(".")[1]}");
+  String minutes = "${(minutesBeforeConversion * 60).toString().split('.')[0]}'";
+
+  double secondsBeforeConversion = double.parse("0.${(minutesBeforeConversion * 60).toString().split('.')[1]}");
+  String seconds = '${double.parse((secondsBeforeConversion * 60).toString()).toStringAsFixed(2)}"';
+
+  return "$degree $minutes $seconds ${isLat ? decimal > 0 ? 'N' : 'S' : decimal > 0 ? 'E' : 'W'}";
+}
+
 FileSystemEntity getEntity(String path) {
   var entity = switch (FileSystemEntity.typeSync(path)) {
     FileSystemEntityType.directory => Directory(path),
@@ -58,6 +71,17 @@ FileSystemEntity getEntity(String path) {
   };
 
   return entity;
+}
+
+String getLocation(FileMetaData? metadata, bool latitude) {
+  double loc = 0.0;
+  if (metadata != null) {
+    if (metadata.gpsLocation != null) {
+      loc = latitude ? metadata.gpsLocation!.latitude : metadata.gpsLocation!.longitude;
+    }
+  }
+
+  return loc == 0.0 ? '' : convertLatLng(loc, latitude);
 }
 
 String getSizeString(int size, { int decimals = 0 }) {

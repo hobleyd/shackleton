@@ -9,7 +9,7 @@ import '../providers/selected_entities.dart';
 import '../providers/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
-import 'metadata_editor.dart';
+import 'metadata/metadata_editor.dart';
 
 class PreviewPane extends ConsumerStatefulWidget {
   final FileOfInterest initialEntity;

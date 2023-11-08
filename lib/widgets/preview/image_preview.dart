@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
+import 'package:shackleton/models/file_metadata.dart';
 
 import '../../models/file_of_interest.dart';
 import '../../providers/metadata.dart';
@@ -85,7 +86,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     await imageFile.writeAsBytes(rotatedBytes);
 
     var metadata = ref.read(metadataProvider(entityPreview).notifier);
-    await metadata.saveMetadata(entityPreview, metadata.state.tags);
+    await metadata.saveMetadata(entityPreview,);
 
     setState(() {
     _isRotatingImage = false;

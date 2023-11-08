@@ -56,11 +56,18 @@ class FileTagsRepository extends _$FileTagsRepository {
     await _lock.synchronized(() async {
       if (queue.isNotEmpty) {
         Entity entity = queue.removeFirst();
-        if (entity.tags.isNotEmpty) {
+        if (entity.hasTags) {
           await writeTags(entity);
+        } else {
+          await removeTags(entity);
         }
       }
     });
+  }
+
+  Future<int> removeTags(entity) async {
+    return await _database.delete('file_tags', where: 'fileId = ?', whereArgs: [entity.path]);
+    // TODO: clean up the dangling tags, if there are any
   }
 
   Future<void> writeTags(Entity entity) async {
@@ -72,7 +79,6 @@ class FileTagsRepository extends _$FileTagsRepository {
       entity.id = await _database.insert('files', entity.toMap());
     }
 
-    // TODO: how do I remove all tags?
     // Insert all the Tags, updating the id for the next foreign key
     if (entity.tags.isNotEmpty) {
       for (var tag in entity.tags) {

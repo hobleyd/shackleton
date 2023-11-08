@@ -50,7 +50,12 @@ class NavigationTags extends ConsumerWidget {
     final List<Map<String, dynamic>> rows = await db.rawQuery(
         'select * from files where id in (select fileId from file_tags, tags where tags.id = file_tags.tagId and tags.tag = ?);',
         [tag.tag]);
-    final Set<Entity> entitySet = rows.map((e) => Entity.fromMap(e)).toSet();
-    ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).addAll(entitySet.map((e) => FileOfInterest(entity: File(e.path))).toSet());
+
+    final Set<FileOfInterest> tagSet = {};
+    for (var row in rows) {
+      final Entity e = Entity.fromMap(row);
+      tagSet.add(FileOfInterest(entity: File(e.path)));
+    }
+    ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).replaceAll(tagSet);
   }
 }
