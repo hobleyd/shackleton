@@ -31,7 +31,6 @@ class Metadata extends _$Metadata {
       ProcessResult output = await runExecutableArguments('exiftool', ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         List<String> location = output.stdout.split('\n');
-        debugPrint('location: $location');
         try {
           return LatLng(double.parse(location[0]), double.parse(location[1]));
         // ignore: empty_catches
