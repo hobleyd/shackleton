@@ -106,7 +106,7 @@ class ShackletonSettings extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      ShackletonStatistics(),
+                      const ShackletonStatistics(),
                       Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
                       ElevatedButton(
                         onPressed: () => _clearCache(ref),

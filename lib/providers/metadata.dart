@@ -34,6 +34,7 @@ class Metadata extends _$Metadata {
         debugPrint('location: $location');
         try {
           return LatLng(double.parse(location[0]), double.parse(location[1]));
+        // ignore: empty_catches
         } on FormatException {}
       }
     }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
-import 'package:shackleton/providers/selected_entities.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/file_metadata.dart';

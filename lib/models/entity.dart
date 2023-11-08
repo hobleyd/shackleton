@@ -1,8 +1,6 @@
 import 'package:path/path.dart';
 import 'package:shackleton/models/file_metadata.dart';
 
-import '../models/tag.dart';
-
 class Entity  {
   int? id;
   String path;

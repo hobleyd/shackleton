@@ -67,8 +67,7 @@ class _PhotoMap extends ConsumerState<PhotoMap> {
                     slivers: [
                       SliverList(
                         delegate: SliverChildListDelegate(
-                          _locationOptions
-                              .map((loc) => ListTile(
+                          _locationOptions.map((loc) => ListTile(
                                     dense: true,
                                     title: Text(loc.displayname, style: Theme.of(context).textTheme.bodySmall),
                                     subtitle: Text('${loc.lat},${loc.lon}', style: Theme.of(context).textTheme.titleSmall),

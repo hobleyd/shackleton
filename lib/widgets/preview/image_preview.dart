@@ -4,11 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
-import 'package:shackleton/models/file_metadata.dart';
 
 import '../../models/file_of_interest.dart';
 import '../../providers/metadata.dart';
-import '../../providers/selected_entities.dart';
 
 class ImagePreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;

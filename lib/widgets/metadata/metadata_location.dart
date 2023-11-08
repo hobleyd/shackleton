@@ -10,9 +10,9 @@ import '../../models/file_of_interest.dart';
 import '../../providers/selected_entities.dart';
 
 class MetadataLocation extends ConsumerWidget {
-  Set<FileOfInterest> entities;
+  final Set<FileOfInterest> entities;
 
-  MetadataLocation({Key? key, required this.entities}) : super(key: key);
+  const MetadataLocation({Key? key, required this.entities}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref,) {

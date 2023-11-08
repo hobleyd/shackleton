@@ -5,13 +5,10 @@ import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:path/path.dart';
-import 'package:process_run/process_run.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../misc/utils.dart';
-import '../models/tag.dart';
 import '../providers/metadata.dart';
 
 const Set<String> documentExtensions = { 'pdf' };
