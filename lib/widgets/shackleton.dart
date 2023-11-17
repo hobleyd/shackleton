@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
+import 'package:shackleton/providers/error.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/map_settings.dart';
@@ -32,6 +33,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
     List<Directory> paths = ref.watch(folderPathProvider);
     PreviewSettings preview = ref.watch(previewProvider);
     MapSettings map = ref.watch(mapPaneProvider);
+    String error = ref.watch(errorProvider);
 
     return Scaffold(
         appBar: AppBar(
@@ -72,6 +74,10 @@ class _Shackleton extends ConsumerState<Shackleton> {
                     ),
                 ),
               ),
+              if (error.isNotEmpty)
+                Expanded(
+                  child: Text(error, style: Theme.of(context).textTheme.labelSmall)
+                ),
             ]),
         ),
     );
