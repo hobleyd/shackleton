@@ -24,6 +24,7 @@ class _PhotoMap extends ConsumerState<PhotoMap> {
   Timer? _debounce;
 
   List<OSMdata> _locationOptions = [];
+  LatLng? _selectedLocation;
 
   @override
   Widget build(BuildContext context,) {
@@ -54,7 +55,7 @@ class _PhotoMap extends ConsumerState<PhotoMap> {
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'au.com.sharpblue.shackleton',
                   ),
-                  MarkerLayer(markers: photos),
+                  MarkerLayer(markers: [...photos, if (_selectedLocation != null) Marker(point: _selectedLocation!, height: 6, width: 6, child: const Icon(Icons.flag, color: Colors.blue))]),
                 ],
               ),
               if (_locationOptions.isNotEmpty)
@@ -72,9 +73,11 @@ class _PhotoMap extends ConsumerState<PhotoMap> {
                                     title: Text(loc.displayname, style: Theme.of(context).textTheme.bodySmall),
                                     subtitle: Text('${loc.lat},${loc.lon}', style: Theme.of(context).textTheme.titleSmall),
                                     onTap: () {
-                                      _mapController.move(LatLng(loc.lat, loc.lon), 13.0);
-                                      _searchFocus.unfocus();
+                                      _selectedLocation = LatLng(loc.lat, loc.lon);
+                                      _mapController.move(_selectedLocation!, 15.0);
+                                      _searchController.text = '';
                                       _locationOptions.clear();
+                                      _searchFocus.unfocus();
                                       setState(() {});
                                     },
                                   ))
