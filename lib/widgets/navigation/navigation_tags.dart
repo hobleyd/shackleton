@@ -54,7 +54,9 @@ class NavigationTags extends ConsumerWidget {
     final Set<FileOfInterest> tagSet = {};
     for (var row in rows) {
       final Entity e = Entity.fromMap(row);
-      tagSet.add(FileOfInterest(entity: File(e.path)));
+      if (e.exists) {
+        tagSet.add(FileOfInterest(entity: File(e.path)));
+      }
     }
     ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).replaceAll(tagSet);
   }

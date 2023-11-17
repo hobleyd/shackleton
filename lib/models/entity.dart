@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart';
 import 'package:shackleton/models/file_metadata.dart';
 
@@ -6,6 +8,7 @@ class Entity  {
   String path;
   FileMetaData? metadata;
 
+  get exists => File(path).existsSync();
   get hasTags => metadata?.hasTags;
   get tags => metadata?.tags;
 
