@@ -34,7 +34,6 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   get selectedListType => widget.selectedListType;
 
   // TODO: If I delete an image, the tags don't refresh on the image that replaces it!
-  // TODO: Ctrl-A for files not visible breaks dragging due to list creation optimisation.
 
   @override
   Widget build(BuildContext context,) {

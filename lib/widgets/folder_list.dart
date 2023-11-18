@@ -318,7 +318,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     entityList.sort();
 
     List<GlobalKey?> keys = List.filled(entityList.length, null, growable: false);
-    return ListView.builder(
+    return SingleChildScrollView(
+        child: ListView.builder(
         itemCount: entityList.length,
         itemBuilder: (context, index) {
           FileOfInterest entity = entityList[index];
@@ -361,7 +362,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           );
         },
         scrollDirection: Axis.vertical,
-        shrinkWrap: true);
+        shrinkWrap: true),
+    );
   }
 
   void _selectIfValidDropLocation(DropOverEvent event, FileOfInterest destination) {
