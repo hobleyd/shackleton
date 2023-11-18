@@ -19,6 +19,7 @@ class ImagePreview extends ConsumerStatefulWidget {
 }
 
 class _ImagePreview extends ConsumerState<ImagePreview> {
+  Uint8List? _rotatedBytes;
   bool _isRotatingImage = false;
 
   get entityPreview => widget.entity;
@@ -40,11 +41,15 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
         _isRotatingImage
             ? const Expanded(child: CircularProgressIndicator.adaptive(strokeWidth: 8,))
             : Expanded(
-            child: Container(
-                alignment: Alignment.center,
-                color: isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Image.file(entityPreview.entity as File, alignment: Alignment.center, fit: BoxFit.contain))),
+                child: Container(
+                  alignment: Alignment.center,
+                  color: isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: _rotatedBytes == null
+                      ? Image.file(entityPreview.entity as File, alignment: Alignment.center, fit: BoxFit.contain)
+                      : Image.memory(_rotatedBytes!, alignment: Alignment.center, fit: BoxFit.contain),
+                ),
+              ),
       ],
     );
   }
@@ -74,14 +79,14 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     Uint8List originalBytes = await imageFile.readAsBytes();
     img.Image decodedImage  = img.decodeImage(originalBytes)!;
     img.Image rotatedImage  = img.copyRotate(decodedImage, angle: degrees);
-    var rotatedBytes  = switch (entityPreview.extension) {
+    _rotatedBytes  = switch (entityPreview.extension) {
     'jpg' || 'jpeg' => img.encodeJpg(rotatedImage),
     'png'           => img.encodePng(rotatedImage),
     'tif' || 'tiff' => img.encodeTiff(rotatedImage),
     'gif'           => img.encodeGif(rotatedImage),
     _               => originalBytes,
     };
-    await imageFile.writeAsBytes(rotatedBytes);
+    await imageFile.writeAsBytes(_rotatedBytes!);
 
     var metadata = ref.read(metadataProvider(entityPreview).notifier);
     await metadata.saveMetadata(entityPreview,);
