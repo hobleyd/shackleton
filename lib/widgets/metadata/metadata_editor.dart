@@ -51,10 +51,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
         padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
         child: Column(
           children: [
-            Text(
-              'Metadata',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            Text('Metadata', style: Theme.of(context).textTheme.labelSmall,),
             const SizedBox(height: 10),
             Expanded(
                 child: ListView.builder(
