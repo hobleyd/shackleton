@@ -86,6 +86,10 @@ class Metadata extends _$Metadata {
       LatLng? location = await getLocationFromFile(entity);
 
       state = FileMetaData(tags: tags, gpsLocation: location);
+
+      Future(() {
+        ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, metadata: state));
+      });
     }
   }
 
