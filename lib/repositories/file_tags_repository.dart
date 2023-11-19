@@ -1,12 +1,12 @@
 import 'dart:collection';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/tag_queue.dart';
 import 'package:synchronized/synchronized.dart';
 
 import '../database/app_database.dart';
 import '../models/entity.dart';
 import '../models/tag.dart';
+import '../providers/tag_queue.dart';
 
 part 'file_tags_repository.g.dart';
 
@@ -39,7 +39,7 @@ class FileTagsRepository extends _$FileTagsRepository {
 
   @override
   Future<List<Tag>> build() {
-    _database = AppDatabase();
+    _database = ref.watch(appDbProvider);
 
     var queue = ref.watch(tagQueueProvider);
     pop(queue);
@@ -54,7 +54,7 @@ class FileTagsRepository extends _$FileTagsRepository {
 
   Future<void> pop(Queue<Entity> queue) async {
     await _lock.synchronized(() async {
-      if (queue.isNotEmpty) {
+      while (queue.isNotEmpty) {
         Entity entity = queue.removeFirst();
         if (entity.hasTags) {
           await writeTags(entity);
