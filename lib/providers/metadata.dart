@@ -112,7 +112,6 @@ class Metadata extends _$Metadata {
       String latitude = getLocation(state, true).replaceAll("'", "\\'").replaceAll('"', '\\"');
       String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
 
-      debugPrint('${entity.name}: $tagString, $latitude, $longitude');
       if (hasExiftool && entity.isMetadataSupported) {
         ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', "-gpslatitude=$latitude", "-gpslongitude=$longitude", entity.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
