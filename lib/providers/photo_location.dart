@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/file_metadata.dart';
-import '../../providers/selected_entities.dart';
+import 'selected_entities/selected_entities.dart';
 
 import 'metadata.dart';
 

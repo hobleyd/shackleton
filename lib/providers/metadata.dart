@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -20,7 +19,7 @@ class Metadata extends _$Metadata {
   @override
   FileMetaData build(FileOfInterest entity) {
     loadMetadataFromFile(entity);
-    return const FileMetaData(tags: []);
+    return const FileMetaData(entity: null, tags: []);
   }
 
   bool contains(Tag tag) => state.contains(tag);
@@ -46,7 +45,7 @@ class Metadata extends _$Metadata {
     List<Tag> tags = await getTagsFromFile(entity);
     LatLng? location = await getLocationFromFile(entity);
 
-    return FileMetaData(tags: tags, gpsLocation: location);
+    return FileMetaData(entity: entity, tags: tags, gpsLocation: location);
   }
 
   Future<List<Tag>> getTagsFromFile(FileOfInterest entity) async {
@@ -85,7 +84,7 @@ class Metadata extends _$Metadata {
       List<Tag> tags = await getTagsFromFile(entity);
       LatLng? location = await getLocationFromFile(entity);
 
-      state = FileMetaData(tags: tags, gpsLocation: location);
+      state = FileMetaData(entity: entity, tags: tags, gpsLocation: location);
 
       Future(() {
         ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, metadata: state));
@@ -93,7 +92,7 @@ class Metadata extends _$Metadata {
     }
   }
 
-  void removeTags(FileOfInterest entity, Tag tag) {
+  void removeTags(Tag tag) {
     List<Tag> tags = [
       for (var t in state.tags)
         if (t != tag)
@@ -101,30 +100,30 @@ class Metadata extends _$Metadata {
     ];
 
     state = state.copyWith(tags: tags);
-    saveMetadata(entity);
+    saveMetadata(updateFile: true);
   }
 
-  Future<bool> saveMetadata(FileOfInterest entity, { bool updateFile = false }) async {
-    bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
+  Future<bool> saveMetadata({ bool updateFile = false }) async {
     // Always write tags to DB even if file writing fails? I feel like this makes sense.
     // ignore: avoid_manual_providers_as_generated_provider_dependency
-    ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, metadata: state));
+    ref.read(tagQueueProvider.notifier).queue(Entity(path: state.entity!.path, metadata: state));
 
     if (updateFile) {
+      bool hasExiftool = whichSync('exiftool') != null ? true : false;
+
       String tagString = getStringFromTags(state.tags);
       String latitude = getLocation(state, true).replaceAll("'", "\\'").replaceAll('"', '\\"');
       String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
 
       if (hasExiftool && entity.isMetadataSupported) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', "-gpslatitude=$latitude", "-gpslongitude=$longitude", entity.path]);
+        ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', "-gpslatitude=$latitude", "-gpslongitude=$longitude", state.entity!.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           if (output.outText.trim() == '1 image files updated') {
             return true;
           }
         } else {
           // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(errorProvider.notifier).setError('Unable to write metedata to ${entity.name}');
+          ref.read(errorProvider.notifier).setError('Unable to write metadata to ${state.entity!.name}');
         }
       }
       else {
@@ -136,21 +135,21 @@ class Metadata extends _$Metadata {
     return false;
   }
 
-  Future<bool> setLocation(FileOfInterest entity, LatLng location) async {
+  Future<bool> setLocation(LatLng location) async {
     state = state.copyWith(gpsLocation: location);
-    return saveMetadata(entity, updateFile: true);
+    return saveMetadata(updateFile: true);
   }
 
-  Future<bool> replaceTagsFromString(FileOfInterest entity, String tags) async {
+  Future<bool> replaceTagsFromString(String tags) async {
     state = state.copyWith(tags: getTagsFromString(tags));
-    return saveMetadata(entity, updateFile: true);
+    return saveMetadata(updateFile: true);
   }
 
-  void updateTagsFromString(FileOfInterest entity, String tags) {
+  void updateTagsFromString(String tags) {
     List<Tag> newTags = List.from(state.tags);
     newTags.addAll(getTagsFromString(tags));
     state = state.copyWith(tags: [...{...newTags}]);
-    saveMetadata(entity, updateFile: true);
+    saveMetadata(updateFile: true);
   }
 
   void setEditable(bool editable) {

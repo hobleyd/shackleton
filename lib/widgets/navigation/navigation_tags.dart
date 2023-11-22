@@ -8,7 +8,7 @@ import '../../misc/utils.dart';
 import '../../models/entity.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
-import '../../providers/selected_entities.dart';
+import '../../providers/selected_entities/selected_entities.dart';
 import '../../repositories/file_tags_repository.dart';
 
 class NavigationTags extends ConsumerWidget {

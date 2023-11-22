@@ -55,7 +55,7 @@ class FileOfInterest implements Comparable {
       }
     } else {
       var metadata = ref.read(metadataProvider(this).notifier);
-      await metadata.saveMetadata(this, updateFile: false);
+      await metadata.saveMetadata(updateFile: false);
     }
   }
 

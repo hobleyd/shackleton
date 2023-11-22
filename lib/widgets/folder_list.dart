@@ -16,7 +16,7 @@ import '../providers/file_events.dart';
 import '../providers/folder_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/metadata.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 import '../repositories/folder_settings_repository.dart';
 import 'entity_context_menu.dart';
 

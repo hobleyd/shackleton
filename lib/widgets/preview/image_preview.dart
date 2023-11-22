@@ -89,7 +89,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     await imageFile.writeAsBytes(_rotatedBytes!);
 
     var metadata = ref.read(metadataProvider(entityPreview).notifier);
-    await metadata.saveMetadata(entityPreview,);
+    await metadata.saveMetadata(updateFile: true);
 
     setState(() {
     _isRotatingImage = false;

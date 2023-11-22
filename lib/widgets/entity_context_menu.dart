@@ -6,7 +6,7 @@ import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../providers/file_events.dart';
 import '../providers/folder_path.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 
 class EntityContextMenu extends ConsumerWidget {
   final Widget child;

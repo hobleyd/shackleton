@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shackleton/providers/selected_entities.dart';
+import 'package:shackleton/providers/selected_entities/selected_entities.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/import_entity.dart';

@@ -16,7 +16,7 @@ void main() {
 
     final mockMetadataProvider = container.read(metadataProvider(foi));
     expect(mockMetadataProvider.tags.length, 0);
-    container.read(metadataProvider(foi).notifier).updateTagsFromString(foi, 'one, two');
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two');
   });
 
   test('can add tags to populated set', () async {
@@ -30,11 +30,11 @@ void main() {
       expect(next.tags.length, 2);
     });
 
-    container.read(metadataProvider(foi).notifier).replaceTagsFromString(foi, 'two, three',);
+    container.read(metadataProvider(foi).notifier).replaceTagsFromString('two, three',);
 
     container.listen(metadataProvider(foi), (previous, next) {
       expect(next.tags.length, 3);
     });
-    container.read(metadataProvider(foi).notifier).updateTagsFromString(foi, 'one, two',);
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two',);
   });
 }

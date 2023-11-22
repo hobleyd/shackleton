@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/selected_entities.dart';
 
-import '../models/file_of_interest.dart';
+import '../../models/file_of_interest.dart';
+import 'selected_entities.dart';
 
 part 'selected_previewable_entities.g.dart';
 

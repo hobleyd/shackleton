@@ -9,7 +9,8 @@ import '../../models/file_metadata.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
 import '../../providers/metadata.dart';
-import '../../providers/selected_entities.dart';
+import '../../providers/selected_entities/selected_entities.dart';
+import '../../providers/selected_entities/selected_tags.dart';
 import 'metadata_location.dart';
 
 class MetadataEditor extends ConsumerStatefulWidget {
@@ -37,12 +38,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
   @override
   Widget build(BuildContext context,) {
-    Set<FileOfInterest> entities = ref.watch(selectedEntitiesProvider(selectedListType));
-    if (entities.isEmpty) {
-      entities = ref.watch(selectedEntitiesProvider(completeListType));
-    }
-
-    final List<Tag> tags = [...{ for (var e in entities) ...ref.watch(metadataProvider(e)).tags }];
+    final List<Tag> tags = ref.watch(selectedTagsProvider(selectedListType, completeListType));
 
     return MouseRegion(
       onEnter: (_) => handler.hasFocus = true,
@@ -73,11 +69,11 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                                 padding: EdgeInsets.zero,
                                 splashRadius: 0.0001,
                                 tooltip: 'Remove tag from selected images...',
-                                onPressed: () => _removeTags(ref, entities, tags, index)),
+                                onPressed: () => _removeTags(ref, tags, index)),
                           ]));
                     })),
             const Spacer(),
-            MetadataLocation(entities: entities,),
+            MetadataLocation(selectedListType: selectedListType, completeListType: completeListType,),
             const SizedBox(height: 30),
             Row(
               children: [
@@ -89,7 +85,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     focusNode: focusNode,
                     keyboardType: TextInputType.text,
                     maxLines: 1,
-                    onSubmitted: (tags) => _updateTags(ref, entities, tags),
+                    onSubmitted: (tags) => _updateTags(ref, tags),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -100,7 +96,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     padding: EdgeInsets.zero,
                     splashRadius: 0.0001,
                     tooltip: 'Add tags to selected images...',
-                    onPressed: () => _updateTags(ref, entities, tagController.text)),
+                    onPressed: () => _updateTags(ref, tagController.text)),
               ],
             ),
           ],
@@ -142,15 +138,28 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     selectedList.replaceAll(filteredEntities);
   }
 
-  void _removeTags(WidgetRef ref, Set<FileOfInterest> entities, List<Tag> tags, int index) {
+  Set<FileOfInterest> _getSelectedEntities() {
+    Set<FileOfInterest> entities = ref.read(selectedEntitiesProvider(selectedListType));
+    if (entities.isEmpty) {
+      entities = ref.read(selectedEntitiesProvider(completeListType));
+    }
+
+    return entities;
+  }
+
+  void _removeTags(WidgetRef ref, List<Tag> tags, int index) {
+    Set<FileOfInterest> entities = _getSelectedEntities();
+
     for (var e in entities) {
-      ref.read(metadataProvider(e).notifier).removeTags(e, tags[index]);
+      ref.read(metadataProvider(e).notifier).removeTags(tags[index]);
     }
   }
 
-  bool _updateTags(WidgetRef ref, Set<FileOfInterest> entities, String tags) {
+  bool _updateTags(WidgetRef ref, String tags) {
+    Set<FileOfInterest> entities = _getSelectedEntities();
+
     for (var e in entities) {
-      ref.read(metadataProvider(e).notifier).updateTagsFromString(e, tags);
+      ref.read(metadataProvider(e).notifier).updateTagsFromString(tags);
     }
 
     tagController.text = '';
@@ -161,9 +170,9 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
   @override
   void delete() {
-    // We want to be able to delete files in the PreviewPane, we also want to be able to edit Metadata in the same Pane; what we don't want to happen is
-    // for people to delete text from the Metadata Text editor and accidentally delete files with an overloaded delete key. So, put a delay in so that we
-    // can't delete without purpose. Any UX people willing to pitch in for a better solution would be greatly appreciated.
+    // We want to be able to delete files in the PreviewPane, we also want to be able to edit Metadata in the same Pane; what we don't want to
+    // happen is for people to delete text from the Metadata Text editor and accidentally delete files with an overloaded delete key. So, put
+    // a delay in so that we can't delete without purpose. Any UX people willing to pitch in for a better solution would be greatly appreciated.
     if (tagController.text.isNotEmpty) {
       if (_debounce?.isActive ?? false) _debounce?.cancel();
 

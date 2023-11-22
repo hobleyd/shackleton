@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 import 'entity_context_menu.dart';
 import 'navigation/navigation_favourites.dart';
 import 'navigation/navigation_mounted_drives.dart';

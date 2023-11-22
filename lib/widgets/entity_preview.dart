@@ -145,7 +145,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
-    ref.read(metadataProvider(selectedEntity).notifier).replaceTagsFromString(selectedEntity, tags);
+    ref.read(metadataProvider(selectedEntity).notifier).replaceTagsFromString(tags);
 
     return true;
   }

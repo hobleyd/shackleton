@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/file_events.dart';
 
-import '../interfaces/file_events_callback.dart';
-import '../models/file_of_interest.dart';
+import '../../interfaces/file_events_callback.dart';
+import '../../models/file_of_interest.dart';
 
 part 'selected_entities.g.dart';
 

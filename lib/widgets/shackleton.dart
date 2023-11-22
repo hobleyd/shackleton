@@ -11,7 +11,7 @@ import '../models/preview_settings.dart';
 import '../providers/folder_path.dart';
 import '../providers/map_pane.dart';
 import '../providers/preview.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 import 'folder_list.dart';
 import 'import_folder.dart';
 import 'navigation.dart';

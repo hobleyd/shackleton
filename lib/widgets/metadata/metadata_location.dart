@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:shackleton/providers/location_update.dart';
-import 'package:shackleton/providers/metadata.dart';
+
 
 import '../../misc/utils.dart';
 import '../../models/file_metadata.dart';
-import '../../models/file_of_interest.dart';
-import '../../providers/selected_entities.dart';
+import '../../providers/location_update.dart';
+import '../../providers/metadata.dart';
+import '../../providers/selected_entities/selected_entities.dart';
+import '../../providers/selected_entities/selected_metadata.dart';
 
 class MetadataLocation extends ConsumerWidget {
-  final Set<FileOfInterest> entities;
+  final FileType selectedListType;
+  final FileType completeListType;
 
-  const MetadataLocation({Key? key, required this.entities}) : super(key: key);
+  const MetadataLocation({Key? key, required this.selectedListType, required this.completeListType}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref,) {
     LatLng newLocation = ref.watch(locationUpdateProvider);
-    FileMetaData? metadata = entities.isNotEmpty ? ref.watch(metadataProvider(entities.first)) : null;
+    List<FileMetaData> metadata = ref.watch(selectedMetadataProvider(selectedListType, completeListType));
 
-    String  latitudeText = entities.length > 1 ? 'Various...' : getLocation(metadata, true).replaceAll(' deg', '°');
-    String longitudeText = entities.length > 1 ? 'Various...' : getLocation(metadata, false).replaceAll(' deg', '°');
+    String  latitudeText = "Not set...";
+    String longitudeText = "Not set...";
 
+    if (metadata.isNotEmpty) {
+      latitudeText  = metadata.length > 1 ? 'Various...' : getLocation(metadata.first, true).replaceAll(' deg', '°');
+      longitudeText = metadata.length > 1 ? 'Various...' : getLocation(metadata.first, false).replaceAll(' deg', '°');
+    }
     return Column(
       children: [
         Row(
@@ -45,7 +51,7 @@ class MetadataLocation extends ConsumerWidget {
           ...[
             const SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () => _acceptLocation(ref, newLocation),
+              onPressed: () => _acceptLocation(ref, metadata, newLocation),
               child: Text('Accept new location', style: Theme.of(context).textTheme.labelSmall),
             ),
           ]
@@ -53,12 +59,10 @@ class MetadataLocation extends ConsumerWidget {
     );
   }
 
-  void _acceptLocation(WidgetRef ref, LatLng location) {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane));
-
-    for (var entity in selectedEntities) {
-      var metadata = ref.read(metadataProvider(entity).notifier);
-      metadata.setLocation(entity, location);
+  void _acceptLocation(WidgetRef ref, List<FileMetaData> metadata, LatLng location) {
+    for (var meta in metadata) {
+      var m = ref.read(metadataProvider(meta.entity!).notifier);
+      m.setLocation(location);
     }
 
     ref.read(locationUpdateProvider.notifier).reset();
