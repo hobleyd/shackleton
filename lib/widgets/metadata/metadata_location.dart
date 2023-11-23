@@ -21,13 +21,27 @@ class MetadataLocation extends ConsumerWidget {
     LatLng newLocation = ref.watch(locationUpdateProvider);
     List<FileMetaData> metadata = ref.watch(selectedMetadataProvider(selectedListType, completeListType));
 
-    String  latitudeText = "Not set...";
-    String longitudeText = "Not set...";
-
-    if (metadata.isNotEmpty) {
-      latitudeText  = metadata.length > 1 ? 'Various...' : getLocation(metadata.first, true).replaceAll(' deg', '°');
-      longitudeText = metadata.length > 1 ? 'Various...' : getLocation(metadata.first, false).replaceAll(' deg', '°');
+    var map = {};
+    for (var m in metadata) {
+      if (m.gpsLocation != null) {
+        map[m.gpsLocation] = !map.containsKey(m.gpsLocation) ? (1) : (map[m.gpsLocation] + 1);
+      }
     }
+
+    String latitudeText =
+      switch (map.length) {
+        0 => "No location set.",
+        1 => getLocation(metadata.first, true).replaceAll(' deg', '°'),
+        _ => "Various...",
+      };
+
+    String longitudeText =
+      switch (map.length) {
+        0 => "No location set.",
+        1 => getLocation(metadata.first, false).replaceAll(' deg', '°'),
+        _ => "Various...",
+      };
+
     return Column(
       children: [
         Row(
@@ -35,7 +49,7 @@ class MetadataLocation extends ConsumerWidget {
           children: [
             SizedBox(width: 80, child: Text('Latitude: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall),),
             const SizedBox(width: 5),
-            Expanded(child: Text(latitudeText.isEmpty ? 'Not set...' : latitudeText, style: Theme.of(context).textTheme.bodySmall),),
+            Expanded(child: Text(latitudeText, style: Theme.of(context).textTheme.bodySmall),),
           ],
         ),
         const SizedBox(height: 10),
@@ -44,7 +58,7 @@ class MetadataLocation extends ConsumerWidget {
           children: [
             SizedBox(width: 80, child: Text('Longitude: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall),),
             const SizedBox(width: 5),
-            Expanded(child: Text(longitudeText.isEmpty ? 'Not set...' : longitudeText, style: Theme.of(context).textTheme.bodySmall),),
+            Expanded(child: Text(longitudeText, style: Theme.of(context).textTheme.bodySmall),),
           ],
         ),
         if (newLocation.latitude != 0 && newLocation.longitude != 0 )
