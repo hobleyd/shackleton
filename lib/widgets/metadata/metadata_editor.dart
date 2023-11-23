@@ -34,8 +34,6 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   get completeListType => widget.completeListType;
   get selectedListType => widget.selectedListType;
 
-  // TODO: If I delete an image, the tags don't refresh on the image that replaces it!
-
   @override
   Widget build(BuildContext context,) {
     final List<Tag> tags = ref.watch(selectedTagsProvider(selectedListType, completeListType));
