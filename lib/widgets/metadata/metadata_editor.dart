@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,23 +53,26 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     itemCount: tags.length,
                     itemBuilder: (context, index) {
                       return Container(
-                          color: index % 2 == 1 ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.white,
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Row(children: [
-                            GestureDetector(
+                        color: index % 2 == 1 ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.white,
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(children: [
+                          Expanded(
+                            child: GestureDetector(
                               onTap: () => _filterByTag(ref, tags[index]),
-                              child: Text(tags[index].tag, style: Theme.of(context).textTheme.bodySmall),
+                              child: Text(tags[index].tag, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
                             ),
-                            const Spacer(),
-                            IconButton(
-                                icon: const Icon(Icons.clear),
-                                constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
-                                iconSize: 12,
-                                padding: EdgeInsets.zero,
-                                splashRadius: 0.0001,
-                                tooltip: 'Remove tag from selected images...',
-                                onPressed: () => _removeTags(ref, tags, index)),
-                          ]));
+                          ),
+                          const SizedBox(width: 5),
+                          IconButton(
+                              icon: const Icon(Icons.clear),
+                              constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                              iconSize: 12,
+                              padding: EdgeInsets.zero,
+                              splashRadius: 0.0001,
+                              tooltip: 'Remove tag from selected images...',
+                              onPressed: () => _removeTags(ref, tags, index)),
+                        ]),
+                      );
                     })),
             const Spacer(),
             MetadataLocation(selectedListType: selectedListType, completeListType: completeListType,),
