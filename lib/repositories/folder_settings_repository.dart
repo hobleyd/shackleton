@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/misc/utils.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
+import '../misc/utils.dart';
 import '../models/folder_ui_settings.dart';
 
 part 'folder_settings_repository.g.dart';

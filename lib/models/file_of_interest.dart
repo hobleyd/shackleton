@@ -28,7 +28,7 @@ class FileOfInterest implements Comparable {
   get exists => entity.existsSync();
   get extension => entity.path.split('.').last.toLowerCase();
   get extensionIndex => name.lastIndexOf('.') ==  -1 ? name.length : name.lastIndexOf('.');
-  get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
+  get isDirectory => entity is Directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
   get isImage => imageExtensions.contains(extension);
   get isHidden => name.startsWith('.');

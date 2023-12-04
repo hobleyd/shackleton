@@ -140,16 +140,22 @@ class Metadata extends _$Metadata {
     return saveMetadata(updateFile: true);
   }
 
-  Future<bool> replaceTagsFromString(String tags) async {
+  Future<bool> replaceTagsFromString(String tags, { bool updateFile = true }) async {
     state = state.copyWith(tags: getTagsFromString(tags));
-    return saveMetadata(updateFile: true);
+    if (updateFile) {
+      return saveMetadata(updateFile: true);
+    } else {
+      return true;
+    }
   }
 
-  void updateTagsFromString(String tags) {
+  void updateTagsFromString(String tags, { bool updateFile = true }) {
     List<Tag> newTags = List.from(state.tags);
     newTags.addAll(getTagsFromString(tags));
     state = state.copyWith(tags: [...{...newTags}]);
-    saveMetadata(updateFile: true);
+    if (updateFile) {
+      saveMetadata(updateFile: true);
+    }
   }
 
   void setEditable(bool editable) {

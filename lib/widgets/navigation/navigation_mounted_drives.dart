@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:process_run/cmd_run.dart';
-import 'package:shackleton/providers/folder_contents.dart';
-import 'package:shackleton/providers/folder_path.dart';
+
+import '../../providers/folder_contents.dart';
+import '../../providers/folder_path.dart';
 
 class NavigationMountedDrives extends ConsumerStatefulWidget {
   final Directory mountPoint;

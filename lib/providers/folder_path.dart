@@ -2,15 +2,21 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../interfaces/file_events_callback.dart';
 import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
+import 'file_events.dart';
 
 part 'folder_path.g.dart';
 
 @riverpod
-class FolderPath extends _$FolderPath {
+class FolderPath extends _$FolderPath implements FileEventsCallback {
   @override
   List<Directory> build() {
+    Future(() {
+      register();
+    });
+
     return [ _getHome() ];
   }
 
@@ -43,7 +49,12 @@ class FolderPath extends _$FolderPath {
     }
   }
 
-  void removeFolder(FileOfInterest folder) {
+  Future<void> register() async {
+    ref.read(fileEventsProvider.notifier).register(this);
+  }
+
+  @override
+  void remove(FileOfInterest folder) {
     if (contains(folder)) {
       state = [
         ...state.sublist(0, state.indexWhere((element) => element.path == folder.path))

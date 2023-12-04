@@ -1,18 +1,16 @@
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/file_events.dart';
-import 'package:shackleton/providers/folder_path.dart';
 
 import '../models/file_of_interest.dart';
-import '../misc/utils.dart';
+import '../providers/file_events.dart';
 
 part 'folder_contents.g.dart';
 
 enum EntitySortField { name, size, modified }
 enum EntitySortOrder { asc, desc }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FolderContents extends _$FolderContents {
   EntitySortField _defaultSort = EntitySortField.name;
   EntitySortOrder _defaultSortOrder = EntitySortOrder.asc;
@@ -81,7 +79,8 @@ class FolderContents extends _$FolderContents {
   void watchFolder(Directory path) async {
     Stream<FileSystemEvent> events = path.watch(events: FileSystemEvent.all);
     events.listen((FileSystemEvent event) {
-      FileOfInterest foi = FileOfInterest(entity: getEntity(event.path));
+      // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
+      FileOfInterest foi = FileOfInterest(entity: event.path == path.path ? Directory(event.path) : File(event.path));
       switch (event.type) {
         case FileSystemEvent.create:
           if (!state.contains(foi)) {
@@ -92,11 +91,8 @@ class FolderContents extends _$FolderContents {
           break;
         case FileSystemEvent.delete:
         case FileSystemEvent.move:
-          var folderPaths = ref.read(folderPathProvider.notifier);
           var fileEvents = ref.read(fileEventsProvider.notifier);
-
-          folderPaths.removeFolder(foi);
-          fileEvents.delete(foi);
+          fileEvents.delete(foi, deleteEntity: false); // Already deleted, just cleaning up here.
 
           state = [
             for (final element in state)

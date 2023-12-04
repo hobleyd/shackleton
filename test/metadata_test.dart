@@ -14,27 +14,25 @@ void main() {
       expect(next.tags.length, 2);
     });
 
-    final mockMetadataProvider = container.read(metadataProvider(foi));
-    expect(mockMetadataProvider.tags.length, 0);
-    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two');
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two', updateFile: false);
   });
 
   test('can add tags to populated set', () async {
     final FileOfInterest foi = FileOfInterest(entity: File('aaa'));
     final ProviderContainer container = ProviderContainer();
 
+    int expectedTags = 0;
     final mockMetadataProvider = container.read(metadataProvider(foi));
-    expect(mockMetadataProvider.tags.length, 0);
+    expect(mockMetadataProvider.tags.length, expectedTags);
 
     container.listen(metadataProvider(foi), (previous, next) {
-      expect(next.tags.length, 2);
+      expect(next.tags.length, expectedTags);
     });
 
-    container.read(metadataProvider(foi).notifier).replaceTagsFromString('two, three',);
+    expectedTags = 2;
+    container.read(metadataProvider(foi).notifier).replaceTagsFromString('two, three', updateFile: false);
 
-    container.listen(metadataProvider(foi), (previous, next) {
-      expect(next.tags.length, 3);
-    });
-    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two',);
+    expectedTags = 3;
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two', updateFile: false);
   });
 }

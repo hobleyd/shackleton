@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/file_events.dart';
 
 import '../../interfaces/file_events_callback.dart';
 import '../../models/file_of_interest.dart';
+import '../../providers/file_events.dart';
 
 part 'selected_entities.g.dart';
 
@@ -46,12 +46,20 @@ class SelectedEntities extends _$SelectedEntities implements FileEventsCallback 
 
   @override
   void remove(FileOfInterest entity) {
-    if (state.contains(entity)) {
+    if (entity.isDirectory) {
       state = {
         for (var e in state)
-          if (e.path != entity.path)
+          if (!e.path.startsWith(entity.path))
             e
       };
+    } else {
+      if (state.contains(entity)) {
+        state = {
+          for (var e in state)
+            if (e.path != entity.path)
+              e
+        };
+      }
     }
   }
 

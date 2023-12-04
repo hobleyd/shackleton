@@ -31,7 +31,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   int _lastSelectedItemIndex = -1;
 
   // TODO: Add key navigation
-  // TODO: Dismounting a drive keeps the preview images visible.
 
   @override
   Widget build(BuildContext context) {

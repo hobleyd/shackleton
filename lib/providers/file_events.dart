@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../interfaces/file_events_callback.dart';
@@ -14,26 +15,28 @@ class FileEvents extends _$FileEvents {
     return [];
   }
 
-  void delete(FileOfInterest entity) {
+  void delete(FileOfInterest entity, { required bool deleteEntity }) {
     if (entity.isDirectory) {
-      Directory d = entity.entity as Directory;
-      for (var file in d.listSync()) {
-        delete(FileOfInterest(entity: file));
-      }
-    } else {
-      for (var callback in state) {
-        callback.remove(entity);
+      if (entity.exists) {
+        Directory d = entity.entity as Directory;
+        for (var file in d.listSync()) {
+          delete(FileOfInterest(entity: file), deleteEntity: deleteEntity);
+        }
       }
     }
 
-    if (entity.exists) {
+    for (var callback in state) {
+      callback.remove(entity);
+    }
+
+    if (entity.exists && deleteEntity) {
       entity.delete();
     }
   }
 
   void deleteAll(Set<FileOfInterest> entities) {
     for (var e in entities) {
-      delete(e);
+      delete(e, deleteEntity: true);
     }
   }
 

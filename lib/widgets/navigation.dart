@@ -20,6 +20,8 @@ class Navigation extends ConsumerStatefulWidget {
 }
 
 class _Navigation extends ConsumerState<Navigation> {
+  final linuxMountFolder = Directory('/media');
+  final macosMountFolder = Directory('/Volumes');
   double _width = 250;
   bool mouseHover = false;
 
@@ -56,10 +58,7 @@ class _Navigation extends ConsumerState<Navigation> {
                       const NavigationFavourites(),
                       if (Platform.isMacOS || Platform.isLinux) ...[
                         const SizedBox(height: 10),
-                        if (Platform.isMacOS)
-                          NavigationMountedDrives(mountPoint: Directory('/Volumes')),
-                        if (Platform.isLinux)
-                          NavigationMountedDrives(mountPoint: Directory('/media')),
+                        NavigationMountedDrives(mountPoint: Platform.isMacOS ? macosMountFolder : linuxMountFolder),
                       ],
                       const SizedBox(height: 10),
                       const NavigationTags(),
