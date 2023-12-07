@@ -14,7 +14,7 @@ void main() {
       ),
     ),
     files: InnoSetupFiles(
-      executable: File('shackleton.exe '),
+      executable: File('build/windows/x64/runner/Release/shackleton.exe '),
       location: Directory('build/windows/x64/runner/Release'),
     ),
     name: InnoSetupName('shackleton-${Platform.environment["VERSION"]}'),
