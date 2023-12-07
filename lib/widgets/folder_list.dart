@@ -118,7 +118,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
               cursor: SystemMouseCursors.resizeColumn,
               child: GestureDetector(
                 onHorizontalDragUpdate: (DragUpdateDetails details) {
-                  var folderNotifier = ref.read(folderSettingsRepositoryProvider(folderPath).notifier);
+                  var folderNotifier = ref.read(folderSettingsRepositoryProvider(folderPath.path).notifier);
                   folderNotifier.updateSettings(folderSettings.copyWith(width: folderSettings.width + details.delta.dx));
                 },
                 child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
