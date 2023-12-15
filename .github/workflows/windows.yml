@@ -24,11 +24,11 @@ jobs:
      - uses: suisei-cn/actions-download-file@v1.3.0
        with:
          url: "https://github.com/tekartik/sqflite/raw/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll"
-         target: windows/build/runner/Release
+         target: build/windows/x64/runner/Release
      - run: dart run windows.dart
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
          name: 'shackleton-${{ env.VERSION }}'
-         files: 'build/windows/x64/runner/Release/shackleton-${{ env.VERSION }}.exe'
+         files: 'build/windows/shackleton-${{ env.VERSION }}.exe'
          tag_name: ${{ env.VERSION }}
