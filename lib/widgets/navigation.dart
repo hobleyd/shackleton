@@ -43,7 +43,7 @@ class _Navigation extends ConsumerState<Navigation> {
           },
           child: Container(
             alignment: Alignment.topLeft,
-            color: Theme.of(context).secondaryHeaderColor,
+            color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.4),
             child: EntityContextMenu(
               fileType: FileType.folderList,
               folder: FileOfInterest(entity: Directory(getHomeFolder())),
