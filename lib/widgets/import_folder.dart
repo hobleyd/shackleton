@@ -22,6 +22,8 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
 
     return Scaffold(
         appBar: AppBar(
+          elevation: 2,
+          shadowColor: Theme.of(context).shadowColor,
           title: Text('Import files to Library', style: Theme.of(context).textTheme.labelSmall),
         ),
         body: Consumer(

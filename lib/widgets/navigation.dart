@@ -43,7 +43,7 @@ class _Navigation extends ConsumerState<Navigation> {
           },
           child: Container(
             alignment: Alignment.topLeft,
-            color: const Color.fromRGBO(217, 217, 217, 100),
+            color: Theme.of(context).secondaryHeaderColor,
             child: EntityContextMenu(
               fileType: FileType.folderList,
               folder: FileOfInterest(entity: Directory(getHomeFolder())),
@@ -54,7 +54,7 @@ class _Navigation extends ConsumerState<Navigation> {
                   child: Column(
                     children: [
                       const NavigationSpace(),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
+                      Container(color: Theme.of(context).primaryColorLight, height: 2),
                       const NavigationFavourites(),
                       if (Platform.isMacOS || Platform.isLinux) ...[
                         const SizedBox(height: 10),

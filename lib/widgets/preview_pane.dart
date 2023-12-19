@@ -37,6 +37,8 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
     return Scaffold(
         appBar: AppBar(
+          elevation: 2,
+          shadowColor: Theme.of(context).shadowColor,
           title: Text(entities.toString(), style: Theme.of(context).textTheme.labelSmall),
         ),
         body: Row(children: [

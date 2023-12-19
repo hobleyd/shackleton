@@ -27,6 +27,8 @@ class ShackletonSettings extends ConsumerWidget {
         fontSizeController.text = '${appSettings.fontSize}';
         return Scaffold(
           appBar: AppBar(
+            elevation: 2,
+            shadowColor: Theme.of(context).shadowColor,
             title: Text('Settings', style: Theme.of(context).textTheme.labelSmall),
           ),
           body: Padding(
