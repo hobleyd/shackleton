@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
+import '../models/map_settings.dart';
+import '../providers/file_events.dart';
+import '../providers/map_pane.dart';
 import '../providers/metadata.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
+import '../providers/selected_entities/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
-import 'metadata_editor.dart';
+import 'metadata/metadata_editor.dart';
 import 'preview_pane.dart';
+import 'preview/photo_map.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
   const PreviewGrid({Key? key}) : super(key: key);
@@ -25,57 +31,44 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   int _lastSelectedItemIndex = -1;
 
   // TODO: Add key navigation
+
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewGrid));
-    entities = selectedEntities.toList();
-    entities.removeWhere((element) => !element.canPreview);
-    entities.sort();
+    MapSettings map = ref.watch(mapPaneProvider);
+    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewGrid));
 
     return entities.isEmpty
         ? Padding(
             padding: const EdgeInsets.only(top: 50),
             child: Text(
-              selectedEntities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!',
+              entities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!',
               textAlign: TextAlign.center,
             ))
         : Row(children: [
             Expanded(
               child: EntityContextMenu(
-                fileType: FileType.previewGrid,
+                fileType: FileType.previewPane,
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return GridView.builder(
-                        itemCount: entities.length,
-                        itemBuilder: (context, i) => GestureDetector(
-                            onTap: () => _selectEntity(entities[i]),
-                            onDoubleTap: () => _previewEntities(entities[i]),
-                            child: EntityPreview(
-                              entity: entities[i],
-                              selectionType: FileType.previewPane,
-                            )),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: switch (constraints.maxWidth) {
-                            < 1024 => 3,
-                            < 2048 => 5,
-                            _ => 7
-                          },
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        padding: const EdgeInsets.only(left: 20, right: 20),
-                        primary: false,
-                      );
-                    },
-                  ),
+                  child: _getGridView(),
                 ),
               ),
             ),
+            if (map.visible) ...[
+              MouseRegion(
+                cursor: SystemMouseCursors.resizeColumn,
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (DragUpdateDetails details) {
+                    ref.read(mapPaneProvider.notifier).changeWidth(details.delta.dx);
+                  },
+                  child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                ),
+              ),
+              SizedBox(width: map.width, child: const PhotoMap()),
+            ],
             const VerticalDivider(),
-            const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane,)),
+            SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane, callback: this)),
           ]);
   }
 
@@ -93,6 +86,60 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     handler.register();
   }
 
+  Widget _getGridView() {
+    var selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
+    List<GlobalKey?> keys = List.filled(entities.length, null, growable: false);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          itemCount: entities.length,
+          itemBuilder: (context, index) {
+            keys[index] = GlobalKey<DragItemWidgetState>();
+
+            return InkWell(
+                onTap: () => _selectEntity(entities[index]),
+                onDoubleTap: () => _previewEntities(entities[index]),
+                child: DragItemWidget(
+                    key: keys[index],
+                    allowedOperations: () => [DropOperation.move],
+                    canAddItemToExistingSession: true,
+                    dragItemProvider: (request) async {
+                      final item = DragItem();
+                      item.add(Formats.fileUri(entities[index].uri));
+                      item.add(Formats.htmlText.lazy(() => entities[index].path));
+                      return item;
+                    },
+                    child: DraggableWidget(
+                      dragItemsProvider: (context) {
+                        // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
+                        // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
+                        // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
+                        List<DragItemWidgetState> dragItems = [];
+                        for (var e in selectedEntities) {
+                          var itemIndex = entities.indexOf(e);
+                          // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
+                          // folder; so double check that the index exists to avoid an Exception.
+                          if (itemIndex != -1 && keys[itemIndex] != null && keys[itemIndex]!.currentState != null) {
+                            dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+                          }
+                        }
+                        return dragItems;
+                      },
+                      child: EntityPreview(entity: entities[index], isSelected: selectedEntities.contains(entities[index]), displayMetadata: true,),
+                    )));
+          },
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: switch (constraints.maxWidth) { < 1024 => 3, < 2048 => 5, _ => 7 },
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          padding: const EdgeInsets.only(left: 20, right: 20),
+          primary: false,
+        );
+      },
+    );
+  }
 
   void _previewEntities(FileOfInterest tappedEntity) {
     var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
@@ -136,8 +183,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void delete() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
-    selectedEntities.deleteAll();
+    var fileEvents = ref.read(fileEventsProvider.notifier);
+    fileEvents.deleteAll(ref.watch(selectedEntitiesProvider(FileType.previewPane)));
   }
 
   @override

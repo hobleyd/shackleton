@@ -11,12 +11,16 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+      - name: "Push version tag from pubspec.yaml"
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: ${{ env.VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           architecture: x64
           cache: false
-      - run: sudo apt-get install -y ninja-build libgtk-3-dev
+      - run: sudo apt-get install -y ninja-build libgtk-3-dev libmpv-dev mpv
       - run: flutter config --enable-linux-desktop
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: dart run flutter_launcher_icons
@@ -27,8 +31,9 @@ jobs:
         env:
           UPDATE_INFO: gh-releases-zsync|AppImageCrafters|appimage-demo-qt5|latest|*x86_64.AppImage.zsync
           VERSION: ${{ env.VERSION }}
-      # Upload generated dmg to the artifacts.
-      - uses: actions/upload-artifact@v1
+      - name: Create Release
+        uses: softprops/action-gh-release@v0.1.15
         with:
-          name: Shackleton-${{ env.VERSION }}-x86_64.AppImage
-          path: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+          name: shackleton-${{ env.VERSION }}
+          files: Shackleton-${{ env.VERSION }}-x86_64.AppImage
+          tag_name: ${{ env.VERSION }}

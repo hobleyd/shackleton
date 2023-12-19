@@ -12,6 +12,10 @@ jobs:
        id: get_version
        run: |
          echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+     - name: "Push version tag from pubspec.yaml"
+       uses: EndBug/latest-tag@latest
+       with:
+         tag-name: ${{ env.VERSION }}
      - uses: subosito/flutter-action@v2
        with:
          channel: 'stable'
@@ -25,7 +29,9 @@ jobs:
        with:
          name: 'shackleton-${{ env.VERSION }}'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
-     - uses: actions/upload-artifact@v1
+     - name: Create Release
+       uses: softprops/action-gh-release@v0.1.15
        with:
-         name: 'shackleton-${{ env.VERSION }}.dmg'
-         path: 'shackleton-${{ env.VERSION }}.dmg'
+         files: 'shackleton-${{ env.VERSION }}.dmg'
+         name: 'shackleton-${{ env.VERSION }}'
+         tag_name: ${{ env.VERSION }}

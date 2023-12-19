@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shackleton/models/app_settings.dart';
-import 'package:shackleton/repositories/app_settings_repository.dart';
+
+import '../models/app_settings.dart';
+import '../repositories/app_settings_repository.dart';
+import '../repositories/app_statistics_repository.dart';
+import 'shackleton_statistics.dart';
 
 class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
@@ -11,10 +14,6 @@ class ShackletonSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var appSettingsRepository = ref.read(appSettingsRepositoryProvider.notifier);
-
-    // Pictures Folder
-    // Font Size
     // Clear DB Cache
     // DB Statistics
     return Consumer(builder: (context, watch, child) {
@@ -28,6 +27,8 @@ class ShackletonSettings extends ConsumerWidget {
         fontSizeController.text = '${appSettings.fontSize}';
         return Scaffold(
           appBar: AppBar(
+            elevation: 2,
+            shadowColor: Theme.of(context).shadowColor,
             title: Text('Settings', style: Theme.of(context).textTheme.labelSmall),
           ),
           body: Padding(
@@ -39,10 +40,9 @@ class ShackletonSettings extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(width: 120, child: Text('Library folder: ', style: Theme.of(context).textTheme.labelSmall)),
+                      SizedBox(width: 120, child: Text('Library folder: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall)),
                       const SizedBox(width: 15),
-                      SizedBox(
-                        width: 300,
+                      Expanded(
                         child: TextField(
                             autofocus: true,
                             controller: libraryFolderController,
@@ -52,7 +52,7 @@ class ShackletonSettings extends ConsumerWidget {
                             ),
                             keyboardType: TextInputType.text,
                             maxLines: 1,
-                            onSubmitted: (path) => appSettingsRepository.updateSettings(appSettings.copyWith(libraryPath: path)),
+                            onSubmitted: (path) => ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(libraryPath: path)),
                             style: Theme.of(context).textTheme.bodySmall),
                       ),
                     ],
@@ -61,10 +61,10 @@ class ShackletonSettings extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(width: 120, child: Text('Font Size: ', style: Theme
-                          .of(context)
-                          .textTheme
-                          .labelSmall)),
+                      SizedBox(
+                          width: 120,
+                          child: Text('Font Size: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall),
+                      ),
                       const SizedBox(width: 15),
                       IconButton(
                         icon: const Icon(Icons.remove),
@@ -73,7 +73,7 @@ class ShackletonSettings extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         splashRadius: 0.0001,
                         tooltip: 'Decrease font size...',
-                        onPressed: () => _changeFontSize(appSettingsRepository, appSettings, -1),
+                        onPressed: () => _changeFontSize(ref, appSettings, -1),
                       ),
                       const SizedBox(width: 10),
                       SizedBox(
@@ -86,11 +86,8 @@ class ShackletonSettings extends ConsumerWidget {
                           ),
                           keyboardType: TextInputType.text,
                           maxLines: 1,
-                          onSubmitted: (_) => _changeFontSize(appSettingsRepository, appSettings, 0),
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .bodySmall,
+                          onSubmitted: (_) => _changeFontSize(ref, appSettings, 0),
+                          style: Theme.of(context).textTheme.bodySmall,
                           textAlign: TextAlign.center,),
                       ),
                       const SizedBox(width: 10),
@@ -101,7 +98,21 @@ class ShackletonSettings extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         splashRadius: 0.0001,
                         tooltip: 'Increase font size...',
-                        onPressed: () => _changeFontSize(appSettingsRepository, appSettings, 1),
+                        onPressed: () => _changeFontSize(ref, appSettings, 1),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const ShackletonStatistics(),
+                      Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                      ElevatedButton(
+                        onPressed: () => _clearCache(ref),
+                        child: Text('Clear Cache', style: Theme.of(context).textTheme.labelSmall),
                       ),
                     ],
                   ),
@@ -115,14 +126,20 @@ class ShackletonSettings extends ConsumerWidget {
     });
   }
 
-  bool _changeFontSize(var appSettingsRepository, AppSettings appSettings, int delta) {
+  bool _changeFontSize(WidgetRef ref, AppSettings appSettings, int delta) {
     int? size = int.tryParse(fontSizeController.text);
     if (size == null) {
       return false;
     }
     size += delta;
 
-    appSettingsRepository.updateSettings(appSettings.copyWith(fontSize: size));
+    ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(fontSize: size));
+    return true;
+  }
+
+  bool _clearCache(WidgetRef ref) {
+    var appStatisticsProvider = ref.read(appStatisticsRepositoryProvider.notifier);
+    appStatisticsProvider.clear();
     return true;
   }
 }

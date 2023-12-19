@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../database/app_database.dart';
 import '../misc/utils.dart';
 import '../models/app_settings.dart';
+import '../providers/shackleton_theme.dart';
 
 part 'app_settings_repository.g.dart';
 
@@ -17,7 +18,7 @@ class AppSettingsRepository extends _$AppSettingsRepository {
         create table if not exists $tableName(
           id                integer primary key, 
           libraryPath       text    not null,
-          fontSize          int     not null,
+          fontSize          int     not null
           );
           ''';
 
@@ -29,15 +30,21 @@ class AppSettingsRepository extends _$AppSettingsRepository {
   }
 
   Future<AppSettings> getSettings() async {
+    late AppSettings appSettings;
     List<Map<String, dynamic>> rows = await _database.query(tableName, where: 'id = ?', whereArgs: [ 0 ]);
     if (rows.isNotEmpty) {
-      return AppSettings.fromJson(rows.first);
+      appSettings = AppSettings.fromJson(rows.first);
     } else {
-      return AppSettings(id: 0, libraryPath: join(getHomeFolder(), 'Pictures'), fontSize: 12);
+      appSettings = AppSettings(id: 0, libraryPath: join(getHomeFolder(), 'Pictures'), fontSize: 12);
     }
+
+    ref.read(shackletonThemeProvider.notifier).setFontSize(appSettings.fontSize.toDouble());
+    return appSettings;
   }
 
   Future<int> updateSettings(AppSettings appSettings) async {
+    ref.read(shackletonThemeProvider.notifier).setFontSize(appSettings.fontSize.toDouble());
+
     int rowId = await _database.insert(tableName, appSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = await AsyncValue.guard(() => getSettings());
     return rowId;

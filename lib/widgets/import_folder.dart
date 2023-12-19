@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shackleton/providers/selected_entities.dart';
+import 'package:shackleton/providers/selected_entities/selected_entities.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/import_entity.dart';
@@ -22,6 +22,8 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
 
     return Scaffold(
         appBar: AppBar(
+          elevation: 2,
+          shadowColor: Theme.of(context).shadowColor,
           title: Text('Import files to Library', style: Theme.of(context).textTheme.labelSmall),
         ),
         body: Consumer(
@@ -30,7 +32,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
             return importAsync.when(error: (error, stackTrace) {
               return Text('$error', style: Theme.of(context).textTheme.bodySmall);
             }, loading: () {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(heightFactor: 1.0, child: CircularProgressIndicator());
             }, data: (List<ImportEntity> filesToImport) {
               return Stack(
                 children: [

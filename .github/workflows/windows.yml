@@ -11,14 +11,24 @@ jobs:
        with:
          channel: 'stable'
          architecture: x64
+     - run: choco install yq
+     - run: echo "VERSION=$(yq .version pubspec.yaml)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+     - name: "Push version tag from pubspec.yaml"
+       uses: EndBug/latest-tag@latest
+       with:
+         tag-name: ${{ env.VERSION }}
      - run: flutter config --enable-windows-desktop
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
-     - run: dart run msix:create
-
-     # Upload generated dmg to the artifacts.
-     - uses: actions/upload-artifact@v1
+     - uses: suisei-cn/actions-download-file@v1.3.0
        with:
-        name: shackleton.msix
-        path: build/windows/runner/Release/shackleton.msix
+         url: "https://github.com/tekartik/sqflite/raw/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll"
+         target: build/windows/x64/runner/Release
+     - run: dart run windows.dart
+     - name: Create Release
+       uses: softprops/action-gh-release@v0.1.15
+       with:
+         name: 'shackleton-${{ env.VERSION }}'
+         files: 'build/windows/shackleton-${{ env.VERSION }}.exe'
+         tag_name: ${{ env.VERSION }}

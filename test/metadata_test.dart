@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shackleton/models/file_of_interest.dart';
-import 'package:shackleton/models/tag.dart';
 import 'package:shackleton/providers/metadata.dart';
 
 void main() {
@@ -15,21 +14,25 @@ void main() {
       expect(next.tags.length, 2);
     });
 
-    final mockMetadataProvider = container.read(metadataProvider(foi));
-    expect(mockMetadataProvider.tags.length, 0);
-    container.read(metadataProvider(foi).notifier).updateTagsFromString(foi, 'one, two');
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two', updateFile: false);
   });
 
   test('can add tags to populated set', () async {
     final FileOfInterest foi = FileOfInterest(entity: File('aaa'));
     final ProviderContainer container = ProviderContainer();
 
+    int expectedTags = 0;
+    final mockMetadataProvider = container.read(metadataProvider(foi));
+    expect(mockMetadataProvider.tags.length, expectedTags);
+
     container.listen(metadataProvider(foi), (previous, next) {
-      expect(next.tags.length, 3);
+      expect(next.tags.length, expectedTags);
     });
 
-    final mockMetadataProvider = container.read(metadataProvider(foi));
-    expect(mockMetadataProvider.tags.length, 0);
-    container.read(metadataProvider(foi).notifier).updateTagsFromString(foi, 'one, two', tagSet: { Tag(tag: 'two'), Tag(tag: 'three') });
+    expectedTags = 2;
+    container.read(metadataProvider(foi).notifier).replaceTagsFromString('two, three', updateFile: false);
+
+    expectedTags = 3;
+    container.read(metadataProvider(foi).notifier).updateTagsFromString('one, two', updateFile: false);
   });
 }

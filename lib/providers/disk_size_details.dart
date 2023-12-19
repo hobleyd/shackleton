@@ -7,7 +7,7 @@ import 'folder_path.dart';
 
 part 'disk_size_details.g.dart';
 
-double roundDouble(double value, int places){
+double roundDouble(double value, int places) {
   var mod = pow(10.0, places);
   return ((value * mod).round().toDouble() / mod);
 }

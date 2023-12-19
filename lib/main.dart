@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:shackleton/repositories/app_settings_repository.dart';
 
 import 'database/app_database.dart';
 import 'misc/provider_logger.dart';
-import 'providers/theme.dart';
+import 'providers/shackleton_theme.dart';
 import 'widgets/shackleton.dart';
 
 Future<void> openDatabase() async {
@@ -14,6 +16,7 @@ Future<void> openDatabase() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
 
   await openDatabase();
 
@@ -27,10 +30,13 @@ class ShackletonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get the Fontsize from the database.
+    ref.watch(appSettingsRepositoryProvider);
+    
     return MaterialApp(
       title: 'Shackleton',
       home: const Shackleton(),
-      theme: ref.watch(themeProvider).theme,
+      theme: ref.watch(shackletonThemeProvider),
     );
   }
 }

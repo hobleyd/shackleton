@@ -2,14 +2,21 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../interfaces/file_events_callback.dart';
 import '../misc/utils.dart';
+import '../models/file_of_interest.dart';
+import 'file_events.dart';
 
 part 'folder_path.g.dart';
 
 @riverpod
-class FolderPath extends _$FolderPath {
+class FolderPath extends _$FolderPath implements FileEventsCallback {
   @override
   List<Directory> build() {
+    Future(() {
+      register();
+    });
+
     return [ _getHome() ];
   }
 
@@ -18,8 +25,8 @@ class FolderPath extends _$FolderPath {
   }
 
   void addFolder(Directory clickedPath, Directory newPath) {
+    // Don't trigger a rebuild if the folder is already visible.
     if (state.contains(newPath)) {
-      // Don't trigger a rebuild if the folder is already visible.
       return;
     }
 
@@ -29,6 +36,28 @@ class FolderPath extends _$FolderPath {
       state = [
         ...state.sublist(0, state.indexOf(clickedPath) + 1),
         newPath,
+      ];
+    }
+  }
+
+  bool contains(FileOfInterest folder) {
+    try {
+      state.firstWhere((element) => element.path == folder.path);
+      return true;
+    } on StateError catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> register() async {
+    ref.read(fileEventsProvider.notifier).register(this);
+  }
+
+  @override
+  void remove(FileOfInterest folder) {
+    if (contains(folder)) {
+      state = [
+        ...state.sublist(0, state.indexWhere((element) => element.path == folder.path))
       ];
     }
   }

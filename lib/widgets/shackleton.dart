@@ -2,33 +2,48 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
+import 'package:shackleton/providers/error.dart';
 
 import '../models/file_of_interest.dart';
+import '../models/map_settings.dart';
 import '../models/preview_settings.dart';
 import '../providers/folder_path.dart';
+import '../providers/map_pane.dart';
 import '../providers/preview.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 import 'folder_list.dart';
 import 'import_folder.dart';
 import 'navigation.dart';
 import 'preview_grid.dart';
 import 'shackleton_settings.dart';
 
-class Shackleton extends ConsumerWidget {
+class Shackleton extends ConsumerStatefulWidget {
   const Shackleton({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ScrollController scrollController = ScrollController();
+  ConsumerState<Shackleton> createState() => _Shackleton();
+}
+
+class _Shackleton extends ConsumerState<Shackleton> {
+  final ScrollController scrollController = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
     List<Directory> paths = ref.watch(folderPathProvider);
     PreviewSettings preview = ref.watch(previewProvider);
+    MapSettings map = ref.watch(mapPaneProvider);
+    String error = ref.watch(errorProvider);
 
     return Scaffold(
         appBar: AppBar(
-          title: Text(paths.map((e) => e.path.split('/').last).toList().toString(), style: Theme.of(context).textTheme.labelSmall),
+          elevation: 2,
+          shadowColor: Theme.of(context).shadowColor,
+          title: Text(paths.map((e) => basename(e.path)).toList().toString(), style: Theme.of(context).textTheme.labelSmall),
           actions: <Widget>[
             IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
             IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
+            IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => ref.read(mapPaneProvider.notifier).setVisibility(!map.visible)),
             IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
             IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
           ],
@@ -61,6 +76,10 @@ class Shackleton extends ConsumerWidget {
                     ),
                 ),
               ),
+              if (error.isNotEmpty)
+                Expanded(
+                  child: Text(error, style: Theme.of(context).textTheme.labelSmall)
+                ),
             ]),
         ),
     );

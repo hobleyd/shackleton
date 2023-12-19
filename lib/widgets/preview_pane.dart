@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
-import '../providers/selected_entities.dart';
+import '../providers/file_events.dart';
+import '../providers/selected_entities/selected_entities.dart';
+import '../providers/selected_entities/selected_previewable_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
-import 'metadata_editor.dart';
+import 'metadata/metadata_editor.dart';
 
 class PreviewPane extends ConsumerStatefulWidget {
   final FileOfInterest initialEntity;
@@ -25,9 +27,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> previewEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
-    entities = previewEntities.toList();
-    entities.sort();
+    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewPane));
 
     // First time through, we set the initial image to the one clicked on.
     if (_lastSelectedItemIndex == -1) {
@@ -37,6 +37,8 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
     return Scaffold(
         appBar: AppBar(
+          elevation: 2,
+          shadowColor: Theme.of(context).shadowColor,
           title: Text(entities.toString(), style: Theme.of(context).textTheme.labelSmall),
         ),
         body: Row(children: [
@@ -51,7 +53,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             ),
           ),
           const VerticalDivider(),
-          const SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem,)),
+          SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem, callback: this,)),
         ]));
   }
 
@@ -90,11 +92,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             },
             itemCount: entities.length,
             itemBuilder: (BuildContext context, int pos) {
-              return EntityPreview(
-                    entity: entities[pos],
-                    selectionType: FileType.previewItem,
-                    displayMetadata: false,
-                  );
+              return EntityPreview(entity: entities[pos], isSelected: false, displayMetadata: false,);
             },
           ),
           Align(
@@ -119,15 +117,13 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   @override
   void delete() {
     if (_lastSelectedItemIndex != -1) {
-      var previewEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
+      var fileEvents = ref.read(fileEventsProvider.notifier);
 
       if (_lastSelectedItemIndex == entities.length) {
         _lastSelectedItemIndex--;
       }
-      previewEntities.delete(entities[_lastSelectedItemIndex]);
-
-      var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane));
-      if (selectedEntities.isEmpty) {
+      fileEvents.delete(entities[_lastSelectedItemIndex], deleteEntity: true);
+      if (ref.watch(selectedEntitiesProvider(FileType.previewPane)).isEmpty) {
         exit();
       }
     }
@@ -148,7 +144,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void newEntity() {
-
   }
 
   @override

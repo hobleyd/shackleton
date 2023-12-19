@@ -9,12 +9,11 @@ import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../misc/utils.dart';
-import '../models/tag.dart';
 import '../providers/metadata.dart';
 
 const Set<String> documentExtensions = { 'pdf' };
-const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff' };
-const Set<String> videoExtensions = { 'gif' };
+const Set<String> imageExtensions = { 'jpeg', 'jpg', 'png', 'tiff', 'tif' };
+const Set<String> videoExtensions = { 'avi', 'gif', 'm4v', 'mp4', 'mkv' };
 
 @immutable
 class FileOfInterest implements Comparable {
@@ -29,11 +28,11 @@ class FileOfInterest implements Comparable {
   get exists => entity.existsSync();
   get extension => entity.path.split('.').last.toLowerCase();
   get extensionIndex => name.lastIndexOf('.') ==  -1 ? name.length : name.lastIndexOf('.');
-  get isDirectory => entity.statSync().type == FileSystemEntityType.directory;
+  get isDirectory => entity is Directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
   get isImage => imageExtensions.contains(extension);
   get isHidden => name.startsWith('.');
-  get isMetadataSupported => imageExtensions.contains(extension);
+  get isMetadataSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension) || documentExtensions.contains(extension);
   get isVideo => videoExtensions.contains(extension);
   get name => basename(path);
   get path => entity.path;
@@ -56,8 +55,7 @@ class FileOfInterest implements Comparable {
       }
     } else {
       var metadata = ref.read(metadataProvider(this).notifier);
-      Set<Tag> tags = await metadata.getTagsFromFile(this);
-      await metadata.replaceTags(this, tags, update: false);
+      await metadata.saveMetadata(updateFile: false);
     }
   }
 
@@ -84,9 +82,13 @@ class FileOfInterest implements Comparable {
   }
 
   void delete() async {
-    if (Platform.isMacOS) {
-      String trash = join(getHomeFolder(), '.Trash', basename(path));
+    String? trash = switch (Platform.operatingSystem) {
+      'macos' => join(getHomeFolder(), '.Trash', basename(path)),
+      'linux' => join(getHomeFolder(), '.local', 'share', 'Trash', 'files', basename(path)),
+            _ => null,
+    };
 
+    if (trash != null) {
       if (isDirectory) {
         moveDirectory(trash);
       } else {

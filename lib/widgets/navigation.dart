@@ -5,11 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
-import '../providers/selected_entities.dart';
+import '../providers/selected_entities/selected_entities.dart';
 import 'entity_context_menu.dart';
-import 'navigation_favourites.dart';
-import 'navigation_space.dart';
-import 'navigation_tags.dart';
+import 'navigation/navigation_favourites.dart';
+import 'navigation/navigation_mounted_drives.dart';
+import 'navigation/navigation_space.dart';
+import 'navigation/navigation_tags.dart';
 
 class Navigation extends ConsumerStatefulWidget {
   const Navigation({Key? key,}) : super(key: key);
@@ -19,6 +20,8 @@ class Navigation extends ConsumerStatefulWidget {
 }
 
 class _Navigation extends ConsumerState<Navigation> {
+  final linuxMountFolder = Directory('/media');
+  final macosMountFolder = Directory('/Volumes');
   double _width = 250;
   bool mouseHover = false;
 
@@ -40,7 +43,7 @@ class _Navigation extends ConsumerState<Navigation> {
           },
           child: Container(
             alignment: Alignment.topLeft,
-            color: const Color.fromRGBO(217, 217, 217, 100),
+            color: Theme.of(context).secondaryHeaderColor,
             child: EntityContextMenu(
               fileType: FileType.folderList,
               folder: FileOfInterest(entity: Directory(getHomeFolder())),
@@ -51,8 +54,12 @@ class _Navigation extends ConsumerState<Navigation> {
                   child: Column(
                     children: [
                       const NavigationSpace(),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
+                      Container(color: Theme.of(context).primaryColorLight, height: 2),
                       const NavigationFavourites(),
+                      if (Platform.isMacOS || Platform.isLinux) ...[
+                        const SizedBox(height: 10),
+                        NavigationMountedDrives(mountPoint: Platform.isMacOS ? macosMountFolder : linuxMountFolder),
+                      ],
                       const SizedBox(height: 10),
                       const NavigationTags(),
                     ],

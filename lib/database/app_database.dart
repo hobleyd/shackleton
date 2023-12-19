@@ -11,7 +11,7 @@ import '../repositories/folder_settings_repository.dart';
 
 part 'app_database.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AppDatabase appDb(AppDbRef ref) {
   return AppDatabase();
 }
@@ -51,7 +51,7 @@ class AppDatabase {
   Future<String> _getDatabasePath() async {
     String database = "";
     if (Platform.isWindows) {
-      database = Platform.environment['APPDATA']!;
+      database = path.join(Platform.environment['APPDATA']!, 'Shackleton');
     } else {
       database = path.join(Platform.environment['HOME']!, '.shackleton');
     }
@@ -83,6 +83,10 @@ class AppDatabase {
 
   void close() {
     _cachedStorage.close();
+  }
+
+  Future<int> delete(String table, { String? where, List<String>? whereArgs }) {
+    return _cachedStorage.delete(table, where: where, whereArgs: whereArgs);
   }
 
   Future<int> insert(String table, Map<String, dynamic> rows, { ConflictAlgorithm? conflictAlgorithm }) async {
