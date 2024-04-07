@@ -4,14 +4,14 @@ import '../../interfaces/file_events_callback.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/file_events.dart';
 
-part 'selected_entities.g.dart';
+part 'selected_folder_contents.g.dart';
 
 enum FileType { folderList, previewGrid, previewPane, previewItem }
 
 @Riverpod(keepAlive: true)
-class SelectedEntities extends _$SelectedEntities implements FileEventsCallback {
+class SelectedFolderContents extends _$SelectedFolderContents implements FileEventsCallback {
   @override
-  Set<FileOfInterest> build(FileType type) {
+  Set<FileOfInterest> build() {
     Future(() {
       register();
     });
