@@ -2,24 +2,27 @@ import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../models/file_of_interest.dart';
-import '../providers/file_events.dart';
+
+import '../../models/file_of_interest.dart';
+import '../../providers/contents/grid_contents.dart';
+import '../../providers/contents/selected_folder_contents.dart';
+import '../file_events.dart';
 
 part 'folder_contents.g.dart';
 
 enum EntitySortField { name, size, modified }
 enum EntitySortOrder { asc, desc }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class FolderContents extends _$FolderContents {
   EntitySortField _defaultSort = EntitySortField.name;
   EntitySortOrder _defaultSortOrder = EntitySortOrder.asc;
 
   @override
   List<FileOfInterest> build(Directory path) {
-    getFolderContents(path);
     watchFolder(path);
-    return state;
+
+    return getFolderContents(path);
   }
 
   void add(FileOfInterest entity) {
@@ -27,12 +30,13 @@ class FolderContents extends _$FolderContents {
     state = [...sort(entities, _defaultSort)];
   }
 
-  void getFolderContents(Directory path) {
+  List<FileOfInterest> getFolderContents(Directory path) {
     List<FileOfInterest> files = [];
     for (var file in path.listSync()) {
       files.add(FileOfInterest(entity: file));
     }
-    state = [...sort(files, _defaultSort)];
+
+    return sort(files, _defaultSort);
   }
 
   EntitySortField getSortField() {
@@ -73,7 +77,7 @@ class FolderContents extends _$FolderContents {
     } else {
       _defaultSort = sortField;
     }
-    state = [...sort(state, _defaultSort)];
+    state = sort(List.from(state), _defaultSort);
   }
 
   void watchFolder(Directory path) async {
@@ -86,6 +90,10 @@ class FolderContents extends _$FolderContents {
           if (!state.contains(foi)) {
             if (!foi.isHidden) {
               add(foi);
+              // If the selectedFolderContentsProvider contains this folder, we should update the previewGridProvider manually.
+              if (ref.read(selectedFolderContentsProvider).contains(FileOfInterest(entity: Directory(path.path)))) {
+                ref.read(gridContentsProvider.notifier).add(foi);
+              }
             }
           }
           break;

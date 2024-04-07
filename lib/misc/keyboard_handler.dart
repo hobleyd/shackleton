@@ -8,6 +8,7 @@ import '../interfaces/keyboard_callback.dart';
 class KeyboardHandler {
   bool isIndividualMultiSelectionPressed = false;
   bool isBlockMultiSelectionPressed = false;
+  bool processModifierKeys = true;
   bool hasFocus = false;
   bool isEditing = false;
   KeyboardCallback keyboardCallback;
@@ -50,16 +51,27 @@ class KeyboardHandler {
             }
 
             return true;
-          } else if (HardwareKeyboard.instance.isShiftPressed) {
+          } else if (processModifierKeys && HardwareKeyboard.instance.isShiftPressed) {
             if (event.logicalKey == LogicalKeyboardKey.tab) {
               isBlockMultiSelectionPressed = false;
               keyboardCallback.left();
+
+              return true;
+            } else {
+              isBlockMultiSelectionPressed = true;
+
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                keyboardCallback.left();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                keyboardCallback.right();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                keyboardCallback.up();
+              } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                keyboardCallback.down();
+              }
+
               return true;
             }
-
-            isBlockMultiSelectionPressed = true;
-
-            return true;
           } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
             keyboardCallback.left();
 

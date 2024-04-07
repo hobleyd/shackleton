@@ -40,6 +40,8 @@ class FileEvents extends _$FileEvents {
   }
 
   void register(FileEventsCallback callback) {
-    state = [...state, callback];
+    if (!state.contains(callback)) {
+      state = [...state, callback];
+    }
   }
 }

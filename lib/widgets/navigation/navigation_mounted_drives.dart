@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:process_run/cmd_run.dart';
 
-import '../../providers/folder_contents.dart';
+import '../../providers/contents/folder_contents.dart';
 import '../../providers/folder_path.dart';
 
 class NavigationMountedDrives extends ConsumerStatefulWidget {
   final Directory mountPoint;
-  const NavigationMountedDrives({Key? key, required this.mountPoint}) : super(key: key);
+  const NavigationMountedDrives({super.key, required this.mountPoint});
 
   @override
   ConsumerState<NavigationMountedDrives> createState() => _NavigationMountedDrives();

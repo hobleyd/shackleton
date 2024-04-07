@@ -7,7 +7,7 @@ import '../../misc/utils.dart';
 import '../../providers/disk_size_details.dart';
 
 class NavigationSpace extends ConsumerWidget {
-  const NavigationSpace({Key? key,}) : super(key: key);
+  const NavigationSpace({super.key,});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

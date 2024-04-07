@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../interfaces/keyboard_callback.dart';
 import '../misc/keyboard_handler.dart';
@@ -13,17 +14,17 @@ import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../providers/file_events.dart';
-import '../providers/folder_contents.dart';
+import '../providers/contents/folder_contents.dart';
+import '../providers/contents/selected_folder_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/metadata.dart';
-import '../providers/selected_entities/selected_entities.dart';
 import '../repositories/folder_settings_repository.dart';
 import 'entity_context_menu.dart';
 
 class FolderList extends ConsumerStatefulWidget {
   final Directory path;
 
-  const FolderList({Key? key, required this.path}) : super(key: key);
+  const FolderList({super.key, required this.path});
 
   @override
   ConsumerState<FolderList> createState() => _FolderList();
@@ -96,14 +97,13 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
                         )
                       : null,
                   child: EntityContextMenu(
-                    fileType: FileType.folderList,
                     folder: FileOfInterest(entity: folderPath),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
                       child: Column(
                         children: [
                           _getFolderColumnHeaders(context, folderSettings),
-                          Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2),
+                          Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
                           Expanded(child: _getListView(folderSettings)),
                           _getFolderSettingsIcons(folderSettings),
                         ],
@@ -116,12 +116,23 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           ),
           MouseRegion(
               cursor: SystemMouseCursors.resizeColumn,
+              key: const Key('resize'),
               child: GestureDetector(
-                onHorizontalDragUpdate: (DragUpdateDetails details) {
+                onHorizontalDragUpdate: (DragUpdateDetails details) async {
                   var folderNotifier = ref.read(folderSettingsRepositoryProvider(folderPath.path).notifier);
                   folderNotifier.updateSettings(folderSettings.copyWith(width: folderSettings.width + details.delta.dx));
+
+                  // Resize the window if we are resizing the rightmost FolderList and it is butted up against the right hand side of the window.
+                  if (mounted) {
+                    Size windowSize = await windowManager.getSize();
+                    double widgetPosition = _getWidgetPosition(context)!.right;
+
+                    if (widgetPosition > windowSize.width - 10) {
+                      windowManager.setSize(Size(windowSize.width + details.delta.dx, windowSize.height));
+                    }
+                  }
                 },
-                child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                child: Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3, margin: const EdgeInsets.only(right: 6),),
               )),
         ]),
         );
@@ -141,36 +152,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     super.initState();
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
     handler.register();
-  }
-
-  void _addSelectedEntity(FileOfInterest entity) {
-    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    folderListSelection.add(entity);
-
-    // We want to add selected entities to both the folder list selection, and the preview grid.
-    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-    if (entity.canPreview) {
-      previewGridSelection.add(entity);
-    } else if (entity.isDirectory) {
-      Set<FileOfInterest> selectedFiles = {};
-
-      Directory d = Directory(entity.path);
-      for (var e in d.listSync()) {
-        FileOfInterest foi = FileOfInterest(entity: e);
-        if (foi.canPreview) {
-          selectedFiles.add(foi);
-        }
-      }
-      previewGridSelection.replaceAll(selectedFiles);
-    }
-  }
-
-  _clearSelectedEntities() {
-    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    folderListSelection.clear();
-
-    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-    previewGridSelection.clear();
   }
 
   Widget _getEntityRow(BuildContext context, FileOfInterest entity, bool showDetails) {
@@ -222,7 +203,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           formats: Formats.standardFormats,
           hitTestBehavior: HitTestBehavior.opaque,
           onDropOver: (event) {
-            _selectIfValidDropLocation(event, entity);
+            _selectIfValidDropLocation(context, event, entity);
             return _onDropOver(event);
           },
           onDropEnter: (event) {},
@@ -314,12 +295,12 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   }
 
   Widget _getListView(FolderUISettings settings) {
-    Set<FileOfInterest> selectedEntities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    Set<FileOfInterest> selectedEntities = ref.watch(selectedFolderContentsProvider);
     List<FileOfInterest> entityList = List.from(entities);
     entityList.removeWhere((element) => !settings.showHiddenFiles && element.isHidden == true);
-    entityList.sort();
 
     List<GlobalKey?> keys = List.filled(entityList.length, null, growable: false);
+
     return SingleChildScrollView(
         child: ListView.builder(
         itemCount: entityList.length,
@@ -327,7 +308,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           FileOfInterest entity = entityList[index];
           keys[index] = GlobalKey<DragItemWidgetState>();
           return InkWell(
-              onTap: () => _selectEntry(entityList, index),
+              onTap: () => _selectEntry(context, entityList, index),
               onDoubleTap: () => entity.openFile(),
               child: DragItemWidget(
                 key: keys[index],
@@ -368,7 +349,19 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     );
   }
 
-  void _selectIfValidDropLocation(DropOverEvent event, FileOfInterest destination) {
+  Rect? _getWidgetPosition(BuildContext context) {
+    final renderObject = context.findRenderObject();
+    final matrix = renderObject?.getTransformTo(null);
+
+    if (matrix != null && renderObject?.paintBounds != null) {
+      final rect = MatrixUtils.transformRect(matrix, renderObject!.paintBounds);
+      return rect;
+    } else {
+      return null;
+    }
+  }
+
+  void _selectIfValidDropLocation(BuildContext context, DropOverEvent event, FileOfInterest destination) {
     final item = event.session.items.first;
     final reader = item.dataReader!;
     if (item.canProvide(Formats.fileUri)) {
@@ -377,11 +370,11 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              _selectEntry(entities, entities.indexOf(destination), shouldEditName: false);
+              _selectEntry(context, entities, entities.indexOf(destination), shouldEditName: false);
               return;
             }
           }
-          ref.read(selectedEntitiesProvider(FileType.folderList).notifier).removeAll();
+          ref.read(selectedFolderContentsProvider.notifier).removeAll();
         }
       });
     }
@@ -425,7 +418,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     entity.rename(filename);
   }
 
-  void _selectEntry(List <FileOfInterest> entities, int index, {bool shouldEditName = true}) {
+  void _selectEntry(BuildContext context, List <FileOfInterest> entities, int index, {bool shouldEditName = true}) {
     FileOfInterest entity = entities[index];
 
     // Cancel editing in the PreviewGrid if we are making selections.
@@ -436,8 +429,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       ref.read(folderPathProvider.notifier).addFolder(widget.path, entity.entity as Directory);
     }
 
+    var selectedFolderContents = ref.read(selectedFolderContentsProvider.notifier);
     if (handler.isIndividualMultiSelectionPressed) {
-      _toggleSelectedEntity(entity);
+      selectedFolderContents.contains(entity) ? selectedFolderContents.remove(entity) : selectedFolderContents.add(entity);    } else if (handler.isBlockMultiSelectionPressed) {
     } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
@@ -450,7 +444,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
         }
 
         for (int i = start; i <= end; i++) {
-          _addSelectedEntity(entities[i]);
+          selectedFolderContents.add(entities[i]);
         }
       }
     } else {
@@ -463,38 +457,27 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
             handler.setEditing(true);
           }
         } else {
-          _toggleSelectedEntity(entity, reset: false);
+          selectedFolderContents.replace(entity);
         }
       } else {
         _lastSelectedItemIndex = index;
-
-        _toggleSelectedEntity(entity, reset: true);
+        selectedFolderContents.replace(entity);
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
-  }
 
-  void _toggleSelectedEntity(FileOfInterest entity, {bool reset = false}) {
-    var folderListSelection = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
-    var previewGridSelection = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-
-    if (reset) {
-      folderListSelection.clear();
-      previewGridSelection.clear();
-    }
-
-    if (folderListSelection.contains(entity)) {
-      folderListSelection.remove(entity);
-      previewGridSelection.remove(entity);
-    } else {
-      _addSelectedEntity(entity);
-    }
+    Scrollable.ensureVisible(context);
   }
 
   @override
   void delete() {
     var fileEvents = ref.read(fileEventsProvider.notifier);
-    fileEvents.deleteAll(ref.watch(selectedEntitiesProvider(FileType.folderList)));
+    fileEvents.deleteAll(ref.watch(selectedFolderContentsProvider));
+  }
+
+  @override
+  void down() {
+
   }
 
   @override
@@ -526,11 +509,14 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   }
 
   @override
+  void up() {
+
+  }
+
+  @override
   void selectAll() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.folderList).notifier);
+    var selectedEntities = ref.read(selectedFolderContentsProvider.notifier);
     selectedEntities.addAll(entities.toSet());
 
-    var gridEntities = ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier);
-    gridEntities.addAll(entities.toSet());
   }
 }

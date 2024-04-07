@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/file_metadata.dart';
-import 'selected_entities/selected_entities.dart';
+import 'contents/selected_grid_entities.dart';
 
 import 'metadata.dart';
 
@@ -14,7 +14,7 @@ part 'photo_location.g.dart';
 class PhotoLocation extends _$PhotoLocation {
   @override
   Future<List<Marker>> build() async {
-    var selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
+    var selectedEntities = ref.watch(selectedGridEntitiesProvider);
     List<Marker> markers = [];
 
     for (var e in selectedEntities) {

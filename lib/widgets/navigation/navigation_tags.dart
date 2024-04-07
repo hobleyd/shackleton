@@ -8,11 +8,11 @@ import '../../misc/utils.dart';
 import '../../models/entity.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
-import '../../providers/selected_entities/selected_entities.dart';
+import '../../providers/contents/grid_contents.dart';
 import '../../repositories/file_tags_repository.dart';
 
 class NavigationTags extends ConsumerWidget {
-  const NavigationTags({Key? key,}) : super(key: key);
+  const NavigationTags({super.key,});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,6 +58,6 @@ class NavigationTags extends ConsumerWidget {
         tagSet.add(FileOfInterest(entity: File(e.path)));
       }
     }
-    ref.read(selectedEntitiesProvider(FileType.previewGrid).notifier).replaceAll(tagSet);
+    ref.read(gridContentsProvider.notifier).replaceAll(tagSet);
   }
 }

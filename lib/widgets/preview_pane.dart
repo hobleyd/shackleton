@@ -2,24 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../interfaces/keyboard_callback.dart';
+import '../interfaces/tag_handler.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
+import '../models/tag.dart';
+import '../providers/contents/pane_contents.dart';
+import '../providers/contents/pane_tags.dart';
 import '../providers/file_events.dart';
-import '../providers/selected_entities/selected_entities.dart';
-import '../providers/selected_entities/selected_previewable_entities.dart';
+import '../providers/metadata.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
 import 'metadata/metadata_editor.dart';
 
 class PreviewPane extends ConsumerStatefulWidget {
   final FileOfInterest initialEntity;
-  const PreviewPane({Key? key, required this.initialEntity}) : super(key: key);
+  const PreviewPane({super.key, required this.initialEntity});
 
   @override
   ConsumerState<PreviewPane> createState() => _PreviewPane();
 }
 
-class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallback {
+class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallback, TagHandler {
   late List<FileOfInterest> entities;
   late PageController _controller;
   late KeyboardHandler handler;
@@ -27,12 +30,22 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   Widget build(BuildContext context) {
-    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewPane));
+    entities = ref.watch(paneContentsProvider);
 
     // First time through, we set the initial image to the one clicked on.
     if (_lastSelectedItemIndex == -1) {
       _lastSelectedItemIndex = entities.indexOf(widget.initialEntity);
       _controller = PageController(initialPage: _lastSelectedItemIndex);
+    }
+
+    if (_lastSelectedItemIndex == -1) {
+      // This means that the initialEntry widget isn't in the list - because we deleted the file;
+      // exit the build() in this case as it's a side effect of the Provider build from the file
+      // delete. TODO: is there a better way to deal with this?
+      exit();
+
+      // Avoid a rebuild while we wait for the Context to pop.
+      return const SizedBox.shrink();
     }
 
     return Scaffold(
@@ -44,7 +57,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
         body: Row(children: [
           Expanded(
             child: EntityContextMenu(
-              fileType: FileType.previewPane,
               child: MouseRegion(
                 onEnter: (_) => handler.hasFocus = true,
                 onExit: (_) => handler.hasFocus = false,
@@ -53,7 +65,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             ),
           ),
           const VerticalDivider(),
-          SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewPane, selectedListType: FileType.previewItem, callback: this,)),
+          SizedBox(width: 210, child: MetadataEditor(keyHandlerCallback: this, tagHandler: this, paneEntity: entities[_lastSelectedItemIndex])),
         ]));
   }
 
@@ -70,7 +82,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
     Future(() {
       // Update the selected previewItem to show correct metadata
-      ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).replace(widget.initialEntity);
+      ref.read(paneTagsProvider.notifier).replace(widget.initialEntity);
     });
 
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
@@ -88,11 +100,11 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             onPageChanged: (index) {
               _lastSelectedItemIndex = index;
 
-              ref.read(selectedEntitiesProvider(FileType.previewItem).notifier).replace(entities[index]);
+              ref.read(paneTagsProvider.notifier).replace(entities[index]);
             },
             itemCount: entities.length,
             itemBuilder: (BuildContext context, int pos) {
-              return EntityPreview(entity: entities[pos], isSelected: false, displayMetadata: false,);
+              return EntityPreview(entity: entities[pos], isSelected: false, displayMetadata: false, previewWidth: MediaQuery.of(context).size.width - 210);
             },
           ),
           Align(
@@ -119,19 +131,26 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
     if (_lastSelectedItemIndex != -1) {
       var fileEvents = ref.read(fileEventsProvider.notifier);
 
-      if (_lastSelectedItemIndex == entities.length) {
+      // Get the entity, reset the selected entity to the previous one, or exit if it was the last one. Then delete the file.
+      final FileOfInterest entity = entities[_lastSelectedItemIndex];
+      if (_lastSelectedItemIndex >= entities.length-1) {
         _lastSelectedItemIndex--;
       }
-      fileEvents.delete(entities[_lastSelectedItemIndex], deleteEntity: true);
-      if (ref.watch(selectedEntitiesProvider(FileType.previewPane)).isEmpty) {
+
+      if (_lastSelectedItemIndex == -1) {
         exit();
       }
+
+      fileEvents.delete(entity, deleteEntity: true);
     }
   }
 
   @override
+  void down() {
+  }
+
+  @override
   void exit() {
-    ref.read(selectedEntitiesProvider(FileType.previewPane).notifier).removeAll();
     Navigator.of(context, rootNavigator: true).maybePop(context);
   }
 
@@ -147,10 +166,25 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   }
 
   @override
+  void removeTag(Tag tag) {
+    ref.read(metadataProvider(entities[_lastSelectedItemIndex]).notifier).removeTags(tag);
+  }
+
+  @override
   void right() {
     if (_lastSelectedItemIndex < entities.length - 1) {
       _controller.nextPage(duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
     }
+  }
+
+  @override
+  void up() {
+  }
+
+  @override
+  void updateTags(String tags) {
+    ref.read(metadataProvider(entities[_lastSelectedItemIndex]).notifier).updateTagsFromString(tags, updateFile: true);
+    ref.read(paneTagsProvider.notifier).replace(entities[_lastSelectedItemIndex]);
   }
 
   @override

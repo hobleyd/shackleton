@@ -1,29 +1,20 @@
-import 'dart:io';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/grid_contents.dart';
-import 'package:shackleton/providers/selected_entities/selected_folder_contents.dart';
-import 'package:shackleton/providers/selected_entities/selected_grid_entities.dart';
 
-import '../../interfaces/file_events_callback.dart';
-import '../../models/file_of_interest.dart';
-import '../../providers/file_events.dart';
+import '../../../interfaces/file_events_callback.dart';
+import '../../../models/file_of_interest.dart';
+import 'grid_contents.dart';
+import 'selected_grid_entities.dart';
 
 part 'pane_contents.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class PaneContents extends _$PaneContents implements FileEventsCallback {
   @override
   List<FileOfInterest> build() {
-    Future(() {
-      register();
-    });
+    List<FileOfInterest> selectedEntities = ref.watch(selectedGridEntitiesProvider);
+    List<FileOfInterest> gridEntities = ref.watch(gridContentsProvider);
+    List<FileOfInterest> sortedEntities = selectedEntities.isNotEmpty ? selectedEntities : gridEntities;
 
-    Set<FileOfInterest> entities = ref.watch(selectedGridEntitiesProvider);
-    if (entities.isEmpty) {
-      entities = ref.watch(gridContentsProvider);
-    }
-    List<FileOfInterest> sortedEntities = List.from(entities);
     sortedEntities.sort();
 
     return sortedEntities;
@@ -41,13 +32,15 @@ class PaneContents extends _$PaneContents implements FileEventsCallback {
     return state.contains(entity);
   }
 
-  Future<void> register() async {
-    ref.read(fileEventsProvider.notifier).register(this);
-  }
-
   @override
   void remove(FileOfInterest entity) {
-    state.remove(entity);
+    if (state.contains(entity)) {
+      state = [
+        for (var e in state)
+          if (e.path != entity.path)
+            e
+      ];
+    }
   }
 
   void removeAll() {

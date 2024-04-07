@@ -5,21 +5,20 @@ import 'package:latlong2/latlong.dart';
 
 import '../../misc/utils.dart';
 import '../../models/file_metadata.dart';
+import '../../models/file_of_interest.dart';
 import '../../providers/location_update.dart';
 import '../../providers/metadata.dart';
-import '../../providers/selected_entities/selected_entities.dart';
-import '../../providers/selected_entities/selected_metadata.dart';
+import '../../providers/contents/selected_grid_metadata.dart';
 
 class MetadataLocation extends ConsumerWidget {
-  final FileType selectedListType;
-  final FileType completeListType;
+  final FileOfInterest? paneEntity;
 
-  const MetadataLocation({Key? key, required this.selectedListType, required this.completeListType}) : super(key: key);
+  const MetadataLocation({super.key, this.paneEntity, });
 
   @override
   Widget build(BuildContext context, WidgetRef ref,) {
     LatLng newLocation = ref.watch(locationUpdateProvider);
-    List<FileMetaData> metadata = ref.watch(selectedMetadataProvider(selectedListType, completeListType));
+    List<FileMetaData> metadata = paneEntity != null ? [ ref.watch(metadataProvider(paneEntity!))] : ref.watch(selectedGridMetadataProvider);
 
     var map = {};
     for (var m in metadata) {

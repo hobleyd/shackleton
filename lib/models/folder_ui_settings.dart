@@ -13,6 +13,8 @@ String _fseToJson(FileSystemEntity entity) => entity.path;
 bool _boolFromJson(int value) => value.isOdd;
 int _boolToJson(bool value) => value ? 1 : 0;
 
+const String navigationFolder = '**navigation**';
+
 @freezed
 class FolderUISettings with _$FolderUISettings {
   const factory FolderUISettings({

@@ -13,6 +13,7 @@ class LocationUpdate extends _$LocationUpdate {
   void reset() {
     state = const LatLng(0, 0);
   }
+
   void setLocation(LatLng location) {
     state = location;
   }

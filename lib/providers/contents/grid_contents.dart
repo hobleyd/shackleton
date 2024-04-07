@@ -1,57 +1,56 @@
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/selected_entities/selected_folder_contents.dart';
 
-import '../../interfaces/file_events_callback.dart';
-import '../../models/file_of_interest.dart';
-import '../../providers/file_events.dart';
+import '../../../interfaces/file_events_callback.dart';
+import '../../../models/file_of_interest.dart';
+import '../../../providers/file_events.dart';
+import 'selected_folder_contents.dart';
 
 part 'grid_contents.g.dart';
 
 @Riverpod(keepAlive: true)
 class GridContents extends _$GridContents implements FileEventsCallback {
   @override
-  Set<FileOfInterest> build() {
+  List<FileOfInterest> build() {
     Future(() {
       register();
     });
 
     Set<FileOfInterest> entities = ref.watch(selectedFolderContentsProvider);
-    if (entities.isEmpty) {
-      Set<FileOfInterest> gridEntities = {};
+    List<FileOfInterest> gridEntities = [];
 
-      for (var entity in entities) {
-        if (entity.canPreview) {
-          gridEntities.add(entity);
-        } else if (entity.isDirectory) {
-          Directory d = Directory(entity.path);
-          for (var e in d.listSync()) {
-            FileOfInterest foi = FileOfInterest(entity: e);
-            if (foi.canPreview) {
-              gridEntities.add(foi);
-            }
+    for (var entity in entities) {
+      if (entity.canPreview) {
+        gridEntities.add(entity);
+      } else if (entity.isDirectory) {
+        Directory d = Directory(entity.path);
+        for (var e in d.listSync()) {
+          FileOfInterest foi = FileOfInterest(entity: e);
+          if (foi.canPreview) {
+            gridEntities.add(foi);
           }
         }
       }
-      return gridEntities;
-    } else {
-      return Set.from(entities);
     }
+    gridEntities.sort();
+    return gridEntities;
   }
 
   void add(FileOfInterest entity) {
     if (!state.contains(entity)) {
-      state = { ...state, entity};
+      state = [ ...state, entity ];
+      state.sort();
     }
   }
 
   void addAll(Set<FileOfInterest> entities) {
-    state = { ...state, ...entities };
+    state = { ...state, ...entities }.toList();
+    state.sort();
   }
 
   void clear() {
-    state = {};
+    state = [];
   }
 
   bool contains(FileOfInterest entity) {
@@ -68,33 +67,25 @@ class GridContents extends _$GridContents implements FileEventsCallback {
 
   @override
   void remove(FileOfInterest entity) {
-    if (entity.isDirectory) {
-      state = {
+    if (state.contains(entity)) {
+      state = [
         for (var e in state)
-          if (!e.path.startsWith(entity.path))
-            e
-      };
-    } else {
-      if (state.contains(entity)) {
-        state = {
-          for (var e in state)
-            if (e.path != entity.path)
-              e
-        };
-      }
+          if (e.path != entity.path) e
+      ];
     }
   }
 
   void removeAll() {
-    state = {};
+    state = [];
   }
 
   void replace(FileOfInterest entity) {
-    state = { entity };
+    state = [ entity ];
   }
 
   void replaceAll(Set<FileOfInterest> entities) {
-    state = { ...entities };
+    state = List.from(entities);
+    state.sort();
   }
 
   int size() {

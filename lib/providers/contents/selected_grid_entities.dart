@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../interfaces/file_events_callback.dart';
@@ -11,26 +9,33 @@ part 'selected_grid_entities.g.dart';
 @Riverpod(keepAlive: true)
 class SelectedGridEntities extends _$SelectedGridEntities implements FileEventsCallback {
   @override
-  Set<FileOfInterest> build() {
+  List<FileOfInterest> build() {
     Future(() {
       register();
     });
 
-    return {};
+    return [];
   }
 
   void add(FileOfInterest entity) {
     if (!state.contains(entity)) {
-      state = { ...state, entity};
+      state.add(entity);
+      state.sort();
+
+      state = List.from(state);
     }
   }
 
   void addAll(Set<FileOfInterest> entities) {
-    state = { ...state, ...entities };
+    Set<FileOfInterest> entitySet = { ...state, ...entities };
+    List<FileOfInterest> newState = List.from(entitySet);
+    newState.sort();
+
+    state = newState;
   }
 
   void clear() {
-    state = {};
+    state = [];
   }
 
   bool contains(FileOfInterest entity) {
@@ -47,33 +52,28 @@ class SelectedGridEntities extends _$SelectedGridEntities implements FileEventsC
 
   @override
   void remove(FileOfInterest entity) {
-    if (entity.isDirectory) {
-      state = {
+    if (state.contains(entity)) {
+      state = [
         for (var e in state)
-          if (!e.path.startsWith(entity.path))
+          if (e.path != entity.path)
             e
-      };
-    } else {
-      if (state.contains(entity)) {
-        state = {
-          for (var e in state)
-            if (e.path != entity.path)
-              e
-        };
-      }
+      ];
     }
   }
 
   void removeAll() {
-    state = {};
+    state = [];
   }
 
   void replace(FileOfInterest entity) {
-    state = { entity };
+    state = [ entity ];
   }
 
   void replaceAll(Set<FileOfInterest> entities) {
-    state = { ...entities };
+    List<FileOfInterest> newState = List.from(entities);
+    newState.sort();
+
+    state = newState;
   }
 
   int size() {

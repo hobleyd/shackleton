@@ -6,10 +6,10 @@ import '../../models/file_of_interest.dart';
 import '../metadata.dart';
 import 'selected_grid_entities.dart';
 
-part 'selected_metadata.g.dart';
+part 'selected_grid_metadata.g.dart';
 
 @riverpod
-class SelectedMetadata extends _$SelectedMetadata {
+class SelectedGridMetadata extends _$SelectedGridMetadata {
   @override
   List<FileMetaData> build() {
     List<FileOfInterest> selectedEntities = ref.watch(selectedGridEntitiesProvider);

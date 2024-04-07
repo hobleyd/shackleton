@@ -63,6 +63,7 @@ class _VideoPreview extends ConsumerState<VideoPreview> {
   @override
   void initState() {
     super.initState();
+
     _player.open(Media(widget.entity.path), play: false);
   }
 }
