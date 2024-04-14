@@ -90,7 +90,6 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     maxLines: 1,
                     onChanged: (text) {
                       handler.hasFocus = text.isEmpty;
-                      debugPrint('changing focus to: ${handler.hasFocus}');
                     },
                     onSubmitted: (tags) => _updateTags(ref, tags),
                     style: Theme.of(context).textTheme.bodySmall,
@@ -127,6 +126,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
     handler.processModifierKeys = false;
+    handler.hasFocus = tagController.text.isEmpty;
     handler.register();
   }
 
@@ -155,6 +155,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     tagHandler.updateTags(tags);
 
     tagController.text = '';
+    handler.hasFocus = true;
     focusNode.requestFocus();
 
     return true;
