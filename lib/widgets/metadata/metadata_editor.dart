@@ -78,7 +78,15 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
             const SizedBox(height: 10),
             MetadataLocation(paneEntity: widget.paneEntity),
             const SizedBox(height: 20),
-            Row(
+          MouseRegion(
+            onEnter: (_) {
+              handler.hasFocus = tagController.text.isEmpty;
+            },
+            onExit: (_) {
+              handler.hasFocus = false;
+              focusNode.unfocus();
+            },
+            child: Row(
               children: [
                 Expanded(
                   child: TextField(
@@ -105,7 +113,8 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     onPressed: () => _updateTags(ref, tagController.text)),
               ],
             ),
-          ],
+          ),
+        ],
         ),
     );
   }
@@ -126,7 +135,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
     handler = KeyboardHandler(ref: ref, keyboardCallback: this);
     handler.processModifierKeys = false;
-    handler.hasFocus = tagController.text.isEmpty;
+    handler.hasFocus = false;
     handler.register();
   }
 
