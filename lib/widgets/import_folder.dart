@@ -172,7 +172,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
         shrinkWrap: true);
   }
 
-  void _moveFiles(List<ImportEntity> entities) {
+  void _moveFiles(List<ImportEntity> entities) async {
     setState(() {
       isImporting = true;
     });

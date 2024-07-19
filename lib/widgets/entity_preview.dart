@@ -5,6 +5,7 @@ import 'package:intersperse/intersperse.dart';
 import '../models/file_of_interest.dart';
 import '../models/file_metadata.dart';
 import '../providers/metadata.dart';
+import 'metadata/fix_metadata.dart';
 import 'preview/image_preview.dart';
 import 'preview/pdf_preview.dart';
 import 'preview/video_preview.dart';
@@ -108,17 +109,16 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget _getMetadata(BuildContext context, WidgetRef ref, bool isSelected) {
     return Container(
         padding: const EdgeInsets.only(left: 2),
-        color: background,
+        color: metadata.corruptedMetadata ? Colors.red : background,
         child: Row(children: [
           Expanded(child: _getMetadataText()),
           const SizedBox(width: 3),
-          _getIconButton(
-              Icons.edit,
-              height: 12,
-              toolTip: 'Edit comma separated list of Tags...',
-              callback: () => ref.read(metadataProvider(selectedEntity).notifier).setEditable(true)),
-        ]
-        ));
+          metadata.corruptedMetadata
+              ? _getIconButton(Icons.auto_fix_high,
+              height: 12, toolTip: 'Fix metadata in file...', callback: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FixMetadata(file: selectedEntity))))
+              : _getIconButton(Icons.edit,
+              height: 12, toolTip: 'Edit comma separated list of Tags...', callback: () => ref.read(metadataProvider(selectedEntity).notifier).setEditable(true)),
+        ]));
   }
 
   Widget _getMetadataText() {
