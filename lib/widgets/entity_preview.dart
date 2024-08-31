@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
+import 'package:shackleton/widgets/preview/markdown_preview.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/file_metadata.dart';
@@ -137,6 +138,8 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget _getPreview() {
     if (selectedEntity.extension == 'pdf') {
       return PDFPreview(entity: selectedEntity, isSelected: isSelected);
+    } else if (selectedEntity.extension == 'md') {
+      return MarkdownPreview(entity: selectedEntity, isSelected: isSelected);
     }
 
     if (selectedEntity.isVideo) {
