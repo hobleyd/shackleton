@@ -136,17 +136,12 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   }
 
   Widget _getPreview() {
-    if (selectedEntity.extension == 'pdf') {
-      return PDFPreview(entity: selectedEntity, isSelected: isSelected);
-    } else if (selectedEntity.extension == 'md') {
-      return MarkdownPreview(entity: selectedEntity, isSelected: isSelected);
-    }
-
-    if (selectedEntity.isVideo) {
-      return VideoPreview(entity: selectedEntity, isSelected: isSelected);
-    }
-
-    return ImagePreview(entity: selectedEntity, isSelected: isSelected, previewWidth: previewWidth);
+    return switch (selectedEntity.extension) {
+      'pdf'                                           => PDFPreview(entity: selectedEntity, isSelected: isSelected),
+      'md'                                            => MarkdownPreview(entity: selectedEntity, isSelected: isSelected),
+      (String ext) when videoExtensions.contains(ext) => VideoPreview(entity: selectedEntity, isSelected: isSelected),
+      _                                               => ImagePreview(entity: selectedEntity, isSelected: isSelected, previewWidth: previewWidth),
+    };
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {
