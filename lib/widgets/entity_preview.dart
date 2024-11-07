@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
+import 'package:shackleton/widgets/preview/markdown_preview.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/file_metadata.dart';
 import '../providers/metadata.dart';
+import 'metadata/fix_metadata.dart';
 import 'preview/image_preview.dart';
 import 'preview/pdf_preview.dart';
 import 'preview/video_preview.dart';
@@ -13,8 +15,9 @@ class EntityPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final bool isSelected;
   final bool displayMetadata;
+  final double previewWidth;
 
-  const EntityPreview({Key? key, required this.entity, required this.isSelected, this.displayMetadata = true}) : super(key: key);
+  const EntityPreview({super.key, required this.entity, required this.isSelected, required this.previewWidth, this.displayMetadata = true});
 
   @override
   ConsumerState<EntityPreview> createState() => _EntityPreview();
@@ -26,6 +29,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   get displayMetaData => widget.displayMetadata;
   get selectedEntity  => widget.entity;
   get isSelected      => widget.isSelected;
+  get previewWidth    => widget.previewWidth;
   get background      => isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
 
   @override
@@ -106,17 +110,16 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget _getMetadata(BuildContext context, WidgetRef ref, bool isSelected) {
     return Container(
         padding: const EdgeInsets.only(left: 2),
-        color: background,
+        color: metadata.corruptedMetadata ? Colors.red : background,
         child: Row(children: [
           Expanded(child: _getMetadataText()),
           const SizedBox(width: 3),
-          _getIconButton(
-              Icons.edit,
-              height: 12,
-              toolTip: 'Edit comma separated list of Tags...',
-              callback: () => ref.read(metadataProvider(selectedEntity).notifier).setEditable(true)),
-        ]
-        ));
+          metadata.corruptedMetadata
+              ? _getIconButton(Icons.auto_fix_high,
+              height: 12, toolTip: 'Fix metadata in file...', callback: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FixMetadata(file: selectedEntity))))
+              : _getIconButton(Icons.edit,
+              height: 12, toolTip: 'Edit comma separated list of Tags...', callback: () => ref.read(metadataProvider(selectedEntity).notifier).setEditable(true)),
+        ]));
   }
 
   Widget _getMetadataText() {
@@ -133,15 +136,12 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   }
 
   Widget _getPreview() {
-    if (selectedEntity.extension == 'pdf') {
-      return PDFPreview(entity: selectedEntity, isSelected: isSelected);
-    }
-
-    if (selectedEntity.isVideo) {
-      return VideoPreview(entity: selectedEntity, isSelected: isSelected);
-    }
-
-    return ImagePreview(entity: selectedEntity, isSelected: isSelected);
+    return switch (selectedEntity.extension) {
+      'pdf'                                           => PDFPreview(entity: selectedEntity, isSelected: isSelected),
+      'md'                                            => MarkdownPreview(entity: selectedEntity, isSelected: isSelected),
+      (String ext) when videoExtensions.contains(ext) => VideoPreview(entity: selectedEntity, isSelected: isSelected),
+      _                                               => ImagePreview(entity: selectedEntity, isSelected: isSelected, previewWidth: previewWidth),
+    };
   }
 
   bool _replaceTags(WidgetRef ref, String tags) {

@@ -3,13 +3,14 @@ import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/misc/utils.dart';
-import 'package:shackleton/providers/error.dart';
+
 
 import '../models/entity.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
+import '../misc/utils.dart';
 import '../models/tag.dart';
+import '../providers/error.dart';
 import '../providers/tag_queue.dart';
 
 part 'metadata.g.dart';
@@ -36,6 +37,9 @@ class Metadata extends _$Metadata {
         // ignore: empty_catches
         } on FormatException {}
       }
+    } else {
+      // ignore: avoid_manual_providers_as_generated_provider_dependency
+      ref.read(errorProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
     }
 
     return null;
@@ -119,11 +123,13 @@ class Metadata extends _$Metadata {
         ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', "-gpslatitude=$latitude", "-gpslongitude=$longitude", state.entity!.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           if (output.outText.trim() == '1 image files updated') {
+            state = state.copyWith(corruptedMetadata: false);
             return true;
           }
         } else {
           // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(errorProvider.notifier).setError('Unable to write metadata to ${state.entity!.name}');
+          ref.read(errorProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
+          state = state.copyWith(corruptedMetadata: true);
         }
       }
       else {

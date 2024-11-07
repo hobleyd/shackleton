@@ -12,7 +12,7 @@ part of 'folder_ui_settings.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 FolderUISettings _$FolderUISettingsFromJson(Map<String, dynamic> json) {
   return _FolderUISettings.fromJson(json);
@@ -28,8 +28,12 @@ mixin _$FolderUISettings {
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   bool get showHiddenFiles => throw _privateConstructorUsedError;
 
+  /// Serializes this FolderUISettings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $FolderUISettingsCopyWith<FolderUISettings> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -59,6 +63,8 @@ class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -113,6 +119,8 @@ class __$$FolderUISettingsImplCopyWithImpl<$Res>
       $Res Function(_$FolderUISettingsImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -187,12 +195,14 @@ class _$FolderUISettingsImpl implements _FolderUISettings {
                 other.showHiddenFiles == showHiddenFiles));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
       Object.hash(runtimeType, entity, width, detailedView, showHiddenFiles);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
@@ -231,8 +241,11 @@ abstract class _FolderUISettings implements FolderUISettings {
   @override
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
   bool get showHiddenFiles;
+
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

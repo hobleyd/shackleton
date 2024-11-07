@@ -11,8 +11,9 @@ import '../../providers/metadata.dart';
 class ImagePreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final bool isSelected;
+  final double previewWidth;
 
-  const ImagePreview({Key? key, required this.entity, required this.isSelected,}) : super(key: key);
+  const ImagePreview({super.key, required this.entity, required this.isSelected, required this.previewWidth});
 
   @override
   ConsumerState<ImagePreview> createState() => _ImagePreview();
@@ -24,6 +25,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
 
   get entityPreview => widget.entity;
   get isSelected    => widget.isSelected;
+  get previewWidth  => widget.previewWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +48,17 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
                   color: isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: _rotatedBytes == null
-                      ? Image.file(entityPreview.entity as File, alignment: Alignment.center, fit: BoxFit.contain)
-                      : Image.memory(_rotatedBytes!, alignment: Alignment.center, fit: BoxFit.contain),
+                      ? Image.file(entityPreview.entity as File,
+                          alignment: Alignment.center,
+                          fit: BoxFit.contain,
+                          width: previewWidth,
+                          cacheWidth: (previewWidth * MediaQuery.of(context).devicePixelRatio).round(),)
+                      : Image.memory(_rotatedBytes!,
+                          alignment: Alignment.center,
+                          fit: BoxFit.contain,
+                          width: previewWidth,
+                          cacheWidth: (previewWidth * MediaQuery.of(context).devicePixelRatio).round(),
+                  ),
                 ),
               ),
       ],

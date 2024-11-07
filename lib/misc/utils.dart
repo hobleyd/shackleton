@@ -52,7 +52,7 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
 }
 
 String convertLatLng(double decimal, bool isLat) {
-  String degree = "${decimal.toString().split(".")[0]} deg";
+  String degree = "${decimal.abs().toString().split(".")[0]} deg";
 
   double minutesBeforeConversion = double.parse("0.${decimal.toString().split(".")[1]}");
   String minutes = "${(minutesBeforeConversion * 60).toString().split('.')[0]}'";

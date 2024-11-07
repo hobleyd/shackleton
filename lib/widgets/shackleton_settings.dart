@@ -10,7 +10,7 @@ class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
   final TextEditingController libraryFolderController = TextEditingController();
 
-  ShackletonSettings({Key? key,}) : super(key: key);
+  ShackletonSettings({super.key,});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

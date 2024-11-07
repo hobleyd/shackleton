@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shackleton/providers/selected_entities/selected_entities.dart';
+
 
 import '../models/file_of_interest.dart';
 import '../models/import_entity.dart';
+import '../providers/contents/selected_folder_contents.dart';
 import '../providers/import.dart';
 
 class ImportFolder extends ConsumerStatefulWidget {
-  const ImportFolder({Key? key,}) : super(key: key);
+  const ImportFolder({super.key,});
 
   @override
   ConsumerState<ImportFolder> createState() => _ImportFolder();
@@ -18,7 +19,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
 
   @override
   Widget build(BuildContext context) {
-    Set<FileOfInterest> entities = ref.watch(selectedEntitiesProvider(FileType.folderList));
+    Set<FileOfInterest> entities = ref.watch(selectedFolderContentsProvider);
 
     return Scaffold(
         appBar: AppBar(
@@ -171,7 +172,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
         shrinkWrap: true);
   }
 
-  void _moveFiles(List<ImportEntity> entities) {
+  void _moveFiles(List<ImportEntity> entities) async {
     setState(() {
       isImporting = true;
     });

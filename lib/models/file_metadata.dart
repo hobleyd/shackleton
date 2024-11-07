@@ -10,6 +10,7 @@ class FileMetaData implements Comparable {
   final List<Tag> tags;
   final bool isEditing;
   final LatLng? gpsLocation;
+  final bool corruptedMetadata;
 
   @override
   get hashCode => tags.hashCode;
@@ -26,16 +27,18 @@ class FileMetaData implements Comparable {
     required this.tags,
     this.isEditing = false,
     this.gpsLocation,
+    this.corruptedMetadata = false,
   });
 
   bool contains(Tag tag) => tags.contains(tag);
 
-  FileMetaData copyWith({FileOfInterest? entity, List<Tag>? tags, bool? isEditing, LatLng? gpsLocation,}) {
+  FileMetaData copyWith({FileOfInterest? entity, List<Tag>? tags, bool? isEditing, LatLng? gpsLocation, bool? corruptedMetadata}) {
     return FileMetaData(
       entity: entity ?? this.entity,
       tags: tags ?? this.tags,
       isEditing: isEditing ?? this.isEditing,
       gpsLocation: gpsLocation ?? this.gpsLocation,
+      corruptedMetadata: corruptedMetadata ?? this.corruptedMetadata,
     );
   }
 

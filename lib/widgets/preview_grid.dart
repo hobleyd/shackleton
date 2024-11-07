@@ -3,14 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../interfaces/keyboard_callback.dart';
+import '../interfaces/tag_handler.dart';
 import '../misc/keyboard_handler.dart';
 import '../models/file_of_interest.dart';
 import '../models/map_settings.dart';
+import '../models/tag.dart';
 import '../providers/file_events.dart';
 import '../providers/map_pane.dart';
 import '../providers/metadata.dart';
-import '../providers/selected_entities/selected_entities.dart';
-import '../providers/selected_entities/selected_previewable_entities.dart';
+import '../providers/contents/grid_contents.dart';
+import '../providers/contents/selected_grid_entities.dart';
 import 'entity_preview.dart';
 import 'entity_context_menu.dart';
 import 'metadata/metadata_editor.dart';
@@ -18,24 +20,30 @@ import 'preview_pane.dart';
 import 'preview/photo_map.dart';
 
 class PreviewGrid extends ConsumerStatefulWidget {
-  const PreviewGrid({Key? key}) : super(key: key);
+  const PreviewGrid({super.key});
 
   @override
   ConsumerState<PreviewGrid> createState() => _PreviewGrid();
 }
 
-class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallback {
+class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallback, TagHandler {
   late List<FileOfInterest> entities;
+  late List<FileOfInterest> selectedEntities;
   late KeyboardHandler handler;
+  ScrollController gridController = ScrollController();
+  List<GlobalKey?> keys = [];
+  double mapWidth = 0;
+  int gridColumns = 5;
 
   int _lastSelectedItemIndex = -1;
-
-  // TODO: Add key navigation
 
   @override
   Widget build(BuildContext context) {
     MapSettings map = ref.watch(mapPaneProvider);
-    entities = ref.watch(selectedPreviewableEntitiesProvider(FileType.previewGrid));
+    entities = ref.watch(gridContentsProvider);
+    selectedEntities = ref.watch(selectedGridEntitiesProvider);
+
+    mapWidth = map.width;
 
     return entities.isEmpty
         ? Padding(
@@ -47,7 +55,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
         : Row(children: [
             Expanded(
               child: EntityContextMenu(
-                fileType: FileType.previewPane,
                 child: MouseRegion(
                   onEnter: (_) => handler.hasFocus = true,
                   onExit: (_) => handler.hasFocus = false,
@@ -68,7 +75,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
               SizedBox(width: map.width, child: const PhotoMap()),
             ],
             const VerticalDivider(),
-            SizedBox(width: 200, child: MetadataEditor(completeListType: FileType.previewGrid, selectedListType: FileType.previewPane, callback: this)),
+            SizedBox(width: 210, child: MetadataEditor(keyHandlerCallback: this, tagHandler: this)),
           ]);
   }
 
@@ -86,13 +93,23 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     handler.register();
   }
 
+  void _ensureSelectedItemVisible() {
+    int column = (_lastSelectedItemIndex / gridColumns).floor();
+    GlobalKey? key = keys[_lastSelectedItemIndex];
+    if (key != null) {
+      var columnHeight = key.currentState!.context.size!.height;
+      gridController.animateTo(columnHeight * column, duration: const Duration(milliseconds: 500), curve: Curves.decelerate);
+    }
+  }
+
   Widget _getGridView() {
-    var selectedEntities = ref.watch(selectedEntitiesProvider(FileType.previewPane));
-    List<GlobalKey?> keys = List.filled(entities.length, null, growable: false);
+    keys = List.filled(entities.length, null, growable: false);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        gridColumns = switch (constraints.maxWidth) { < 1024 => 3, < 2048 => 5, _ => 7 };
         return GridView.builder(
+          controller: gridController,
           itemCount: entities.length,
           itemBuilder: (context, index) {
             keys[index] = GlobalKey<DragItemWidgetState>();
@@ -126,11 +143,15 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
                         }
                         return dragItems;
                       },
-                      child: EntityPreview(entity: entities[index], isSelected: selectedEntities.contains(entities[index]), displayMetadata: true,),
+                      child: EntityPreview(
+                          entity: entities[index],
+                          isSelected: selectedEntities.contains(entities[index]),
+                          displayMetadata: true,
+                          previewWidth: (MediaQuery.of(context).size.width - 210 - mapWidth) / gridColumns),
                     )));
           },
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: switch (constraints.maxWidth) { < 1024 => 3, < 2048 => 5, _ => 7 },
+            crossAxisCount: gridColumns,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
           ),
@@ -142,7 +163,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   }
 
   void _previewEntities(FileOfInterest tappedEntity) {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     if (!selectedEntities.contains(tappedEntity)) {
       // If we double tap on an unselectedEntity, assume we want to browse everything in detail.
       selectAll();
@@ -157,9 +177,9 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
     int index = entities.indexOf(entity);
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
+    var entityNotifier = ref.read(selectedGridEntitiesProvider.notifier);
     if (handler.isIndividualMultiSelectionPressed) {
-      selectedEntities.contains(entity) ? selectedEntities.remove(entity) : selectedEntities.add(entity);
+      entityNotifier.contains(entity) ? entityNotifier.remove(entity) : entityNotifier.add(entity);
     } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
@@ -172,19 +192,28 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
         }
 
         for (int i = start; i <= end; i++) {
-          selectedEntities.add(entities[i]);
+          entityNotifier.add(entities[i]);
         }
       }
     } else {
       _lastSelectedItemIndex = index;
-      selectedEntities.replace(entity);
+      entityNotifier.replace(entity);
     }
   }
 
   @override
   void delete() {
     var fileEvents = ref.read(fileEventsProvider.notifier);
-    fileEvents.deleteAll(ref.watch(selectedEntitiesProvider(FileType.previewPane)));
+    fileEvents.deleteAll(selectedEntities.toSet());
+  }
+
+  @override
+  void down() {
+    if (_lastSelectedItemIndex < entities.length - gridColumns) {
+      _selectEntity(entities[_lastSelectedItemIndex + gridColumns]);
+
+      _ensureSelectedItemVisible();
+    }
   }
 
   @override
@@ -196,6 +225,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   void left() {
     if (_lastSelectedItemIndex > 0) {
       _selectEntity(entities[--_lastSelectedItemIndex]);
+
+      _ensureSelectedItemVisible();
     }
   }
 
@@ -203,6 +234,8 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   void right() {
     if (_lastSelectedItemIndex < entities.length) {
       _selectEntity(entities[++_lastSelectedItemIndex]);
+
+      _ensureSelectedItemVisible();
     }
   }
 
@@ -212,8 +245,30 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   }
 
   @override
+  void removeTag(Tag tag) {
+    for (var e in selectedEntities) {
+      ref.read(metadataProvider(e).notifier).removeTags(tag);
+    }
+  }
+
+  @override
   void selectAll() {
-    var selectedEntities = ref.read(selectedEntitiesProvider(FileType.previewPane).notifier);
     selectedEntities.addAll(entities.toSet());
+  }
+
+  @override
+  void up() {
+    if (_lastSelectedItemIndex >= gridColumns) {
+      _selectEntity(entities[_lastSelectedItemIndex - gridColumns]);
+
+      _ensureSelectedItemVisible();
+    }
+  }
+
+  @override
+  void updateTags(String tags) {
+    for (var e in selectedEntities) {
+      ref.read(metadataProvider(e).notifier).updateTagsFromString(tags);
+    }
   }
 }

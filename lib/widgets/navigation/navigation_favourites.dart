@@ -8,7 +8,7 @@ import '../../models/favourite.dart';
 import '../../repositories/favourites_repository.dart';
 
 class NavigationFavourites extends ConsumerStatefulWidget {
-  const NavigationFavourites({Key? key,}) : super(key: key);
+  const NavigationFavourites({super.key,});
 
   @override
   ConsumerState<NavigationFavourites> createState() => _NavigationFavourites();
