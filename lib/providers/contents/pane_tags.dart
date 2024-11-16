@@ -16,7 +16,8 @@ class PaneTags extends _$PaneTags {
 
   void replace(FileOfInterest entity) {
     FileMetaData metadata = ref.read(metadataProvider(entity));
-    metadata.tags.sort();
-    state = metadata.tags;
+    List<Tag> tags = List.from(metadata.tags);
+    tags.sort();
+    state = tags;
   }
 }
