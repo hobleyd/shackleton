@@ -89,7 +89,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
   @override
   void initState() {
     super.initState();
-    handler = KeyboardHandler(ref: ref, keyboardCallback: this);
+    handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'PreviewGrid');
     handler.register();
   }
 

@@ -86,7 +86,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
       ref.read(paneTagsProvider.notifier).replace(widget.initialEntity);
     });
 
-    handler = KeyboardHandler(ref: ref, keyboardCallback: this);
+    handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'PreviewPane');
     handler.register();
   }
 

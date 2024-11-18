@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,8 +14,9 @@ class KeyboardHandler {
   bool isEditing = false;
   KeyboardCallback keyboardCallback;
   WidgetRef ref;
+  String name;
 
-  KeyboardHandler({required this.ref, required this.keyboardCallback});
+  KeyboardHandler({required this.ref, required this.keyboardCallback, required this.name});
 
   // Return true if Meta is pressed on the Mac, or Ctrl is pressed on everything else.
   // We are waiting on you, Asahi Linux team!
@@ -31,7 +33,7 @@ class KeyboardHandler {
       // All Keyboard Handlers listen all the time, so we only want to react to the one in focus.
       return false;
     }
-
+    
     bool isCtrlOrMeta = _isCtrlOrMeta(event);
 
     if (event is KeyDownEvent) {

@@ -150,7 +150,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
   @override
   void initState() {
     super.initState();
-    handler = KeyboardHandler(ref: ref, keyboardCallback: this);
+    handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'FolderList');
     handler.register();
   }
 

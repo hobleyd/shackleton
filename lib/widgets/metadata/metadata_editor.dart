@@ -42,10 +42,21 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     final List<Tag> tags = paneEntity == null ? ref.watch(gridTagsProvider) : ref.watch(paneTagsProvider);
 
     return Padding(
-        padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+      padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+      child: MouseRegion(
+        onEnter: (_) {
+          handler.hasFocus = tagController.text.isEmpty;
+        },
+        onExit: (_) {
+          handler.hasFocus = false;
+          focusNode.unfocus();
+        },
         child: Column(
           children: [
-            Text('Metadata', style: Theme.of(context).textTheme.labelSmall,),
+            Text(
+              'Metadata',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
             const SizedBox(height: 10),
             Expanded(
                 child: tags.isNotEmpty
@@ -78,15 +89,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
             const SizedBox(height: 10),
             MetadataLocation(paneEntity: widget.paneEntity),
             const SizedBox(height: 20),
-          MouseRegion(
-            onEnter: (_) {
-              handler.hasFocus = tagController.text.isEmpty;
-            },
-            onExit: (_) {
-              handler.hasFocus = false;
-              focusNode.unfocus();
-            },
-            child: Row(
+            Row(
               children: [
                 Expanded(
                   child: TextField(
@@ -113,9 +116,9 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
                     onPressed: () => _updateTags(ref, tagController.text)),
               ],
             ),
-          ),
-        ],
+          ],
         ),
+      ),
     );
   }
 
@@ -133,7 +136,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     tagController = TextEditingController();
     focusNode = FocusNode();
 
-    handler = KeyboardHandler(ref: ref, keyboardCallback: this);
+    handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'MetadataEditor');
     handler.processModifierKeys = false;
     handler.hasFocus = false;
     handler.register();
