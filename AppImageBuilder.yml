@@ -20,8 +20,8 @@ AppDir:
     - amd64
     allow_unauthenticated: true
     sources:
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy main restricted universe
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-security main restricted universe
+    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ noble main restricted universe
+    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ noble-security main restricted universe
     include:
     - libc6:amd64
     - libsqlite3-dev:amd64
