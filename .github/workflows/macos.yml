@@ -22,6 +22,7 @@ jobs:
          architecture: x64
          cache: true
      - run: flutter config --enable-macos-desktop
+     - run: flutter create --platforms=macos .
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons

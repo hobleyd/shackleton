@@ -18,6 +18,7 @@ jobs:
        with:
          tag-name: ${{ env.VERSION }}
      - run: flutter config --enable-windows-desktop
+     - run: flutter create --platforms=windows .
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build windows --release --no-tree-shake-icons
