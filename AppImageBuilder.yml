@@ -5,13 +5,13 @@ script:
   - rm -rf AppDir || true
   - cp -r build/linux/x64/release/bundle AppDir
   - mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps/
-  - cp assets/explorer.png AppDir/usr/share/icons/hicolor/64x64/apps/
+  - cp assets/shackleton.png AppDir/usr/share/icons/hicolor/64x64/apps/
 AppDir:
   path: ./AppDir
   app_info:
     id: au.com.sharpblue.shackleton
     name: Shackleton
-    icon: explorer.png
+    icon: shackleton.png
     version: "{{VERSION}}"
     exec: shackleton
     exec_args: $@
@@ -20,8 +20,8 @@ AppDir:
     - amd64
     allow_unauthenticated: true
     sources:
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ noble main restricted universe
-    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ noble-security main restricted universe
+    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy main restricted universe
+    - sourceline: deb http://au.archive.ubuntu.com/ubuntu/ jammy-security main restricted universe
     include:
     - libc6:amd64
     - libsqlite3-dev:amd64
