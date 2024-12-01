@@ -51,7 +51,7 @@ class KeyboardHandler {
       // All Keyboard Handlers listen all the time, so we only want to react to the one in focus.
       return false;
     }
-    
+
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         keyboardCallback.exit();

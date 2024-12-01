@@ -431,7 +431,7 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
     var selectedFolderContents = ref.read(selectedFolderContentsProvider.notifier);
     if (handler.isIndividualMultiSelectionPressed) {
-      selectedFolderContents.contains(entity) ? selectedFolderContents.remove(entity) : selectedFolderContents.add(entity);    } else if (handler.isBlockMultiSelectionPressed) {
+      selectedFolderContents.contains(entity) ? selectedFolderContents.remove(entity) : selectedFolderContents.add(entity);
     } else if (handler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
