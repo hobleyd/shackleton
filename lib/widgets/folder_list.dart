@@ -433,7 +433,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
     if (handler.isIndividualMultiSelectionPressed) {
       selectedFolderContents.contains(entity) ? selectedFolderContents.remove(entity) : selectedFolderContents.add(entity);    } else if (handler.isBlockMultiSelectionPressed) {
     } else if (handler.isBlockMultiSelectionPressed) {
-      debugPrint('isBlockMultiSelectionPressed');
       if (_lastSelectedItemIndex != -1) {
         int start = _lastSelectedItemIndex;
         int end = index;
@@ -466,6 +465,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
+
+    Scrollable.ensureVisible(context);
   }
 
   @override

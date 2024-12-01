@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Shackleton
-Exec=shackleton
-Icon=explorer
-Type=Application
-Terminal=false
-Categories=Utility;
-Comment=
-X-AppImage-Version=1.0.0-beta2

@@ -4,8 +4,8 @@ script:
   - which mksquashfs || apt install squashfs-tools
   - rm -rf AppDir || true
   - cp -r build/linux/x64/release/bundle AppDir
-  - mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps/
-  - cp assets/explorer.png AppDir/usr/share/icons/hicolor/512x512/apps/
+  - mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps/
+  - cp assets/explorer.png AppDir/usr/share/icons/hicolor/64x64/apps/
 AppDir:
   path: ./AppDir
   app_info:
@@ -31,7 +31,10 @@ AppDir:
     include: []
     exclude:
     - usr/share/man
-    - usr/share/doc
+    - usr/share/doc/*/README.*
+    - usr/share/doc/*/changelog.*
+    - usr/share/doc/*/NEWS.*
+    - usr/share/doc/*/TODO.*
   test:
     fedora-30:
       image: appimagecrafters/tests-env:fedora-30
