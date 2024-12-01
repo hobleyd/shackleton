@@ -232,7 +232,7 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   @override
   void right() {
-    if (_lastSelectedItemIndex < entities.length) {
+    if (_lastSelectedItemIndex < entities.length-1) {
       _selectEntity(entities[++_lastSelectedItemIndex]);
 
       _ensureSelectedItemVisible();

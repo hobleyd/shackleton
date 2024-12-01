@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,12 +28,28 @@ class KeyboardHandler {
   }
 
   bool _handleKeyEvent(KeyEvent event,) {
+    bool isCtrlOrMeta = _isCtrlOrMeta(event);
+
+    // We check for this outside of hasFocus in case the mouse is moved away from the Handler while still pressing the modifier key; we don't want to lose
+    // the fact that we are no longer pressing when when the modifier is no longer being pressed.
+    if (event is KeyUpEvent) {
+      if (isCtrlOrMeta) {
+        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
+        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
+        isIndividualMultiSelectionPressed = false;
+
+        return true;
+      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
+        isBlockMultiSelectionPressed = false;
+
+        return true;
+      }
+    }
+
     if (!hasFocus) {
       // All Keyboard Handlers listen all the time, so we only want to react to the one in focus.
       return false;
     }
-    
-    bool isCtrlOrMeta = _isCtrlOrMeta(event);
 
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -95,18 +110,6 @@ class KeyboardHandler {
             return true;
           }
         }
-      }
-    } else if (event is KeyUpEvent) {
-      if (isCtrlOrMeta) {
-        // MacOS insists that Ctrl can be used with the left mouse button to simulate a right click. Single Button mice were a bad idea
-        // when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
-        isIndividualMultiSelectionPressed = false;
-
-        return true;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft || event.logicalKey == LogicalKeyboardKey.shiftRight) {
-        isBlockMultiSelectionPressed = false;
-
-        return true;
       }
     }
 
