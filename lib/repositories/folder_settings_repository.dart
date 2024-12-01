@@ -43,9 +43,8 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
     }
   }
 
-  Future<int> updateSettings(FolderUISettings folderSettings) async {
-    int rowId = await _database.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
-    state = await AsyncValue.guard(() => getSettings(folderSettings.entity.path));
-    return rowId;
+  Future<void> updateSettings(FolderUISettings folderSettings) async {
+    _database.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    state = AsyncValue.data(folderSettings);
   }
 }
