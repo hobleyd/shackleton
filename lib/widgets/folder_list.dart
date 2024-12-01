@@ -124,8 +124,8 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
 
                   // Resize the window if we are resizing the rightmost FolderList and it is butted up against the right hand side of the window.
                   if (mounted) {
-                    Size windowSize = await windowManager.getSize();
                     double widgetPosition = _getWidgetPosition(context)!.right;
+                    Size windowSize = await windowManager.getSize();
 
                     if (widgetPosition > windowSize.width - 10) {
                       windowManager.setSize(Size(windowSize.width + details.delta.dx, windowSize.height));

@@ -107,7 +107,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
 
     WidgetsBinding.instance.endOfFrame.then((_) {
         if (mounted) {
-          final double screenWidth = MediaQuery.of(context).size.width;
+          final double screenWidth = WidgetsBinding.instance.platformDispatcher.views.first.physicalSize.width;
           double totalWidth = 0;
 
           var folderSettings = ref.watch(folderSettingsRepositoryProvider(navigationFolder));
