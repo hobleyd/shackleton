@@ -465,8 +465,6 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
-
-    Scrollable.ensureVisible(context);
   }
 
   @override
