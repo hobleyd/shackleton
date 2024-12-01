@@ -26,6 +26,7 @@ AppDir:
     - libc6:amd64
     - libsqlite3-dev:amd64
     - libmpv-dev:amd64
+    - libmpv2:amd64
   files:
     include: []
     exclude:

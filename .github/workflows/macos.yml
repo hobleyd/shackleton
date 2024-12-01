@@ -26,7 +26,7 @@ jobs:
      - run: dart run build_runner build --delete-conflicting-outputs
      - run: dart run flutter_launcher_icons
      - run: flutter build macos --release --no-tree-shake-icons
-     - uses: QQxiaoming/create-dmg-action@v0.0.2
+     - uses: lethja/create-dmg-action@v0.0.2
        with:
          name: 'shackleton-${{ env.VERSION }}'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
