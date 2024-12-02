@@ -33,12 +33,10 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
     entities = ref.watch(paneContentsProvider);
 
     // First time through, we set the initial image to the one clicked on.
-    debugPrint('PreviewPane: $_lastSelectedItemIndex: $entities');
     if (_lastSelectedItemIndex == -1) {
       _lastSelectedItemIndex = entities.indexOf(widget.initialEntity);
       _controller = PageController(initialPage: _lastSelectedItemIndex);
     }
-    debugPrint('PreviewPane: newIndex: $_lastSelectedItemIndex');
     if (_lastSelectedItemIndex == -1) {
       // This means that the initialEntry widget isn't in the list - because we deleted the file;
       // exit the build() in this case as it's a side effect of the Provider build from the file
