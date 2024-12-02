@@ -175,20 +175,23 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
 
   @override
   void delete() {
+    // This doesn't work reliably and I keep deleting files I don't want to. So let's drop this for now and if the MetadataEditor has focus, we
+    // won't ever delete a file.
+
     // We want to be able to delete files in the PreviewPane, we also want to be able to edit Metadata in the same Pane; what we don't want to
     // happen is for people to delete text from the Metadata Text editor and accidentally delete files with an overloaded delete key. So, put
     // a delay in so that we can't delete without purpose. Any UX people willing to pitch in for a better solution would be greatly appreciated.
-    if (tagController.text.isNotEmpty) {
-      if (_debounce?.isActive ?? false) _debounce?.cancel();
-
-      _debounce = Timer(const Duration(milliseconds: 4000), () {});
-    }
-
-    if (_debounce?.isActive ?? false) {
-      return;
-    } else {
-      if (tagController.text.isEmpty) keyHandlerCallback.delete();
-    }
+    // if (tagController.text.isNotEmpty) {
+    //   if (_debounce?.isActive ?? false) _debounce?.cancel();
+    //
+    //   _debounce = Timer(const Duration(milliseconds: 4000), () {});
+    // }
+    //
+    // if (_debounce?.isActive ?? false) {
+    //   return;
+    // } else {
+    //   if (tagController.text.isEmpty) keyHandlerCallback.delete();
+    // }
   }
 
   @override
