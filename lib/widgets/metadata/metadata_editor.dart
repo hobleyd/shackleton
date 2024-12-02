@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +29,6 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
   late TextEditingController tagController;
   late KeyboardHandler handler;
   late FocusNode focusNode;
-  Timer? _debounce;
 
   get keyHandlerCallback => widget.keyHandlerCallback;
   get tagHandler => widget.tagHandler;
