@@ -16,6 +16,9 @@ For every other platform it is the Ctrl key as expected. Why MacOS insists that 
 with the left mouse button to simulate a right click I have no idea. Single Button mice were a
 bad idea when Steve Jobs insisted on them and who has seen one in the last 10 years. Seriously Apple?
 
+Performance is not ideal with large folders of images; but I'll look at that post the 1.0 release as
+everything works, just a little more slowly than preferred.
+
 ## External Dependencies
 - We use exiftool to manipulate metadata in files hence this is required to be installed if you want to edit metadata. At least until there is a Flutter package to do it in code. On MacOS, I install this using homebrew.
 - Rust is required to compile Shackleton due to downstream dependencies.
