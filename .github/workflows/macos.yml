@@ -28,11 +28,11 @@ jobs:
      - run: flutter build macos --release --no-tree-shake-icons
      - uses: lethja/create-dmg-action@v0.0.2
        with:
-         name: 'shackleton-${{ env.VERSION }}'
+         name: 'shackleton'
          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
      - name: Create Release
        uses: softprops/action-gh-release@v0.1.15
        with:
-         files: 'shackleton-${{ env.VERSION }}.dmg'
+         files: 'shackleton.dmg'
          name: 'shackleton-${{ env.VERSION }}'
          tag_name: ${{ env.VERSION }}
