@@ -90,7 +90,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
               children: [
                 Expanded(
                   child: TextField(
-                    autofocus: true,
+                    autofocus: false,
                     controller: tagController,
                     decoration: const InputDecoration(border: InputBorder.none, hintText: 'Add tags here', isDense: true),
                     focusNode: focusNode,
@@ -132,6 +132,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
     super.initState();
     tagController = TextEditingController();
     focusNode = FocusNode();
+    focusNode.unfocus();
 
     handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'MetadataEditor');
     handler.processModifierKeys = false;
