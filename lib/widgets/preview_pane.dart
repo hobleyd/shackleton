@@ -168,6 +168,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
   @override
   void removeTag(Tag tag) {
     ref.read(metadataProvider(entities[_lastSelectedItemIndex]).notifier).removeTags(tag);
+    ref.read(paneTagsProvider.notifier).replace(entities[_lastSelectedItemIndex]);
   }
 
   @override
