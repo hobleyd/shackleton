@@ -164,8 +164,10 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements KeyboardCallbac
 
   void _previewEntities(FileOfInterest tappedEntity) {
     if (!selectedEntities.contains(tappedEntity)) {
-      // If we double tap on an unselectedEntity, assume we want to browse everything in detail.
-      selectAll();
+      // If we double tap on an unselectedEntity, replace the selected entitites.
+      var entityNotifier = ref.read(selectedGridEntitiesProvider.notifier);
+      entityNotifier.removeAll();
+      entityNotifier.add(tappedEntity);
     }
 
     // TODO: Ideally this would be a new window, but Flutter doesn't support multiple windows yet, refactor when it does.
