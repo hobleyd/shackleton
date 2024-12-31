@@ -54,7 +54,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
               ),
         if (displayMetaData) ...[
           SizedBox(height: 5, child: Container(color: background)),
-          metadata.isEditing ? _getEditableMetadata(context, ref) : _getMetadata(context, ref, isSelected),
+          _getMetadata(context, ref, isSelected),
         ],
       ],
     );
@@ -63,37 +63,6 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   @override
   void initState() {
     super.initState();
-  }
-
-  Widget _getEditableMetadata(BuildContext context, WidgetRef ref) {
-    TextEditingController tagController = TextEditingController();
-
-    if (metadata.tags.isNotEmpty) {
-      for (int i = 0; i < metadata.tags.length; i++) {
-        tagController.text += metadata.tags[i].tag;
-        if (i != metadata.tags.length - 1) {
-          tagController.text += ', ';
-        }
-      }
-    }
-
-    return Row(children: [
-      Expanded(
-        child: TextField(
-            autofocus: true,
-            controller: tagController,
-            decoration: const InputDecoration(border: InputBorder.none, isDense: true),
-            keyboardType: TextInputType.text,
-            maxLines: 1,
-            onSubmitted: (tags) => _replaceTags(ref, tags),
-            style: Theme.of(context).textTheme.bodySmall),
-      ),
-      _getIconButton(
-          Icons.save,
-          height: 12,
-          toolTip: 'Save comma separated list of Tags to file...',
-          callback: () => _replaceTags(ref, tagController.text)),
-    ]);
   }
 
   Widget _getIconButton(IconData iconData, { required String toolTip, required double height, VoidCallback? callback}) {
@@ -113,12 +82,13 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
         color: metadata.corruptedMetadata ? Colors.red : background,
         child: Row(children: [
           Expanded(child: _getMetadataText()),
-          const SizedBox(width: 3),
-          metadata.corruptedMetadata
-              ? _getIconButton(Icons.auto_fix_high,
-              height: 12, toolTip: 'Fix metadata in file...', callback: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FixMetadata(file: selectedEntity))))
-              : _getIconButton(Icons.edit,
-              height: 12, toolTip: 'Edit comma separated list of Tags...', callback: () => ref.read(metadataProvider(selectedEntity).notifier).setEditable(true)),
+          if (metadata.corruptedMetadata) ...[
+            const SizedBox(width: 3),
+            _getIconButton(Icons.auto_fix_high,
+                height: 12,
+                toolTip: 'Fix metadata in file...',
+                callback: () => Navigator.push(context, MaterialPageRoute(builder: (context) => FixMetadata(file: selectedEntity))))
+          ],
         ]));
   }
 
