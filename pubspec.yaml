@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  archive: ^3.6.1
+  archive: ^4.0.2
   async: ^2.11.0
   collection: ^1.18.0
   convert: ^3.1.2
@@ -43,8 +43,8 @@ dependencies:
   sqflite_common_ffi: ^2.3.4
   super_context_menu: ^0.8.2+1
   super_drag_and_drop: ^0.8.19
-  syncfusion_flutter_gauges: ^27.1.58
-  syncfusion_flutter_pdfviewer: ^27.1.58
+  syncfusion_flutter_gauges: ^28.1.37
+  syncfusion_flutter_pdfviewer: ^28.1.37
   synchronized: ^3.2.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1

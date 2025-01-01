@@ -38,7 +38,7 @@ Future<FileOfInterest?> createZip(FileOfInterest folder, Set<FileOfInterest> fil
 
   FileOfInterest foi = FileOfInterest(entity: getZipName(folder, filesToZip));
   var encoder = ZipFileEncoder();
-  encoder.create(foi.path, level: Deflate.BEST_COMPRESSION);
+  encoder.create(foi.path, level: DeflateLevel.bestCompression);
   for (var file in filesToZip) {
     if (file.isDirectory) {
       encoder.addDirectory(file.entity as Directory, includeDirName: true);
