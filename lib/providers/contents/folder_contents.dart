@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 
@@ -83,30 +84,51 @@ class FolderContents extends _$FolderContents {
   void watchFolder(Directory path) async {
     Stream<FileSystemEvent> events = path.watch(events: FileSystemEvent.all);
     events.listen((FileSystemEvent event) {
-      // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
       FileOfInterest foi = FileOfInterest(entity: event.path == path.path ? Directory(event.path) : File(event.path));
-      switch (event.type) {
-        case FileSystemEvent.create:
-          if (!state.contains(foi)) {
-            if (!foi.isHidden) {
-              add(foi);
-              // If the selectedFolderContentsProvider contains this folder, we should update the previewGridProvider manually.
-              if (ref.read(selectedFolderContentsProvider).contains(FileOfInterest(entity: Directory(path.path)))) {
-                ref.read(gridContentsProvider.notifier).add(foi);
+
+      // Windows provides out of order file system events; so let's use a sledgehammer.
+      if (Platform.isWindows) {
+        if (foi.isFile) {
+          List<FileOfInterest> files = [];
+          for (var file in foi.entity.parent.listSync()) {
+            files.add(FileOfInterest(entity: file));
+          }
+          List<FileOfInterest> toAdd = files.where((i) => !state.contains(i)).toList();
+          List<FileOfInterest> toDelete = state.where((i) => !files.contains(i)).toList();
+          // Look for files not in the current state, to add
+          // Look for files not in the modified liat, to delete
+          List<FileOfInterest> entities = [...state, ...toAdd];
+          entities.removeWhere((i) => toDelete.contains(i));
+          state = [...sort(entities, _defaultSort)];
+        }
+      } else {
+        // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
+        switch (event.type) {
+          case FileSystemEvent.create:
+            if (!state.contains(foi)) {
+              if (!foi.isHidden) {
+                add(foi);
+                // If the selectedFolderContentsProvider contains this folder, we should update the previewGridProvider manually.
+                if (ref
+                    .read(selectedFolderContentsProvider)
+                    .contains(FileOfInterest(entity: Directory(path.path)))) {
+                  ref.read(gridContentsProvider.notifier).add(foi);
+                }
               }
             }
-          }
-          break;
-        case FileSystemEvent.delete:
-        case FileSystemEvent.move:
-          var fileEvents = ref.read(fileEventsProvider.notifier);
-          fileEvents.delete(foi, deleteEntity: false); // Already deleted, just cleaning up here.
+            break;
+          case FileSystemEvent.delete:
+          case FileSystemEvent.move:
+            var fileEvents = ref.read(fileEventsProvider.notifier);
+            fileEvents.delete(foi,
+                deleteEntity: false); // Already deleted, just cleaning up here.
 
-          state = [
-            for (final element in state)
-              if (element.path != event.path) element,
-          ];
-          break;
+            state = [
+              for (final element in state)
+                if (element.path != event.path) element,
+            ];
+            break;
+        }
       }
     });
   }

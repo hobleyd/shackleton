@@ -102,9 +102,11 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     var metadata = ref.read(metadataProvider(entityPreview).notifier);
     await metadata.saveMetadata(updateFile: true);
 
-    setState(() {
-    _isRotatingImage = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isRotatingImage = false;
+      });
+    }
   }
 
   void _rotateLeft() async {
