@@ -44,11 +44,7 @@ Run a Powershell as an Administrator
 > choco install exiftool
 ```
 ### Compilation
-Run a Powershell as an Administrator
-```
-> choco install rust
-```
-Then go to https://developer.android.com/studio/#downloads and download Android Studio.
+Go to https://www.rust-lang.org/tools/install and install rust from the installer. Then go to https://developer.android.com/studio/#downloads and download Android Studio.
 
 ## Linux
 ### Runtime
