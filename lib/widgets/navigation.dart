@@ -50,7 +50,7 @@ class _Navigation extends ConsumerState<Navigation> {
               },
               child: Container(
                 alignment: Alignment.topLeft,
-                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4),
                 child: EntityContextMenu(
                   folder: FileOfInterest(entity: Directory(getHomeFolder())),
                   child: Padding(
