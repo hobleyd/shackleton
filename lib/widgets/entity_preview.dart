@@ -113,10 +113,4 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
       _                                               => ImagePreview(entity: selectedEntity, isSelected: isSelected, previewWidth: previewWidth),
     };
   }
-
-  bool _replaceTags(WidgetRef ref, String tags) {
-    ref.read(metadataProvider(selectedEntity).notifier).replaceTagsFromString(tags);
-
-    return true;
-  }
 }
