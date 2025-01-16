@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 
@@ -109,9 +108,7 @@ class FolderContents extends _$FolderContents {
               if (!foi.isHidden) {
                 add(foi);
                 // If the selectedFolderContentsProvider contains this folder, we should update the previewGridProvider manually.
-                if (ref
-                    .read(selectedFolderContentsProvider)
-                    .contains(FileOfInterest(entity: Directory(path.path)))) {
+                if (ref.read(selectedFolderContentsProvider).contains(FileOfInterest(entity: Directory(path.path)))) {
                   ref.read(gridContentsProvider.notifier).add(foi);
                 }
               }
@@ -120,8 +117,7 @@ class FolderContents extends _$FolderContents {
           case FileSystemEvent.delete:
           case FileSystemEvent.move:
             var fileEvents = ref.read(fileEventsProvider.notifier);
-            fileEvents.delete(foi,
-                deleteEntity: false); // Already deleted, just cleaning up here.
+            fileEvents.delete(foi, deleteEntity: false); // Already deleted, just cleaning up here.
 
             state = [
               for (final element in state)
