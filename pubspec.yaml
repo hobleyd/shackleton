@@ -15,6 +15,7 @@ dependencies:
   convert: ^3.1.2
   crypto: ^3.0.5
   cupertino_icons: ^1.0.8
+  device_info_plus: ^11.2.1
   exif: ^3.3.0
   file_icon: ^1.0.0
   flutter_map: ^7.0.1
@@ -37,14 +38,15 @@ dependencies:
   media_kit_libs_linux: ^1.1.0
   path: ^1.9.0
   path_provider: ^2.1.4
+  pdfrx: ^1.0.101
   process_run: ^1.2.2
   riverpod_annotation: ^2.1.2
   scrollable_positioned_list: ^0.3.8
   sqflite_common_ffi: ^2.3.4
-  super_context_menu: ^0.8.2+1
-  super_drag_and_drop: ^0.8.19
-  syncfusion_flutter_gauges: ^28.1.37
-  syncfusion_flutter_pdfviewer: ^28.1.37
+  super_context_menu: ^0.9.0-dev.6
+  super_drag_and_drop: ^0.9.0-dev.6
+  super_native_extensions: ^0.9.0-dev.6
+  syncfusion_flutter_gauges: ^28.1.39
   synchronized: ^3.2.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1

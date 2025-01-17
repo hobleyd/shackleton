@@ -107,7 +107,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
 
   Widget _getPreview() {
     return switch (selectedEntity.extension) {
-      'pdf'                                           => PDFPreview(entity: selectedEntity, isSelected: isSelected),
+      'pdf'                                           => PDFPreview(entity: selectedEntity, isSelected: isSelected, showFullFile: !displayMetaData),
       'md'                                            => MarkdownPreview(entity: selectedEntity, isSelected: isSelected),
       (String ext) when videoExtensions.contains(ext) => VideoPreview(entity: selectedEntity, isSelected: isSelected),
       _                                               => ImagePreview(entity: selectedEntity, isSelected: isSelected, previewWidth: previewWidth),

@@ -1,16 +1,15 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 import '../../models/file_of_interest.dart';
 
 class PDFPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final bool isSelected;
+  final bool showFullFile;
 
-  const PDFPreview({super.key, required this.entity, required this.isSelected,});
+  const PDFPreview({super.key, required this.entity, required this.isSelected, required this.showFullFile,});
 
   @override
   ConsumerState<PDFPreview> createState() => _PDFPreview();
@@ -19,6 +18,7 @@ class PDFPreview extends ConsumerStatefulWidget {
 class _PDFPreview extends ConsumerState<PDFPreview> {
   get entityPreview => widget.entity;
   get isSelected    => widget.isSelected;
+  get showFullFile => widget.showFullFile;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,21 @@ class _PDFPreview extends ConsumerState<PDFPreview> {
             alignment: Alignment.center,
             color: background,
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: SfPdfViewer.file(entityPreview.entity as File),
+            child: showFullFile
+                ? PdfViewer.file(entityPreview.path)
+                : PdfDocumentViewBuilder.file(
+                    entityPreview.path,
+                    builder: (context, document) => ListView.builder(
+                      itemCount: 1,
+                      itemBuilder: (context, index) {
+                        return PdfPageView(
+                          document: document,
+                          pageNumber: 1,
+                          alignment: Alignment.center,
+                        );
+                      },
+                    ),
+            ),
           ),
         ),
       ],
