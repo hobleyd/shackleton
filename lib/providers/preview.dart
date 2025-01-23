@@ -12,6 +12,8 @@ class Preview extends _$Preview {
   }
 
   void changeHeight(double delta) {
-    state = state.copyWith(height: state.height + delta);
+    if (state.height + delta > 250) {
+      state = state.copyWith(height: state.height + delta);
+    }
   }
 }
