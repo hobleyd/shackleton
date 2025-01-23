@@ -47,7 +47,6 @@ class _Shackleton extends ConsumerState<Shackleton> {
           IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
           IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
           IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => ref.read(mapPaneProvider.notifier).setVisibility(!map.visible)),
-          IconButton(icon: const Icon(Icons.preview), tooltip: 'Preview', onPressed: () => ref.read(previewProvider.notifier).setVisibility(!preview.visible)),
           IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
         ],
       ),
@@ -56,17 +55,15 @@ class _Shackleton extends ConsumerState<Shackleton> {
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (preview.visible) ...{
-                Align(alignment: Alignment.center, child: SizedBox(height: preview.height, child: const PreviewGrid())),
-                MouseRegion(
-                    cursor: SystemMouseCursors.resizeRow,
-                    child: GestureDetector(
-                      onVerticalDragUpdate: (DragUpdateDetails details) {
-                        ref.read(previewProvider.notifier).changeHeight(details.delta.dy);
-                      },
-                      child: Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
-                    )),
-              },
+          Align(alignment: Alignment.center, child: SizedBox(height: preview.height, child: const PreviewGrid())),
+          MouseRegion(
+              cursor: SystemMouseCursors.resizeRow,
+              child: GestureDetector(
+                onVerticalDragUpdate: (DragUpdateDetails details) {
+                  ref.read(previewProvider.notifier).changeHeight(details.delta.dy);
+                },
+                child: Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
+              )),
           Expanded(
             child: Scrollbar(
               thumbVisibility: true,

@@ -14,8 +14,4 @@ class Preview extends _$Preview {
   void changeHeight(double delta) {
     state = state.copyWith(height: state.height + delta);
   }
-
-  void setVisibility(bool isVisible) {
-    state = state.copyWith(visible: isVisible);
-  }
 }
