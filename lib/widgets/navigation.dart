@@ -51,9 +51,7 @@ class _Navigation extends ConsumerState<Navigation> {
               child: Container(
                 alignment: Alignment.topLeft,
                 color: Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4),
-                child: EntityContextMenu(
-                  folder: FileOfInterest(entity: Directory(getHomeFolder())),
-                  child: Padding(
+                child: Padding(
                     padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
                     child: SingleChildScrollView(
                       controller: controller,
@@ -70,7 +68,6 @@ class _Navigation extends ConsumerState<Navigation> {
                           const NavigationTags(),
                         ],
                       ),
-                    ),
                   ),
                 ),
               ),
