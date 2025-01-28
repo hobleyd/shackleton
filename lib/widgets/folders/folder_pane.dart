@@ -8,7 +8,6 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/folder_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
-import '../../providers/folder_path.dart';
 import 'directory_row.dart';
 import 'entity_row.dart';
 import 'selection.dart';
@@ -52,7 +51,7 @@ class _FolderPane extends ConsumerState<FolderPane> {
             FileOfInterest entity = entityList[index];
             keys[index] = GlobalKey<DragItemWidgetState>();
             return InkWell(
-              onTap: () => selectEntry(ref: ref, handler: handler, path: folderPath, entities: entityList, index: index),
+              onTapUp: (tap) => selectEntry(ref: ref, handler: handler, path: folderPath, entities: entityList, index: index),
               onDoubleTap: () => entity.openFile(),
               child: DragItemWidget(
                 key: keys[index],
@@ -66,16 +65,23 @@ class _FolderPane extends ConsumerState<FolderPane> {
                 },
                 child: DraggableWidget(
                   dragItemsProvider: (context) {
-                    // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
-                    // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
-                    // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
                     List<DragItemWidgetState> dragItems = [];
-                    for (var e in selectedEntities) {
-                      var itemIndex = entityList.indexOf(e);
-                      // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
-                      // folder; so double check that the index exists to avoid an Exception.
-                      if (itemIndex != -1) {
-                        dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+
+                    if (!selectedEntities.contains(entity)) {
+                      // If the item we are dragging is not in the selectedEntities list, then add it individually for the drag.
+                      var itemIndex = entityList.indexOf(entity);
+                      dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+                    } else {
+                      // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
+                      // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
+                      // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
+                      for (var e in selectedEntities) {
+                        var itemIndex = entityList.indexOf(e);
+                        // if we double click on a file to open it, this will get called, but the selectedEntities will be related to the parent
+                        // folder; so double check that the index exists to avoid an Exception.
+                        if (itemIndex != -1) {
+                          dragItems.add(keys[itemIndex]!.currentState! as DragItemWidgetState);
+                        }
                       }
                     }
                     return dragItems;
