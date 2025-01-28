@@ -2,14 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
 import 'package:shackleton/providers/editing_entity.dart';
-import 'package:shackleton/widgets/folders/folder_column_headers.dart';
-import 'package:super_drag_and_drop/super_drag_and_drop.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../../interfaces/keyboard_callback.dart';
-import '../../misc/drag_drop.dart';
 import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/folder_ui_settings.dart';
@@ -17,10 +12,7 @@ import '../../providers/file_events.dart';
 import '../../providers/contents/folder_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
 import '../../repositories/folder_settings_repository.dart';
-import '../entity_context_menu.dart';
 import 'folder_drop_zone.dart';
-import 'folder_pane.dart';
-import 'folder_settings_icons.dart';
 
 class FolderList extends ConsumerStatefulWidget {
   final Directory path;
