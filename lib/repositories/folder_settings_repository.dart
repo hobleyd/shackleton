@@ -47,4 +47,18 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
     _database.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = AsyncValue.data(folderSettings);
   }
+
+  updateShowDetailedView(bool showDetailedView) {
+    state.when(
+        data: (FolderUISettings settings) => updateSettings(settings.copyWith(detailedView: showDetailedView)),
+        error: (e, st) => null,
+        loading: () => null);
+  }
+
+  void updateShowHiddenFiles(bool showHiddenFiles) {
+    state.when(
+        data: (FolderUISettings settings) => updateSettings(settings.copyWith(showHiddenFiles: showHiddenFiles)),
+        error: (e, st) => null,
+        loading: () => null);
+  }
 }

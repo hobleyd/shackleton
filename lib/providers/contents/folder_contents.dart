@@ -85,6 +85,7 @@ class FolderContents extends _$FolderContents {
     events.listen((FileSystemEvent event) {
       FileOfInterest foi = FileOfInterest(entity: event.path == path.path ? Directory(event.path) : File(event.path));
 
+      event.destination;
       // Windows provides out of order file system events; so let's use a sledgehammer.
       if (Platform.isWindows) {
         if (foi.isFile) {
@@ -104,6 +105,7 @@ class FolderContents extends _$FolderContents {
         // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
         switch (event.type) {
           case FileSystemEvent.create:
+          case FileSystemEvent.modify:
             if (!state.contains(foi)) {
               if (!foi.isHidden) {
                 add(foi);

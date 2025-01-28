@@ -15,7 +15,7 @@ import '../providers/preview.dart';
 import '../providers/contents/selected_folder_contents.dart';
 import '../repositories/folder_settings_repository.dart';
 
-import 'folder_list.dart';
+import 'folders/folder_list.dart';
 import 'import_folder.dart';
 import 'navigation.dart';
 import 'preview_grid.dart';
