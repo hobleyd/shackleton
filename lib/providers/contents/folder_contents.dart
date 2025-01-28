@@ -94,8 +94,7 @@ class FolderContents extends _$FolderContents {
   void watchFolder(Directory path) async {
     Stream<FileSystemEvent> events = path.watch(events: FileSystemEvent.all);
     events.listen((FileSystemEvent event) {
-      FileOfInterest foi = FileOfInterest(entity: event.path == path.path ? Directory(event.path) : File(event.path));
-
+      FileOfInterest foi = FileOfInterest(entity: event.isDirectory ? Directory(event.path) : File(event.path));
       // Windows provides out of order file system events; so let's use a sledgehammer.
       if (Platform.isWindows) {
         if (foi.isFile) {
@@ -127,7 +126,6 @@ class FolderContents extends _$FolderContents {
             break;
           case FileSystemEvent.move:
             FileSystemMoveEvent e = event as FileSystemMoveEvent;
-
             add(FileOfInterest(entity: e.isDirectory ? Directory(e.destination!) : File(e.destination!)));
             delete(event.path, foi);
             break;

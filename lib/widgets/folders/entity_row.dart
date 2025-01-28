@@ -4,6 +4,8 @@ import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shackleton/providers/contents/grid_contents.dart';
+import 'package:shackleton/providers/contents/selected_folder_contents.dart';
 
 import '../../misc/keyboard_handler.dart';
 import '../../misc/utils.dart';
@@ -78,6 +80,7 @@ class EntityRow extends ConsumerWidget {
     contents.setEditableState(entity, false);
     handler.setEditing(false);
 
-    entity.rename(filename);
+    FileOfInterest newEntity = entity.rename(filename);
+    ref.read(selectedFolderContentsProvider.notifier).replace(newEntity);
   }
 }

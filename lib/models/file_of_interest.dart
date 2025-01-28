@@ -193,8 +193,8 @@ class FileOfInterest implements Comparable {
     }
   }
 
-  void rename(String name) {
-    entity.rename(join(dirname(path), name));
+  FileOfInterest rename(String name) {
+    return FileOfInterest(entity: entity.renameSync(join(entity.parent.path, name)));
   }
 
   @override
