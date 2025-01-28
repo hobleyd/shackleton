@@ -106,7 +106,7 @@ class FolderContents extends _$FolderContents {
           List<FileOfInterest> toAdd = files.where((i) => !state.contains(i)).toList();
           List<FileOfInterest> toDelete = state.where((i) => !files.contains(i)).toList();
           // Look for files not in the current state, to add
-          // Look for files not in the modified liat, to delete
+          // Look for files not in the modified list, to delete
           List<FileOfInterest> entities = [...state, ...toAdd];
           entities.removeWhere((i) => toDelete.contains(i));
           state = [...sort(entities, _defaultSort)];
