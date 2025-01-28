@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 
@@ -28,6 +29,16 @@ class FolderContents extends _$FolderContents {
   void add(FileOfInterest entity) {
     List<FileOfInterest> entities = [...state, entity];
     state = [...sort(entities, _defaultSort)];
+  }
+
+  void delete(String path, FileOfInterest entity) {
+    var fileEvents = ref.read(fileEventsProvider.notifier);
+    fileEvents.delete(entity, deleteEntity: false); // Already deleted, just cleaning up here.
+
+    state = [
+      for (final element in state)
+        if (element.path != path) element,
+    ];
   }
 
   List<FileOfInterest> getFolderContents(Directory path) {
@@ -85,7 +96,6 @@ class FolderContents extends _$FolderContents {
     events.listen((FileSystemEvent event) {
       FileOfInterest foi = FileOfInterest(entity: event.path == path.path ? Directory(event.path) : File(event.path));
 
-      event.destination;
       // Windows provides out of order file system events; so let's use a sledgehammer.
       if (Platform.isWindows) {
         if (foi.isFile) {
@@ -109,22 +119,17 @@ class FolderContents extends _$FolderContents {
             if (!state.contains(foi)) {
               if (!foi.isHidden) {
                 add(foi);
-                // If the selectedFolderContentsProvider contains this folder, we should update the previewGridProvider manually.
-                if (ref.read(selectedFolderContentsProvider).contains(FileOfInterest(entity: Directory(path.path)))) {
-                  ref.read(gridContentsProvider.notifier).add(foi);
-                }
               }
             }
             break;
           case FileSystemEvent.delete:
+            delete(event.path, foi);
+            break;
           case FileSystemEvent.move:
-            var fileEvents = ref.read(fileEventsProvider.notifier);
-            fileEvents.delete(foi, deleteEntity: false); // Already deleted, just cleaning up here.
+            FileSystemMoveEvent e = event as FileSystemMoveEvent;
 
-            state = [
-              for (final element in state)
-                if (element.path != event.path) element,
-            ];
+            add(FileOfInterest(entity: e.isDirectory ? Directory(e.destination!) : File(e.destination!)));
+            delete(event.path, foi);
             break;
         }
       }
