@@ -69,34 +69,28 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
                 showFolderButtons = false;
               });
             },
-            child: Container(
-              alignment: Alignment.topLeft,
-              decoration: isDropZone
-                  ? BoxDecoration(
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.teal,
-                  width: 2,
-                ),
-              )
-                  : null,
-              child: EntityContextMenu(
-                folder: FileOfInterest(entity: folderPath),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                  child: Column(
-                    children: [
-                      FolderColumnHeaders(path: folderPath, showDetailedView: folderSettings.detailedView),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
-                      Expanded(child: FolderPane(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
-                      FolderSettingsIcons(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
-                    ],
+              child: Container(
+                alignment: Alignment.topLeft,
+                decoration: isDropZone
+                    ? BoxDecoration(shape: BoxShape.rectangle, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.teal, width: 2,),)
+                    : null,
+                child: EntityContextMenu(
+                  folder: FileOfInterest(entity: folderPath),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                    child: Column(
+                      children: [
+                        FolderColumnHeaders(path: folderPath, showDetailedView: folderSettings.detailedView),
+                        Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
+                        Expanded(
+                            child: FolderPane(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
+                        FolderSettingsIcons(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ),
       ),
       MouseRegion(

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../interfaces/file_events_callback.dart';
@@ -30,7 +31,7 @@ class FolderPath extends _$FolderPath implements FileEventsCallback {
       return;
     }
 
-    if (clickedPath == state.last) {
+    if (clickedPath.path == state.last.path) {
       state = [ ...state, newPath];
     } else {
       state = [

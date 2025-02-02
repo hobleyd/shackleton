@@ -11,7 +11,8 @@ import '../../providers/contents/selected_folder_contents.dart';
 import 'entity_row.dart';
 import 'selection.dart';
 
-class DirectoryRow extends ConsumerWidget {
+
+class DirectoryRow extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final bool showDetailedView;
   final KeyboardHandler handler;
@@ -20,21 +21,44 @@ class DirectoryRow extends ConsumerWidget {
   const DirectoryRow({super.key, required this.entity, required this.handler, required this.showDetailedView, required this.entities});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DirectoryRow> createState() => _DirectoryRow();
+}
+
+class _DirectoryRow extends ConsumerState<DirectoryRow> {
+  bool isDropZone = false;
+
+  get entity => widget.entity;
+  get showDetailedView => widget.showDetailedView;
+  get handler => widget.handler;
+  get entities => widget.entities;
+
+  @override
+  Widget build(BuildContext context) {
     return DropRegion(
         formats: Formats.standardFormats,
         hitTestBehavior: HitTestBehavior.opaque,
         onDropOver: (event) {
-          _selectIfValidDropLocation(ref, event, entity);
           return onDropOver(event);
         },
-        onDropEnter: (event) {},
-        onDropLeave: (event) {},
+        onDropEnter: (event) async {
+          _selectIfValidDropLocation(ref, event, entity);
+        },
+        onDropLeave: (event) async {
+          setState(() {
+            isDropZone = false;
+          });
+        },
         onPerformDrop: (event) => onPerformDrop(event, destination: entity),
-        child: EntityRow(entity: entity, handler: handler, showDetailedView: showDetailedView));
+        child: Container(
+          alignment: Alignment.topLeft,
+          decoration: isDropZone
+              ? BoxDecoration(shape: BoxShape.rectangle, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.teal, width: 2,),)
+              : null,
+          child: EntityRow(entity: entity, handler: handler, showDetailedView: showDetailedView),
+    ));
   }
-
-  void _selectIfValidDropLocation(WidgetRef ref, DropOverEvent event, FileOfInterest destination) {
+  
+  void _selectIfValidDropLocation(WidgetRef ref, DropEvent event, FileOfInterest destination) {
     final item = event.session.items.first;
     final reader = item.dataReader!;
     if (item.canProvide(Formats.fileUri)) {
@@ -43,11 +67,13 @@ class DirectoryRow extends ConsumerWidget {
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              selectEntry(ref: ref, handler: handler, path: destination.entity as Directory, entities: entities, index: entities.indexOf(destination));
-              return;
+              selectEntry(ref: ref, handler: handler, path: entity.entity.parent, entities: entities, index: entities.indexOf(destination));
+              setState(() {
+                isDropZone = true;
+              });
             }
           }
-          ref.read(selectedFolderContentsProvider.notifier).removeAll();
+          //ref.read(selectedFolderContentsProvider.notifier).removeAll();
         }
       });
     }
