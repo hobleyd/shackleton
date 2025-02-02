@@ -43,7 +43,7 @@ class DirectoryRow extends ConsumerWidget {
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              selectEntry(ref: ref, handler: handler, path: destination.path, entities: entities, index: entities.indexOf(destination));
+              selectEntry(ref: ref, handler: handler, path: destination.entity as Directory, entities: entities, index: entities.indexOf(destination));
               return;
             }
           }
