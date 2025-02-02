@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
 import '../../models/file_of_interest.dart';
-import '../../providers/metadata.dart';
 
 class ImagePreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;

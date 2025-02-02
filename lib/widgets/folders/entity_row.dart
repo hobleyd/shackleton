@@ -1,16 +1,13 @@
-import 'dart:io';
-
 import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shackleton/providers/contents/grid_contents.dart';
-import 'package:shackleton/providers/contents/selected_folder_contents.dart';
 
 import '../../misc/keyboard_handler.dart';
 import '../../misc/utils.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/folder_contents.dart';
+import '../../providers/contents/selected_folder_contents.dart';
 
 class EntityRow extends ConsumerWidget {
   final FileOfInterest entity;

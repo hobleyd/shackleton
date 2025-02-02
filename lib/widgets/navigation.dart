@@ -3,11 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../misc/utils.dart';
-import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../repositories/folder_settings_repository.dart';
-import 'entity_context_menu.dart';
 import 'navigation/navigation_favourites.dart';
 import 'navigation/navigation_mounted_drives.dart';
 import 'navigation/navigation_space.dart';

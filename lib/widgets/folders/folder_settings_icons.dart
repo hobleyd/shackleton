@@ -60,7 +60,6 @@ class FolderSettingsIcons extends ConsumerWidget {
     );
   }
 
-  @override
   void newEntity(WidgetRef ref) {
     FolderContents contents = ref.read(folderContentsProvider(path).notifier);
     FileOfInterest entity = FileOfInterest(entity: path.createTempSync('new-'), editing: true);

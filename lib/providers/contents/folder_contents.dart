@@ -1,12 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 import '../../models/file_of_interest.dart';
-import '../../providers/contents/grid_contents.dart';
-import '../../providers/contents/selected_folder_contents.dart';
 import '../file_events.dart';
 
 part 'folder_contents.g.dart';
