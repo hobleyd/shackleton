@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/database/app_database.dart';
 import 'package:shackleton/repositories/file_tags_repository.dart';
 
 

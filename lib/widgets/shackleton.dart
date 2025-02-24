@@ -8,6 +8,7 @@ import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../models/map_settings.dart';
 import '../models/preview_settings.dart';
+import '../providers/contents/grid_contents.dart';
 import '../providers/folder_path.dart';
 import '../providers/error.dart';
 import '../providers/map_pane.dart';
@@ -18,7 +19,7 @@ import '../repositories/folder_settings_repository.dart';
 import 'folders/folder_list.dart';
 import 'import_folder.dart';
 import 'navigation.dart';
-import 'preview_grid.dart';
+import 'preview/preview_grid.dart';
 import 'shackleton_settings.dart';
 
 class Shackleton extends ConsumerStatefulWidget {
@@ -46,7 +47,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
         actions: <Widget>[
           IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
           IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
-          IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => ref.read(mapPaneProvider.notifier).setVisibility(!map.visible)),
+          IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => _showMap(ref, map.visible)),
           IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
         ],
       ),
@@ -126,6 +127,15 @@ class _Shackleton extends ConsumerState<Shackleton> {
     Set<FileOfInterest> selectedEntities = ref.read(selectedFolderContentsProvider);
     for (FileOfInterest foi in selectedEntities) {
       await foi.cacheFileOfInterest(ref);
+    }
+  }
+
+  void _showMap(WidgetRef ref, bool visible) {
+    if (ref.read(gridContentsProvider).isEmpty) {
+      ref.read(errorProvider.notifier).setError('The Map is unavailable until you have selected items to preview!');
+    } else {
+      ref.read(mapPaneProvider.notifier).setVisibility(!visible);
+      ref.read(errorProvider.notifier).setError('');
     }
   }
 }

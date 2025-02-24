@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../interfaces/keyboard_callback.dart';
-import '../interfaces/tag_handler.dart';
-import '../misc/keyboard_handler.dart';
-import '../models/file_of_interest.dart';
-import '../models/tag.dart';
-import '../providers/contents/pane_contents.dart';
-import '../providers/contents/pane_tags.dart';
-import '../providers/file_events.dart';
-import '../providers/metadata.dart';
+import '../../interfaces/keyboard_callback.dart';
+import '../../interfaces/tag_handler.dart';
+import '../../misc/keyboard_handler.dart';
+import '../../models/file_of_interest.dart';
+import '../../models/tag.dart';
+import '../../providers/contents/pane_contents.dart';
+import '../../providers/contents/pane_tags.dart';
+import '../../providers/file_events.dart';
+import '../../providers/metadata.dart';
 import 'entity_preview.dart';
-import 'entity_context_menu.dart';
-import 'metadata/metadata_editor.dart';
+import '../entity_context_menu.dart';
+import '../metadata/metadata_editor.dart';
 
 class PreviewPane extends ConsumerStatefulWidget {
   final FileOfInterest initialEntity;

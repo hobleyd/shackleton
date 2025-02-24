@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:shackleton/widgets/preview/markdown_preview.dart';
 
-import '../models/file_of_interest.dart';
-import '../models/file_metadata.dart';
-import '../providers/metadata.dart';
-import 'metadata/fix_metadata.dart';
-import 'preview/image_preview.dart';
-import 'preview/pdf_preview.dart';
-import 'preview/video_preview.dart';
+import '../../models/file_of_interest.dart';
+import '../../models/file_metadata.dart';
+import '../../providers/metadata.dart';
+import '../metadata/fix_metadata.dart';
+import '../preview/image_preview.dart';
+import '../preview/pdf_preview.dart';
+import '../preview/video_preview.dart';
 
 class EntityPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;

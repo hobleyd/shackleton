@@ -7,7 +7,6 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import '../../misc/drag_drop.dart';
 import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
-import '../../providers/contents/selected_folder_contents.dart';
 import 'entity_row.dart';
 import 'selection.dart';
 

@@ -42,11 +42,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
         _isRotatingImage
             ? const Expanded(child: CircularProgressIndicator.adaptive(strokeWidth: 8,))
             : Expanded(
-                child: Container(
-                  alignment: Alignment.center,
-                  color: isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: _rotatedBytes == null
+                child: _rotatedBytes == null
                       ? Image.file(entityPreview.entity as File,
                           alignment: Alignment.center,
                           fit: BoxFit.contain,
@@ -59,7 +55,6 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
                           cacheWidth: (previewWidth * MediaQuery.of(context).devicePixelRatio).round(),
                   ),
                 ),
-              ),
       ],
     );
   }
