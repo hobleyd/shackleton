@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/database/app_database.dart';
+import 'package:shackleton/repositories/file_tags_repository.dart';
 
 
 import '../models/entity.dart';
@@ -11,7 +13,6 @@ import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../models/tag.dart';
 import '../providers/error.dart';
-import '../providers/tag_queue.dart';
 
 part 'metadata.g.dart';
 
@@ -91,7 +92,7 @@ class Metadata extends _$Metadata {
       state = FileMetaData(entity: entity, tags: tags, gpsLocation: location);
 
       Future(() {
-        ref.read(tagQueueProvider.notifier).queue(Entity(path: entity.path, metadata: state));
+        ref.read(fileTagsRepositoryProvider.notifier).writeTags(Entity(path: entity.path, metadata: state));
       });
     }
   }
@@ -110,7 +111,7 @@ class Metadata extends _$Metadata {
   Future<bool> saveMetadata({ bool updateFile = false }) async {
     // Always write tags to DB even if file writing fails? I feel like this makes sense.
     // ignore: avoid_manual_providers_as_generated_provider_dependency
-    ref.read(tagQueueProvider.notifier).queue(Entity(path: state.entity!.path, metadata: state));
+    ref.read(fileTagsRepositoryProvider.notifier).writeTags(Entity(path: state.entity!.path, metadata: state));
 
     if (updateFile) {
       bool hasExiftool = whichSync('exiftool') != null ? true : false;

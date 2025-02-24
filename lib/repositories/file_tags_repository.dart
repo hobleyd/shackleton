@@ -1,19 +1,16 @@
 import 'dart:collection';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:synchronized/synchronized.dart';
 
 import '../database/app_database.dart';
 import '../models/entity.dart';
 import '../models/tag.dart';
-import '../providers/tag_queue.dart';
 
 part 'file_tags_repository.g.dart';
 
 @riverpod
 class FileTagsRepository extends _$FileTagsRepository {
   late AppDatabase _database;
-  final _lock = Lock();
 
   static const String createFiles = '''
         create table if not exists files(
@@ -41,9 +38,6 @@ class FileTagsRepository extends _$FileTagsRepository {
   Future<List<Tag>> build() {
     _database = ref.watch(appDbProvider);
 
-    var queue = ref.watch(tagQueueProvider);
-    pop(queue);
-
     return getTags();
   }
 
@@ -52,22 +46,11 @@ class FileTagsRepository extends _$FileTagsRepository {
     return results.map((row) => Tag.fromMap(row)).toList();
   }
 
-  Future<void> pop(Queue<Entity> queue) async {
-    await _lock.synchronized(() async {
-      while (queue.isNotEmpty) {
-        Entity entity = queue.removeFirst();
-        if (entity.hasTags) {
-          await writeTags(entity);
-        } else {
-          await removeTags(entity);
-        }
-      }
-    });
-  }
+  Future<void> removeTags(entity) async {
+    await _database.delete('file_tags', where: 'fileId = ?', whereArgs: [entity.path]);
 
-  Future<int> removeTags(entity) async {
-    return await _database.delete('file_tags', where: 'fileId = ?', whereArgs: [entity.path]);
     // TODO: clean up the dangling tags, if there are any
+    //state = AsyncData(await getTags());
   }
 
   Future<void> writeTags(Entity entity) async {
@@ -90,6 +73,7 @@ class FileTagsRepository extends _$FileTagsRepository {
         }
         else {
           tag.id = await _database.insert('tags', tag.toMap());
+          state = AsyncData(await getTags());
         }
 
         List<Map> fileTagRecords = await _database.query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
