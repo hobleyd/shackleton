@@ -16,7 +16,6 @@ class NavigationTags extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    debugPrint('rebuilding tags');
     return Consumer(builder: (context, watch, child) {
       var fileTagsAsync = ref.watch(fileTagsRepositoryProvider);
       return fileTagsAsync.when(error: (error, stackTrace) {

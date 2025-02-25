@@ -104,7 +104,6 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
     if (key != null) {
       var columnHeight = key.currentState!.context.size!.height;
       if (visibleRow != lastVisibleRow) {
-        debugPrint('animating to: ${columnHeight * visibleRow}');
         scrollController.animateTo(columnHeight * visibleRow, duration: const Duration(milliseconds: 500), curve: Curves.decelerate);
         lastVisibleRow = visibleRow;
       }
