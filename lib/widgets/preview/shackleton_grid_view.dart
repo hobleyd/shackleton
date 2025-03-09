@@ -50,7 +50,7 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
               keys[idx] = GlobalKey<DragItemWidgetState>();
 
               return InkWell(
-                  onTap: () => gridController.selectEntity(idx, false),
+                  onTap: () => gridController.selectEntityByMouse(idx),
                   onDoubleTap: () => _previewEntities(entities[idx]),
                   child: DragItemWidget(
                       key: keys[idx],
