@@ -37,7 +37,9 @@ class _FolderList extends ConsumerState<FolderList> implements KeyboardCallback 
       }, loading: () {
         return const CircularProgressIndicator();
       }, data: (FolderUISettings folderSettings) {
-        return FolderDropZone(path: folderPath, handler: handler, settings: folderSettings);
+        return GestureDetector(
+            onTap: () => ref.read(selectedFolderContentsProvider.notifier).clear(),
+            child: FolderDropZone(path: folderPath, handler: handler, settings: folderSettings));
       });
     });
   }

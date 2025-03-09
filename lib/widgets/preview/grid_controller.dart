@@ -54,7 +54,7 @@ class GridController implements KeyboardCallback {
         _startSelectedItemIndex = lastIdx;
       }
     }
-    selectEntity(lastIdx);
+    selectEntity(lastIdx, true);
 
     visibilityCallback(lastIdx);
   }
@@ -77,7 +77,7 @@ class GridController implements KeyboardCallback {
         }
       }
 
-      selectEntity(lastIdx);
+      selectEntity(lastIdx, true);
       visibilityCallback(lastIdx);
     }
   }
@@ -97,7 +97,7 @@ class GridController implements KeyboardCallback {
         }
       }
 
-      selectEntity(lastIdx);
+      selectEntity(lastIdx, true);
       visibilityCallback(lastIdx);
     }
   }
@@ -115,7 +115,7 @@ class GridController implements KeyboardCallback {
     entitiesNotifier.addAll(entities.toSet());
   }
 
-  void selectEntity(int idx) {
+  void selectEntity(int idx, bool isKeyboard) {
     List<FileOfInterest> entities = ref.read(gridContentsProvider);
     FileOfInterest entity = entities[idx];
     _lastSelectedItemIndex = idx;
@@ -128,6 +128,15 @@ class GridController implements KeyboardCallback {
       entityNotifier.contains(entity) ? entityNotifier.remove(entity) : entityNotifier.add(entity);
     } else if (keyHandler.isBlockMultiSelectionPressed) {
       if (_lastSelectedItemIndex != -1) {
+        if (!isKeyboard) {
+          // Mouse selection requires us to update start and end; unlike with keyboard input which happens elsewhere.
+          if (idx < _startSelectedItemIndex) {
+            _startSelectedItemIndex = idx;
+          } else {
+            _endSelectedItemIndex = idx;
+          }
+        }
+
         Set<FileOfInterest> newSelection = {};
         for (int i = _startSelectedItemIndex; i <= _endSelectedItemIndex; i++) {
           newSelection.add(entities[i]);
@@ -153,7 +162,7 @@ class GridController implements KeyboardCallback {
       }
     }
 
-    selectEntity(lastIdx);
+    selectEntity(lastIdx, true);
     visibilityCallback(lastIdx);
   }
 
