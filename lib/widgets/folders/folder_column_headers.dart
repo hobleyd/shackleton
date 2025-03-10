@@ -13,7 +13,7 @@ class FolderColumnHeaders extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-     var entitiesNotifier = ref.read(folderContentsProvider(path).notifier);
+     var entitiesNotifier = ref.read(folderContentsProvider(path.path).notifier);
 
       Widget sortIcon = entitiesNotifier.getSortOrder() == EntitySortOrder.asc ? const Icon(Icons.expand_less) : const Icon(Icons.expand_more);
 

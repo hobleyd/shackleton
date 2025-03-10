@@ -123,8 +123,4 @@ class KeyboardHandler {
   void register() {
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
-
-  void setEditing(bool editing) {
-    isEditing = editing;
-  }
 }

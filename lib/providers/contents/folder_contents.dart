@@ -10,16 +10,17 @@ part 'folder_contents.g.dart';
 enum EntitySortField { name, size, modified }
 enum EntitySortOrder { asc, desc }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FolderContents extends _$FolderContents {
   EntitySortField _defaultSort = EntitySortField.name;
   EntitySortOrder _defaultSortOrder = EntitySortOrder.asc;
 
   @override
-  List<FileOfInterest> build(Directory path) {
-    watchFolder(path);
+  List<FileOfInterest> build(String path) {
+    final Directory d = Directory(path);
+    watchFolder(d);
 
-    return getFolderContents(path);
+    return getFolderContents(d);
   }
 
   void add(FileOfInterest entity) {

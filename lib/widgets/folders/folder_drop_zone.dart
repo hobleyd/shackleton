@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/models/folder_ui_settings.dart';
+import 'package:shackleton/widgets/folders/folder_pane_controller.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../misc/drag_drop.dart';
-import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
 import '../../repositories/folder_settings_repository.dart';
 import '../entity_context_menu.dart';
@@ -18,25 +18,26 @@ import 'folder_settings_icons.dart';
 class FolderDropZone extends ConsumerStatefulWidget {
   final Directory path;
   final FolderUISettings settings;
-  final KeyboardHandler handler;
 
-  const FolderDropZone({super.key, required this.path, required this.settings, required this.handler});
+  const FolderDropZone({super.key, required this.path, required this.settings, });
 
   @override
   ConsumerState<FolderDropZone> createState() => _FolderDropZone();
 }
 
 class _FolderDropZone extends ConsumerState<FolderDropZone> {
+  late FolderPaneController paneController;
+
   bool isDropZone = false;
   bool showFolderButtons = false;
   late double width;
 
   get folderPath => widget.path;
   get folderSettings => widget.settings;
-  get handler => widget.handler;
 
   @override
   Widget build(BuildContext context) {
+
     return SizedBox(width: width, child: Row(children: [
       Expanded(
         child: DropRegion(
@@ -58,13 +59,13 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
           onPerformDrop: (event) => onPerformDrop(event, destination: FileOfInterest(entity: folderPath)),
           child: MouseRegion(
             onEnter: (_) {
-              handler.hasFocus = true;
+              paneController.hasFocus = true;
               setState(() {
                 showFolderButtons = true;
               });
             },
             onExit: (_) {
-              handler.hasFocus = false;
+              paneController.hasFocus = false;
               setState(() {
                 showFolderButtons = false;
               });
@@ -83,8 +84,8 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
                         FolderColumnHeaders(path: folderPath, showDetailedView: folderSettings.detailedView),
                         Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
                         Expanded(
-                            child: FolderPane(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
-                        FolderSettingsIcons(path: folderPath, handler: handler, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
+                            child: FolderPane(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
+                        FolderSettingsIcons(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
                       ],
                     ),
                   ),
@@ -125,6 +126,7 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
   @override @override
   void initState() {
     super.initState();
+    paneController = FolderPaneController(context: context, ref: ref, path: folderPath);
     width = folderSettings.width;
   }
 

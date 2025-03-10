@@ -19,7 +19,7 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
   @override
   Widget build(BuildContext context) {
     return Consumer(builder: (context, watch, child) {
-      var mountPointRepository = ref.watch(folderContentsProvider(widget.mountPoint));
+      var mountPointRepository = ref.watch(folderContentsProvider(widget.mountPoint.path));
       mountPointRepository.removeWhere((element) => !element.isDirectory);
       if (Platform.isMacOS) {
         mountPointRepository.removeWhere((element) => element.name == 'Macintosh HD');

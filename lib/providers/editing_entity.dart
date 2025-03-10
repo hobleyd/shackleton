@@ -15,11 +15,13 @@ class EditingEntity extends _$EditingEntity {
   }
 
   void setEditingEntity(Directory path, FileOfInterest? entity) {
-    FolderContents contents = ref.read(folderContentsProvider(path).notifier);
+    FolderContents contents = ref.read(folderContentsProvider(path.path).notifier);
     if (entity != null) {
       contents.setEditableState(entity, true);
     } else {
-      state ?? contents.setEditableState(state!, false);
+      if (state != null) {
+        contents.setEditableState(state!, false);
+      }
     }
 
     state = entity;

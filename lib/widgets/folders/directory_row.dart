@@ -5,19 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../../misc/drag_drop.dart';
-import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
 import 'entity_row.dart';
-import 'selection.dart';
+import 'folder_pane_controller.dart';
 
 
 class DirectoryRow extends ConsumerStatefulWidget {
   final FileOfInterest entity;
   final bool showDetailedView;
-  final KeyboardHandler handler;
+  final FolderPaneController paneController;
   final List<FileOfInterest> entities;
 
-  const DirectoryRow({super.key, required this.entity, required this.handler, required this.showDetailedView, required this.entities});
+  const DirectoryRow({super.key, required this.entity, required this.paneController, required this.showDetailedView, required this.entities});
 
   @override
   ConsumerState<DirectoryRow> createState() => _DirectoryRow();
@@ -28,7 +27,7 @@ class _DirectoryRow extends ConsumerState<DirectoryRow> {
 
   get entity => widget.entity;
   get showDetailedView => widget.showDetailedView;
-  get handler => widget.handler;
+  get paneController => widget.paneController;
   get entities => widget.entities;
 
   @override
@@ -53,7 +52,7 @@ class _DirectoryRow extends ConsumerState<DirectoryRow> {
           decoration: isDropZone
               ? BoxDecoration(shape: BoxShape.rectangle, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.teal, width: 2,),)
               : null,
-          child: EntityRow(entity: entity, handler: handler, showDetailedView: showDetailedView),
+          child: EntityRow(entity: entity, paneController: paneController, showDetailedView: showDetailedView),
     ));
   }
   
@@ -66,7 +65,7 @@ class _DirectoryRow extends ConsumerState<DirectoryRow> {
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              selectEntry(ref: ref, handler: handler, path: entity.entity.parent, entities: entities, index: entities.indexOf(destination));
+              paneController.selectEntry(entities: entities, index: entities.indexOf(destination));
               setState(() {
                 isDropZone = true;
               });

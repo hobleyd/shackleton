@@ -2,19 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shackleton/widgets/folders/folder_pane_controller.dart';
 
-import '../../misc/keyboard_handler.dart';
-import '../../models/file_of_interest.dart';
-import '../../providers/contents/folder_contents.dart';
 import '../../repositories/folder_settings_repository.dart';
 
 class FolderSettingsIcons extends ConsumerWidget {
   final Directory path;
-  final KeyboardHandler handler;
+  final FolderPaneController paneController;
   final bool showHiddenFiles;
   final bool showDetailedView;
 
-  const FolderSettingsIcons({super.key, required this.path, required this.handler, required this.showHiddenFiles, required this.showDetailedView});
+  const FolderSettingsIcons({super.key, required this.path, required this.paneController, required this.showHiddenFiles, required this.showDetailedView});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +46,7 @@ class FolderSettingsIcons extends ConsumerWidget {
           IconButton(
             constraints: const BoxConstraints(minHeight: 14, maxHeight: 14),
             iconSize: 14,
-            onPressed: () => newEntity(ref),
+            onPressed: () => paneController.newEntity(),
             padding: const EdgeInsets.only(top: 5),
             splashRadius: 0.0001,
             tooltip: 'New folder...',
@@ -58,12 +56,5 @@ class FolderSettingsIcons extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  void newEntity(WidgetRef ref) {
-    FolderContents contents = ref.read(folderContentsProvider(path).notifier);
-    FileOfInterest entity = FileOfInterest(entity: path.createTempSync('new-'), editing: true);
-    contents.add(entity);
-    handler.setEditing(true);
   }
 }

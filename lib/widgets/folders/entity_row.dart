@@ -2,19 +2,21 @@ import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shackleton/providers/editing_entity.dart';
 
-import '../../misc/keyboard_handler.dart';
 import '../../misc/utils.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/folder_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
+import 'folder_pane_controller.dart';
 
 class EntityRow extends ConsumerWidget {
-  final FileOfInterest entity;
+  FileOfInterest entity;
   final bool showDetailedView;
-  final KeyboardHandler handler;
+  final FolderPaneController paneController;
+  late FolderContents contents;
 
-  const EntityRow({super.key, required this.entity, required this.showDetailedView, required this.handler});
+  EntityRow({super.key, required this.entity, required this.showDetailedView, required this.paneController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,7 +35,7 @@ class EntityRow extends ConsumerWidget {
                 decoration: const InputDecoration(border: InputBorder.none, isDense: true,),
                 keyboardType: TextInputType.text,
                 maxLines: 1,
-                onSubmitted: (tags) => _renameFile(ref, entity, tagController.text),
+                onSubmitted: (tags) => _renameFile(ref, tagController.text),
                 style: Theme
                     .of(context)
                     .textTheme
@@ -46,7 +48,7 @@ class EntityRow extends ConsumerWidget {
               padding: EdgeInsets.zero,
               splashRadius: 0.0001,
               tooltip: 'Rename file...',
-              onPressed: () => _renameFile(ref, entity, tagController.text)),
+              onPressed: () => _renameFile(ref, tagController.text)),
         ],
         if (!entity.editing) ...[
           Expanded(
@@ -72,12 +74,12 @@ class EntityRow extends ConsumerWidget {
     );
   }
 
-  void _renameFile(WidgetRef ref, FileOfInterest entity, String filename) {
-    FolderContents contents = ref.read(folderContentsProvider(entity.entity.parent).notifier);
-    contents.setEditableState(entity, false);
-    handler.setEditing(false);
+  void _renameFile(WidgetRef ref, String filename) {
+    ref.read(editingEntityProvider.notifier).setEditingEntity(entity.parent, null);
 
     FileOfInterest newEntity = entity.rename(filename);
     ref.read(selectedFolderContentsProvider.notifier).replace(newEntity);
+
+    paneController.isEditing = false;
   }
 }

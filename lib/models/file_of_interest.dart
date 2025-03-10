@@ -36,6 +36,7 @@ class FileOfInterest implements Comparable {
   get isVideo => videoExtensions.contains(extension);
   get name => basename(path);
   get path => entity.path;
+  get parent => entity.parent;
   get shouldImport => isImage || isVideo;
   get stat => entity.statSync();
   get uri => entity.uri;
@@ -199,7 +200,7 @@ class FileOfInterest implements Comparable {
 
   @override
   String toString() {
-    return name;
+    return '($name: editing: $editing)';
   }
 
   void _createParentFolders(String destinationPath) {
