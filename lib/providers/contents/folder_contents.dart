@@ -94,19 +94,17 @@ class FolderContents extends _$FolderContents {
       FileOfInterest foi = FileOfInterest(entity: event.isDirectory ? Directory(event.path) : File(event.path));
       // Windows provides out of order file system events; so let's use a sledgehammer.
       if (Platform.isWindows) {
-        if (foi.isFile) {
-          List<FileOfInterest> files = [];
-          for (var file in foi.entity.parent.listSync()) {
-            files.add(FileOfInterest(entity: file));
-          }
-          List<FileOfInterest> toAdd = files.where((i) => !state.contains(i)).toList();
-          List<FileOfInterest> toDelete = state.where((i) => !files.contains(i)).toList();
-          // Look for files not in the current state, to add
-          // Look for files not in the modified list, to delete
-          List<FileOfInterest> entities = [...state, ...toAdd];
-          entities.removeWhere((i) => toDelete.contains(i));
-          state = [...sort(entities, _defaultSort)];
+        List<FileOfInterest> files = [];
+        for (var file in foi.entity.parent.listSync()) {
+          files.add(FileOfInterest(entity: file));
         }
+        List<FileOfInterest> toAdd = files.where((i) => !state.contains(i)).toList();
+        List<FileOfInterest> toDelete = state.where((i) => !files.contains(i)).toList();
+        // Look for files not in the current state, to add
+        // Look for files not in the modified list, to delete
+        List<FileOfInterest> entities = [...state, ...toAdd];
+        entities.removeWhere((i) => toDelete.contains(i));
+        state = [...sort(entities, _defaultSort)];
       } else {
         // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
         switch (event.type) {
