@@ -89,6 +89,11 @@ class AppDatabase {
     return _cachedStorage.delete(table, where: where, whereArgs: whereArgs);
   }
 
+  Future<int> getCount(String table, { String? where, List<dynamic>? whereArgs }) async {
+    List<Map<String, dynamic>> results = await _cachedStorage.query(table, columns: ['count(*) as count'], where: where, whereArgs: whereArgs);
+    return results.first['count'] as int;
+  }
+
   Future<int> insert(String table, Map<String, dynamic> rows, { ConflictAlgorithm? conflictAlgorithm }) async {
     return _cachedStorage.insert(table, rows, conflictAlgorithm: conflictAlgorithm);
   }
