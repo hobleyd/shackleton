@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/file_of_interest.dart';
+import '../../providers/folder_path.dart';
 import '../file_events.dart';
 
 part 'folder_contents.g.dart';
@@ -105,6 +106,14 @@ class FolderContents extends _$FolderContents {
         List<FileOfInterest> entities = [...state, ...toAdd];
         entities.removeWhere((i) => toDelete.contains(i));
         state = [...sort(entities, _defaultSort)];
+
+        if (event.type == FileSystemEvent.move || event.type == FileSystemEvent.delete) {
+          delete(event.path, foi);
+          if (foi.isDirectory && event.type == FileSystemEvent.move) {
+            FileSystemMoveEvent e = event as FileSystemMoveEvent;
+            ref.read(folderPathProvider.notifier).addFolder(foi.entity as Directory, Directory(e.destination!));
+          }
+        }
       } else {
         // So if I unmount a folder from the filesystem, FileSystemEvent shows this as a file, not a directory. How frustrating. We can infer this instead...
         switch (event.type) {
@@ -121,8 +130,12 @@ class FolderContents extends _$FolderContents {
             break;
           case FileSystemEvent.move:
             FileSystemMoveEvent e = event as FileSystemMoveEvent;
-            add(FileOfInterest(entity: e.isDirectory ? Directory(e.destination!) : File(e.destination!)));
+            FileOfInterest target = FileOfInterest(entity: e.isDirectory ? Directory(e.destination!) : File(e.destination!));
+            add(target);
             delete(event.path, foi);
+            if (foi.isDirectory) {
+              ref.read(folderPathProvider.notifier).addFolder(foi.entity as Directory, target.entity as Directory);
+            }
             break;
         }
       }
