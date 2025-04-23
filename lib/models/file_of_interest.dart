@@ -1,12 +1,15 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:win32/win32.dart';
 
 import '../misc/utils.dart';
 import '../providers/metadata.dart';
@@ -89,14 +92,18 @@ class FileOfInterest implements Comparable {
             _ => null,
     };
 
-    if (trash != null) {
-      if (isDirectory) {
-        moveDirectory(trash);
-      } else {
-        moveFile(trash);
-      }
+    if (Platform.isWindows) {
+      recycleFile(path);
     } else {
-      entity.deleteSync();
+      if (trash != null) {
+        if (isDirectory) {
+          moveDirectory(trash);
+        } else {
+          moveFile(trash);
+        }
+      } else {
+        entity.deleteSync();
+      }
     }
   }
 
@@ -168,7 +175,7 @@ class FileOfInterest implements Comparable {
     File file = entity as File;
     try {
       return file.renameSync(destinationPath);
-    } on FileSystemException {
+    } on FileSystemException catch (e) {
       final newFile = file.copySync(destinationPath);
       entity.deleteSync();
       return newFile;
@@ -194,13 +201,41 @@ class FileOfInterest implements Comparable {
     }
   }
 
+  bool recycleFile(String file) {
+    if (Platform.isWindows) {
+      final hwnd = GetActiveWindow();
+      final pFrom = [file].toWideCharArray();
+      final lpFileOp =
+      calloc<SHFILEOPSTRUCT>()
+        ..ref.hwnd = hwnd
+        ..ref.wFunc = FO_DELETE
+        ..ref.pFrom = pFrom
+        ..ref.pTo = nullptr
+        ..ref.fFlags = FOF_ALLOWUNDO;
+
+      try {
+        final result = SHFileOperation(lpFileOp);
+        return result == 0;
+      } finally {
+        free(pFrom);
+        free(lpFileOp);
+      }
+    }
+
+    return false;
+  }
+
   FileOfInterest rename(String name) {
+    // TODO: fix this for renaming folders.
+    if (name == this.name) {
+      return this;
+    }
     return FileOfInterest(entity: entity.renameSync(join(entity.parent.path, name)));
   }
 
   @override
   String toString() {
-    return '($name: editing: $editing)';
+    return '($name)';
   }
 
   void _createParentFolders(String destinationPath) {
