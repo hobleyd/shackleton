@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../models/file_of_interest.dart';
@@ -20,13 +23,15 @@ Future<void> onPerformDrop(PerformDropEvent event, {required FileOfInterest dest
       if (reader.canProvide(Formats.fileUri)) {
         reader.getValue(Formats.fileUri, (uri) async {
           if (uri != null) {
-            Uri toFileUri = Uri.parse('${destination.uri}${basename(Uri.decodeComponent(uri.path))}');
+            String fromPath = uri.toFilePath(windows: Platform.isWindows);
+            String finalPath = path.join(destination.path, basename(fromPath));
 
-            final type = FileSystemEntity.typeSync(Uri.decodeComponent(uri.path));
+            final type = FileSystemEntity.typeSync(fromPath);
+            debugPrint('entity type: $type, $fromPath, ${destination.path}');
             var _ = switch (type) {
-              FileSystemEntityType.file => FileOfInterest(entity: File.fromUri(uri)).moveFile(Uri.decodeComponent(toFileUri.path)),
-              FileSystemEntityType.directory => FileOfInterest(entity: Directory.fromUri(uri)).moveDirectory(Uri.decodeComponent(toFileUri.path)),
-              _ => FileOfInterest(entity: Link.fromUri(uri)).moveLink(Uri.decodeComponent(toFileUri.path)),
+              FileSystemEntityType.file => FileOfInterest(entity: File(fromPath)).moveFile(finalPath),
+              FileSystemEntityType.directory => FileOfInterest(entity: Directory(fromPath)).moveDirectory(finalPath),
+              _ => FileOfInterest(entity: Link(fromPath)).moveLink(finalPath),
             };
           }
         });

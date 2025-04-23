@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/repositories/file_tags_repository.dart';
 
 import '../interfaces/file_events_callback.dart';
 import '../models/file_of_interest.dart';
@@ -30,6 +31,9 @@ class FileEvents extends _$FileEvents {
 
     if (entity.exists && deleteEntity) {
       entity.delete();
+      // We also need to clean up the filetags cache in the database.
+      var filetags = ref.read(fileTagsRepositoryProvider.notifier);
+      filetags.removeTags(entity);
     }
   }
 
