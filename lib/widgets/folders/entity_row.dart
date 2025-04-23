@@ -11,7 +11,7 @@ import '../../providers/contents/selected_folder_contents.dart';
 import 'folder_pane_controller.dart';
 
 class EntityRow extends ConsumerWidget {
-  FileOfInterest entity;
+  final FileOfInterest entity;
   final bool showDetailedView;
   final FolderPaneController paneController;
   late FolderContents contents;

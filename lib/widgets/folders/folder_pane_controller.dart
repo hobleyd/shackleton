@@ -79,7 +79,7 @@ class FolderPaneController implements KeyboardCallback {
     if (keyHandler.isEditing) {
       FileOfInterest? entity = ref.read(editingEntityProvider);
       if (entity != null) {
-        ref.read(editingEntityProvider.notifier).setEditingEntity(entity.path, null);
+        ref.read(editingEntityProvider.notifier).setEditingEntity(entity.parent, null);
         keyHandler.isEditing = false;
       }
     }
@@ -150,7 +150,7 @@ class FolderPaneController implements KeyboardCallback {
         for (int i = _startSelectedItemIndex; i <= _endSelectedItemIndex; i++) {
           newSelection.add(folderEntities[i]);
         }
-        ref.read(selectedFolderContentsProvider.notifier).replaceAll(newSelection);
+        selectedFolderContents.replaceAll(newSelection);
       }
     } else {
       int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -170,6 +170,15 @@ class FolderPaneController implements KeyboardCallback {
       }
       _lastSelectedTimestamp = currentTimestamp;
     }
+  }
+
+  void selectEntityByEntity(FileOfInterest entity) {
+    int idx = folderEntities.indexOf(entity);
+    _startSelectedItemIndex = idx;
+    _endSelectedItemIndex = idx;
+
+    var selectedFolderContents = ref.read(selectedFolderContentsProvider.notifier);
+    selectedFolderContents.replace(entity);
   }
 
   void selectEntityByMouse(int idx) {

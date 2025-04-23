@@ -65,7 +65,7 @@ class _DirectoryRow extends ConsumerState<DirectoryRow> {
           if (destination.isDirectory) {
             FileOfInterest source = FileOfInterest(entity: Directory.fromUri(uri));
             if (source.isValidMoveLocation(destination.path)) {
-              paneController.selectEntry(entities: entities, index: entities.indexOf(destination));
+              paneController.selectEntityByEntity(destination);
               setState(() {
                 isDropZone = true;
               });
