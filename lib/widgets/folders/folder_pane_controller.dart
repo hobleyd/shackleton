@@ -10,6 +10,7 @@ import '../../models/file_of_interest.dart';
 import '../../providers/contents/folder_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
 import '../../providers/editing_entity.dart';
+import '../../providers/editing_timestamp.dart';
 import '../../providers/file_events.dart';
 import '../../providers/folder_path.dart';
 import '../../providers/metadata.dart';
@@ -26,7 +27,6 @@ class FolderPaneController implements KeyboardCallback {
   int _startSelectedItemIndex = -1;
   int _endSelectedItemIndex = -1;
   int _lastSelectedItemIndex = -1;
-  int _lastSelectedTimestamp = -1;
 
   FolderPaneController({ required this.context, required this.ref, required this.path }) {
     keyHandler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'FolderPaneController');
@@ -67,7 +67,7 @@ class FolderPaneController implements KeyboardCallback {
         }
       }
 
-      _lastSelectedTimestamp = -1;
+      ref.read(editingTimestampProvider(entities[lastIdx]).notifier).setLastClickTimestamp(-1);
 
       selectEntity(lastIdx);
       visibilityCallback(lastIdx);
@@ -79,7 +79,7 @@ class FolderPaneController implements KeyboardCallback {
     if (keyHandler.isEditing) {
       FileOfInterest? entity = ref.read(editingEntityProvider);
       if (entity != null) {
-        ref.read(editingEntityProvider.notifier).setEditingEntity(entity.parent, null);
+        ref.read(editingEntityProvider.notifier).setEditingEntity(entity, false);
         keyHandler.isEditing = false;
       }
     }
@@ -122,7 +122,8 @@ class FolderPaneController implements KeyboardCallback {
         }
       }
 
-      _lastSelectedTimestamp = -1;
+      List<FileOfInterest> entities = ref.read(folderContentsProvider(path.path));
+      ref.read(editingTimestampProvider(entities[lastIdx]).notifier).setLastClickTimestamp(-1);
 
       selectEntity(lastIdx);
       visibilityCallback(lastIdx);
@@ -154,9 +155,10 @@ class FolderPaneController implements KeyboardCallback {
       }
     } else {
       int currentTimestamp = DateTime.now().millisecondsSinceEpoch;
+      int lastTimestamp = ref.read(editingTimestampProvider(entity));
       if (_lastSelectedItemIndex == idx) {
-        if (currentTimestamp - _lastSelectedTimestamp < 2000) {
-            ref.read(editingEntityProvider.notifier).setEditingEntity(path, entity);
+        if (currentTimestamp - lastTimestamp < 2000) {
+            ref.read(editingEntityProvider.notifier).setEditingEntity(entity, true);
             keyHandler.isEditing = true;
         } else {
           _startSelectedItemIndex = idx;
@@ -168,7 +170,8 @@ class FolderPaneController implements KeyboardCallback {
         _endSelectedItemIndex = idx;
         selectedFolderContents.replace(entity);
       }
-      _lastSelectedTimestamp = currentTimestamp;
+
+      ref.read(editingTimestampProvider(entity).notifier).setLastClickTimestamp(currentTimestamp);
     }
   }
 

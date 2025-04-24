@@ -75,7 +75,7 @@ class EntityRow extends ConsumerWidget {
   }
 
   void _renameFile(WidgetRef ref, String filename) {
-    ref.read(editingEntityProvider.notifier).setEditingEntity(entity.parent, null);
+    ref.read(editingEntityProvider.notifier).setEditingEntity(entity, false);
 
     FileOfInterest newEntity = entity.rename(filename);
     ref.read(selectedFolderContentsProvider.notifier).replace(newEntity);
