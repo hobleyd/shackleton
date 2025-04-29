@@ -1,0 +1,21 @@
+[Desktop Entry]
+X-AppImage-Arch=x86_64
+X-AppImage-Version=1.0.4
+X-AppImage-Name=Shackleton
+Name=Shackleton
+Exec=
+Icon=appimagekit_b00573223c8fd664807c34134ef3a49d_explorer.png
+StartupWMClass=shackleton
+Type=Application
+Terminal=false
+Categories=Utility;
+Comment=
+TryExec=
+X-AppImage-Old-Icon=explorer.png
+X-AppImage-Identifier=b00573223c8fd664807c34134ef3a49d
+Actions=Remove;
+X-AppImageLauncher-Version=2.2.0 (git commit 0f91801), built on 2022-11-02 23:51:55 UTC
+
+[Desktop Action Remove]
+Name=Remove AppImage from system
+Icon=AppImageLauncher
