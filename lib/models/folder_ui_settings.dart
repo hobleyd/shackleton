@@ -16,7 +16,7 @@ int _boolToJson(bool value) => value ? 1 : 0;
 const String navigationFolder = '**navigation**';
 
 @freezed
-class FolderUISettings with _$FolderUISettings {
+abstract class FolderUISettings with _$FolderUISettings {
   const factory FolderUISettings({
     @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson) required FileSystemEntity entity,
     required double width,
