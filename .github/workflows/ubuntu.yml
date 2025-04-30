@@ -27,11 +27,11 @@ jobs:
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: dart run flutter_launcher_icons
       - run: flutter build linux --release --no-tree-shake-icons
-      - uses: AppImageCrafters/build-appimage@master
+      - uses: AppImageCrafters/build-appimage-action@master
         with:
           recipe: "AppImageBuilder.yml"
         env:
-          UPDATE_INFO: gh-releases-zsync|AppImageCrafters|appimage-demo-qt5|latest|*x86_64.AppImage.zsync
+          UPDATE_INFO: gh-releases-zsync|hobleyd|shackleton|latest|*x86_64.AppImage.zsync
           VERSION: ${{ env.VERSION }}
       - name: Create Release
         uses: softprops/action-gh-release@v0.1.15
