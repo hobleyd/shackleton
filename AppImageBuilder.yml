@@ -31,14 +31,14 @@ AppDir:
     include:
     - libc6:amd64
     - libsqlite3-dev:amd64
-    - libmpv-dev:amd64
+    - libmpv2-dev:amd64
     - libmpv2:amd64
     - librsvg2-common:amd64
   files:
     include:
-    - /lib/x86_64-linux-gnu/libmpv.so
-    - /lib/x86_64-linux-gnu/libmpv.so.2
-    - /lib/x86_64-linux-gnu/libsqlite3.so
+    - /usr/lib/x86_64-linux-gnu/libmpv.so
+    - /usr/lib/x86_64-linux-gnu/libmpv.so.2
+    - /usr/lib/x86_64-linux-gnu/libsqlite3.so
     exclude:
     - usr/share/man
     - usr/share/doc/*/README.*
