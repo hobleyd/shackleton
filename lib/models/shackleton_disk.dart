@@ -71,7 +71,7 @@ class ShackletonDisk {
   void eject(WidgetRef ref) async {
     ProcessResult result;
     if (Platform.isWindows) {
-      result = await runExecutableArguments('powershell.exe', ['-command', '(New-Object -comObject Shell.Application).NameSpace(17).ParseName("$mountPath").InvokeVerb("Eject")'], verbose: true);
+      result = await runExecutableArguments('powershell.exe', ['-command', '(New-Object -comObject Shell.Application).NameSpace(17).ParseName("$mountPath").InvokeVerb("Eject")']);
     } else {
       result = await runExecutableArguments('umount', [mountPath]);
     }
