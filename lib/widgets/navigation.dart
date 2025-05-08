@@ -7,6 +7,7 @@ import '../models/folder_ui_settings.dart';
 import '../repositories/folder_settings_repository.dart';
 import 'navigation/navigation_favourites.dart';
 import 'navigation/navigation_mounted_drives.dart';
+import 'navigation/navigation_mounted_drives_windows.dart';
 import 'navigation/navigation_space.dart';
 import 'navigation/navigation_tags.dart';
 
@@ -57,10 +58,10 @@ class _Navigation extends ConsumerState<Navigation> {
                           const NavigationSpace(),
                           Container(color: Theme.of(context).primaryColorLight, height: 2),
                           const NavigationFavourites(),
-                          if (Platform.isMacOS || Platform.isLinux) ...[
-                            const SizedBox(height: 10),
-                            NavigationMountedDrives(mountPoint: Platform.isMacOS ? macosMountFolder : linuxMountFolder),
-                          ],
+                          const SizedBox(height: 10),
+                          Platform.isWindows
+                              ? NavigationMountedDrivesWindows()
+                              : NavigationMountedDrives(mountPoint: Platform.isMacOS ? macosMountFolder : linuxMountFolder),
                           const SizedBox(height: 10),
                           const NavigationTags(),
                         ],

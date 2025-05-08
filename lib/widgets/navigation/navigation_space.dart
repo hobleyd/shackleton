@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:universal_disk_space/universal_disk_space.dart';
 
 import '../../misc/utils.dart';
+import '../../models/shackleton_disk.dart';
 import '../../providers/disk_size_details.dart';
+import '../../providers/folder_path.dart';
 
 class NavigationSpace extends ConsumerWidget {
   const NavigationSpace({super.key,});
@@ -20,8 +23,13 @@ class NavigationSpace extends ConsumerWidget {
         loading: () {
           return const Center(child: CircularProgressIndicator());
         },
-        data: (Disk disk) {
-          return Row(
+        data: (List<ShackletonDisk> disks) {
+          var folderPaths = ref.watch(folderPathProvider);
+
+          ShackletonDisk? disk = _getDisk(disks, folderPaths.last);
+          return disk == null
+          ? const Text('Wow! A diskless computer!')
+          : Row(
             children: [
               const SizedBox(width: 10),
               Column(children: [
@@ -80,5 +88,29 @@ class NavigationSpace extends ConsumerWidget {
         },
       );
     });
+  }
+
+  ShackletonDisk? _getDisk(List<ShackletonDisk> disks, FileSystemEntity entity) {
+    for (var disk in disks) {
+      if (Platform.isWindows) {
+        if (entity.path.startsWith(disk.mountPath) ||
+            entity.path.startsWith(disk.devicePath) ||
+            entity.absolute.path
+                .toUpperCase() // Must convert both sides to upper case since Windows paths are case invariant
+                .startsWith(disk.mountPath.toUpperCase()) ||
+            entity.absolute.path
+                .toUpperCase()
+                .startsWith(disk.devicePath.toUpperCase())) {
+          return disk;
+        }
+      } else if (Platform.isLinux || Platform.isMacOS) {
+        if (entity.path.startsWith(disk.mountPath) || entity.path.startsWith(disk.devicePath) || entity.absolute.path.startsWith(disk.mountPath) ||
+            entity.absolute.path.startsWith(disk.devicePath)) {
+          return disk;
+        }
+      }
+    }
+
+    return null;
   }
 }

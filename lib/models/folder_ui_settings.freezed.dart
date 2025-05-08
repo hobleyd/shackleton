@@ -1,3 +1,4 @@
+// dart format width=80
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
@@ -9,184 +10,35 @@ part of 'folder_ui_settings.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-FolderUISettings _$FolderUISettingsFromJson(Map<String, dynamic> json) {
-  return _FolderUISettings.fromJson(json);
-}
 
 /// @nodoc
 mixin _$FolderUISettings {
   @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-  FileSystemEntity get entity => throw _privateConstructorUsedError;
-  double get width => throw _privateConstructorUsedError;
+  FileSystemEntity get entity;
+  double get width;
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get detailedView => throw _privateConstructorUsedError;
+  bool get detailedView;
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get showHiddenFiles => throw _privateConstructorUsedError;
-
-  /// Serializes this FolderUISettings to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  bool get showHiddenFiles;
 
   /// Create a copy of FolderUISettings
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
   $FolderUISettingsCopyWith<FolderUISettings> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+      _$FolderUISettingsCopyWithImpl<FolderUISettings>(
+          this as FolderUISettings, _$identity);
 
-/// @nodoc
-abstract class $FolderUISettingsCopyWith<$Res> {
-  factory $FolderUISettingsCopyWith(
-          FolderUISettings value, $Res Function(FolderUISettings) then) =
-      _$FolderUISettingsCopyWithImpl<$Res, FolderUISettings>;
-  @useResult
-  $Res call(
-      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-      FileSystemEntity entity,
-      double width,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showHiddenFiles});
-}
-
-/// @nodoc
-class _$FolderUISettingsCopyWithImpl<$Res, $Val extends FolderUISettings>
-    implements $FolderUISettingsCopyWith<$Res> {
-  _$FolderUISettingsCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of FolderUISettings
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? entity = null,
-    Object? width = null,
-    Object? detailedView = null,
-    Object? showHiddenFiles = null,
-  }) {
-    return _then(_value.copyWith(
-      entity: null == entity
-          ? _value.entity
-          : entity // ignore: cast_nullable_to_non_nullable
-              as FileSystemEntity,
-      width: null == width
-          ? _value.width
-          : width // ignore: cast_nullable_to_non_nullable
-              as double,
-      detailedView: null == detailedView
-          ? _value.detailedView
-          : detailedView // ignore: cast_nullable_to_non_nullable
-              as bool,
-      showHiddenFiles: null == showHiddenFiles
-          ? _value.showHiddenFiles
-          : showHiddenFiles // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$FolderUISettingsImplCopyWith<$Res>
-    implements $FolderUISettingsCopyWith<$Res> {
-  factory _$$FolderUISettingsImplCopyWith(_$FolderUISettingsImpl value,
-          $Res Function(_$FolderUISettingsImpl) then) =
-      __$$FolderUISettingsImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-      FileSystemEntity entity,
-      double width,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      bool showHiddenFiles});
-}
-
-/// @nodoc
-class __$$FolderUISettingsImplCopyWithImpl<$Res>
-    extends _$FolderUISettingsCopyWithImpl<$Res, _$FolderUISettingsImpl>
-    implements _$$FolderUISettingsImplCopyWith<$Res> {
-  __$$FolderUISettingsImplCopyWithImpl(_$FolderUISettingsImpl _value,
-      $Res Function(_$FolderUISettingsImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of FolderUISettings
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? entity = null,
-    Object? width = null,
-    Object? detailedView = null,
-    Object? showHiddenFiles = null,
-  }) {
-    return _then(_$FolderUISettingsImpl(
-      entity: null == entity
-          ? _value.entity
-          : entity // ignore: cast_nullable_to_non_nullable
-              as FileSystemEntity,
-      width: null == width
-          ? _value.width
-          : width // ignore: cast_nullable_to_non_nullable
-              as double,
-      detailedView: null == detailedView
-          ? _value.detailedView
-          : detailedView // ignore: cast_nullable_to_non_nullable
-              as bool,
-      showHiddenFiles: null == showHiddenFiles
-          ? _value.showHiddenFiles
-          : showHiddenFiles // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$FolderUISettingsImpl implements _FolderUISettings {
-  const _$FolderUISettingsImpl(
-      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-      required this.entity,
-      required this.width,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required this.detailedView,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required this.showHiddenFiles});
-
-  factory _$FolderUISettingsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$FolderUISettingsImplFromJson(json);
-
-  @override
-  @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-  final FileSystemEntity entity;
-  @override
-  final double width;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  final bool detailedView;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  final bool showHiddenFiles;
-
-  @override
-  String toString() {
-    return 'FolderUISettings(entity: $entity, width: $width, detailedView: $detailedView, showHiddenFiles: $showHiddenFiles)';
-  }
+  /// Serializes this FolderUISettings to a JSON map.
+  Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$FolderUISettingsImpl &&
+            other is FolderUISettings &&
             (identical(other.entity, entity) || other.entity == entity) &&
             (identical(other.width, width) || other.width == width) &&
             (identical(other.detailedView, detailedView) ||
@@ -200,52 +52,185 @@ class _$FolderUISettingsImpl implements _FolderUISettings {
   int get hashCode =>
       Object.hash(runtimeType, entity, width, detailedView, showHiddenFiles);
 
-  /// Create a copy of FolderUISettings
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
-      __$$FolderUISettingsImplCopyWithImpl<_$FolderUISettingsImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$FolderUISettingsImplToJson(
-      this,
-    );
+  String toString() {
+    return 'FolderUISettings(entity: $entity, width: $width, detailedView: $detailedView, showHiddenFiles: $showHiddenFiles)';
   }
 }
 
-abstract class _FolderUISettings implements FolderUISettings {
-  const factory _FolderUISettings(
+/// @nodoc
+abstract mixin class $FolderUISettingsCopyWith<$Res> {
+  factory $FolderUISettingsCopyWith(
+          FolderUISettings value, $Res Function(FolderUISettings) _then) =
+      _$FolderUISettingsCopyWithImpl;
+  @useResult
+  $Res call(
       {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-      required final FileSystemEntity entity,
-      required final double width,
+      FileSystemEntity entity,
+      double width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
       @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool detailedView,
-      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-      required final bool showHiddenFiles}) = _$FolderUISettingsImpl;
+      bool showHiddenFiles});
+}
 
-  factory _FolderUISettings.fromJson(Map<String, dynamic> json) =
-      _$FolderUISettingsImpl.fromJson;
+/// @nodoc
+class _$FolderUISettingsCopyWithImpl<$Res>
+    implements $FolderUISettingsCopyWith<$Res> {
+  _$FolderUISettingsCopyWithImpl(this._self, this._then);
+
+  final FolderUISettings _self;
+  final $Res Function(FolderUISettings) _then;
+
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? entity = null,
+    Object? width = null,
+    Object? detailedView = null,
+    Object? showHiddenFiles = null,
+  }) {
+    return _then(_self.copyWith(
+      entity: null == entity
+          ? _self.entity
+          : entity // ignore: cast_nullable_to_non_nullable
+              as FileSystemEntity,
+      width: null == width
+          ? _self.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as double,
+      detailedView: null == detailedView
+          ? _self.detailedView
+          : detailedView // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showHiddenFiles: null == showHiddenFiles
+          ? _self.showHiddenFiles
+          : showHiddenFiles // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _FolderUISettings implements FolderUISettings {
+  const _FolderUISettings(
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+      required this.entity,
+      required this.width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+      required this.detailedView,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+      required this.showHiddenFiles});
+  factory _FolderUISettings.fromJson(Map<String, dynamic> json) =>
+      _$FolderUISettingsFromJson(json);
 
   @override
   @JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
-  FileSystemEntity get entity;
+  final FileSystemEntity entity;
   @override
-  double get width;
-  @override
-  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get detailedView;
+  final double width;
   @override
   @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
-  bool get showHiddenFiles;
+  final bool detailedView;
+  @override
+  @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+  final bool showHiddenFiles;
 
   /// Create a copy of FolderUISettings
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$FolderUISettingsImplCopyWith<_$FolderUISettingsImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @pragma('vm:prefer-inline')
+  _$FolderUISettingsCopyWith<_FolderUISettings> get copyWith =>
+      __$FolderUISettingsCopyWithImpl<_FolderUISettings>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$FolderUISettingsToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _FolderUISettings &&
+            (identical(other.entity, entity) || other.entity == entity) &&
+            (identical(other.width, width) || other.width == width) &&
+            (identical(other.detailedView, detailedView) ||
+                other.detailedView == detailedView) &&
+            (identical(other.showHiddenFiles, showHiddenFiles) ||
+                other.showHiddenFiles == showHiddenFiles));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, entity, width, detailedView, showHiddenFiles);
+
+  @override
+  String toString() {
+    return 'FolderUISettings(entity: $entity, width: $width, detailedView: $detailedView, showHiddenFiles: $showHiddenFiles)';
+  }
 }
+
+/// @nodoc
+abstract mixin class _$FolderUISettingsCopyWith<$Res>
+    implements $FolderUISettingsCopyWith<$Res> {
+  factory _$FolderUISettingsCopyWith(
+          _FolderUISettings value, $Res Function(_FolderUISettings) _then) =
+      __$FolderUISettingsCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(fromJson: _fseFromJson, toJson: _fseToJson)
+      FileSystemEntity entity,
+      double width,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson) bool detailedView,
+      @JsonKey(fromJson: _boolFromJson, toJson: _boolToJson)
+      bool showHiddenFiles});
+}
+
+/// @nodoc
+class __$FolderUISettingsCopyWithImpl<$Res>
+    implements _$FolderUISettingsCopyWith<$Res> {
+  __$FolderUISettingsCopyWithImpl(this._self, this._then);
+
+  final _FolderUISettings _self;
+  final $Res Function(_FolderUISettings) _then;
+
+  /// Create a copy of FolderUISettings
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? entity = null,
+    Object? width = null,
+    Object? detailedView = null,
+    Object? showHiddenFiles = null,
+  }) {
+    return _then(_FolderUISettings(
+      entity: null == entity
+          ? _self.entity
+          : entity // ignore: cast_nullable_to_non_nullable
+              as FileSystemEntity,
+      width: null == width
+          ? _self.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as double,
+      detailedView: null == detailedView
+          ? _self.detailedView
+          : detailedView // ignore: cast_nullable_to_non_nullable
+              as bool,
+      showHiddenFiles: null == showHiddenFiles
+          ? _self.showHiddenFiles
+          : showHiddenFiles // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+// dart format on
