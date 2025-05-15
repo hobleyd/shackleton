@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:process_run/cmd_run.dart';
 
+import '../providers/disk_size_details.dart';
 import '../providers/error.dart';
 
 class ShackletonDisk {
@@ -78,6 +79,8 @@ class ShackletonDisk {
 
     if (result.exitCode != 0) {
       ref.read(errorProvider.notifier).setError(result.stderr ?? result.stdout);
+    } else {
+      ref.read(diskSizeDetailsProvider.notifier).scanDisks();
     }
   }
 }

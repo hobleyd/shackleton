@@ -19,8 +19,6 @@ double roundDouble(double value, int places) {
 
 @Riverpod(keepAlive: true)
 class DiskSizeDetails extends _$DiskSizeDetails {
-  Map<String, String> _networkDrives = {};
-
   @override
   Future<List<ShackletonDisk>> build() async {
     if (Platform.isWindows) {
@@ -33,6 +31,7 @@ class DiskSizeDetails extends _$DiskSizeDetails {
 
   Future<List<ShackletonDisk>> _getDisks() async {
     List<ShackletonDisk> disks = [];
+
     if (!Platform.isWindows) {
       DiskSpace diskSpace = DiskSpace();
       await diskSpace.scan();
@@ -50,44 +49,43 @@ class DiskSizeDetails extends _$DiskSizeDetails {
       final powerShell = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
       final powerShellArgs = [
         '-command',
-        'get-wmiobject',
-        'Win32_volume',
+        'get-PSDrive',
         '|',
-        'select',
-        'Name, Freespace, Capacity, DriveType, Label'
+        'Where-Object', '{', r'$_.Provider', '-match', r'"FileSystem$"', '}',
+        '|',
+        'ConvertTo-Csv', '-NoTypeInformation'
       ];
 
-      if (_networkDrives.isEmpty) {
-        _networkDrives = await _getNetworkDrives();
-      }
+      Map<String, int> driveTypes = await _getDriveTypes();
 
       ProcessResult psResult = await runExecutableArguments(powerShell, powerShellArgs);
       final List<String> volumeLines = LineSplitter().convert(psResult.stdout);
-      List<List<String>> results = volumeLines.map((line) => line.split(',')).toList();
-      results.removeWhere((list) => list.first.isEmpty);
+      for (int i = 1; i < volumeLines.length; i++) {
+        List<String> volumes = volumeLines[i].split(',');
 
-      for (int i = 0; i < results.length / 5; i++) {
-        final String devicePath = results[(i * 5) + 0].first.split(' : ').last;
-        final String mountPath = _networkDrives.containsKey(devicePath) ? _networkDrives[devicePath]! : devicePath;
-        final int freeSpace = int.parse(results[(i * 5) + 1].first.split(' : ').last);
-        final int capacity = int.parse(results[(i * 5) + 2].first.split(' : ').last);
-        final String driveType = results[(i * 5) + 3].first.split(' : ').last;
-        final String label = results[(i * 5) + 4].first.split(' : ').last;
+        try {
+          final String devicePath = volumes[5].replaceAll('"', '').replaceAll(r'\', '');
+          final Directory mountDir = Directory(devicePath);
+          if (mountDir.existsSync()) {
+            final int usedSpace = volumes[0].isNotEmpty ? int.parse(volumes[0].replaceAll('"', '')) : 0;
+            final int freeSpace = volumes[1].isNotEmpty ? int.parse(volumes[1].replaceAll('"', '')) : 0;
+            final String mountPath = volumes[9].replaceAll('"', '');
+            final String driveLabel = volumes[6].replaceAll('"', '');
+            final int driveType = driveTypes[devicePath]!;
 
-        final mountDir = Directory(mountPath);
-        if (mountDir.existsSync()) {
-          // Only care about Windows mounted drives at this point
-          if (devicePath.endsWith(':\\')) {
             disks.add(ShackletonDisk(
-                devicePath: devicePath.substring(0, devicePath.length - 1),
-                mountPath: mountPath.substring(0, mountPath.length - 1),
-                totalSize: capacity,
-                usedSpace: capacity - freeSpace,
-                usedPercentage: roundDouble(((capacity - freeSpace) / capacity) * 100.0, 2),
+                devicePath: devicePath,
+                mountPath: mountPath.isNotEmpty ? mountPath : devicePath,
+                totalSize: usedSpace + freeSpace,
+                usedSpace: usedSpace,
+                usedPercentage: roundDouble((usedSpace / (usedSpace + freeSpace)) * 100.0, 2),
                 availableSpace: freeSpace,
-                isRemovable: driveType == "2" || driveType == "4",
-                label: label));
+                isRemovable: driveType == 2 || driveType == 4,
+                label: driveLabel));
           }
+        } catch (e) {
+          // existsSync() can return a FileSystemException if it fails!
+          continue;
         }
       }
     }
@@ -95,37 +93,31 @@ class DiskSizeDetails extends _$DiskSizeDetails {
     return disks;
   }
 
-  Future<Map<String, String>> _getNetworkDrives() async {
-    final String net = r'C:\Windows\System32\net.exe';
-    final List<String> netArgs = ['use'];
+  Future<Map<String, int>> _getDriveTypes() async {
+    final powerShell = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
+    final powerShellArgs = [
+      '-command',
+      'get-wmiobject',
+      'Win32_volume',
+      '|',
+      'Select',
+      'DriveLetter, DriveType',
+      '|',
+      'ConvertTo-Csv', '-NoTypeInformation'
+    ];
 
-    ProcessResult netResult = await runExecutableArguments(net, netArgs);
-    final List<String> netLines = LineSplitter().convert(netResult.stdout);
-
-    Map<String, String> networkDrives = {};
-    for (String line in netLines) {
-      if (line.trim().isEmpty || line.startsWith('The command') || line.startsWith('New connections') || line.startsWith('-----')) {
-        continue;
-      }
-
-      String netDrive = line.substring(13, 15);
-      if (netDrive.endsWith(':')) {
-        // If the network path is too long, the 'Microsoft Windows Network' gets pushed to a newline; so no need to do anything if we
-        // don't have a drive letter as it is this (spare) line we are on.
-        String remote = line.substring(23);
-
-        if (remote.endsWith('Microsoft Windows Network')) {
-          remote = remote.substring(0, remote.length - 25);
-        }
-        remote = remote.trim();
-        networkDrives[netDrive] = remote;
-      }
+    Map<String, int> results = {};
+    ProcessResult psResult = await runExecutableArguments(powerShell, powerShellArgs);
+    final List<String> volumeLines = LineSplitter().convert(psResult.stdout);
+    for (int i = 1; i < volumeLines.length; i++) {
+      List<String> volumes = volumeLines[i].split(',');
+      results[volumes[0].replaceAll('"', '')] = volumes[1].isNotEmpty ? int.parse(volumes[1].replaceAll('"', '')) : 0;
     }
 
-    return networkDrives;
+    return results;
   }
 
-  void _setDisks() async {
+  void scanDisks() async {
     state = AsyncValue.data(await _getDisks());
   }
 
@@ -136,7 +128,7 @@ class DiskSizeDetails extends _$DiskSizeDetails {
         'drive': drive as String,
         'info': info as String?,
       } = message;
-      _setDisks();
+      scanDisks();
     }, cancelOnError: true);
   }
 }
