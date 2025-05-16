@@ -49,14 +49,12 @@ class DiskSizeDetails extends _$DiskSizeDetails {
       final powerShell = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
       final powerShellArgs = [
         '-command',
-        'get-PSDrive',
+        'Get-WmiObject', '-Class', 'Win32_LogicalDisk',
         '|',
-        'Where-Object', '{', r'$_.Provider', '-match', r'"FileSystem$"', '}',
+        'Select', 'DeviceID,', 'DriveType,', 'ProviderName,', 'FreeSpace,', 'Size,', 'VolumeName',
         '|',
         'ConvertTo-Csv', '-NoTypeInformation'
       ];
-
-      Map<String, int> driveTypes = await _getDriveTypes();
 
       ProcessResult psResult = await runExecutableArguments(powerShell, powerShellArgs);
       final List<String> volumeLines = LineSplitter().convert(psResult.stdout);
@@ -64,21 +62,22 @@ class DiskSizeDetails extends _$DiskSizeDetails {
         List<String> volumes = volumeLines[i].split(',');
 
         try {
-          final String devicePath = volumes[5].replaceAll('"', '').replaceAll(r'\', '');
+          final String devicePath = volumes[0].replaceAll('"', '');
           final Directory mountDir = Directory(devicePath);
           if (mountDir.existsSync()) {
-            final int usedSpace = volumes[0].isNotEmpty ? int.parse(volumes[0].replaceAll('"', '')) : 0;
-            final int freeSpace = volumes[1].isNotEmpty ? int.parse(volumes[1].replaceAll('"', '')) : 0;
-            final String mountPath = volumes[9].replaceAll('"', '');
-            final String driveLabel = volumes[6].replaceAll('"', '');
-            final int driveType = driveTypes[devicePath]!;
+            final int freeSpace = volumes[3].isNotEmpty ? int.parse(volumes[3].replaceAll('"', '')) : 0;
+            final int totalSize = volumes[4].isNotEmpty ? int.parse(volumes[4].replaceAll('"', '')) : 0;
+            final int usedSpace = totalSize - freeSpace;
+            final String mountPath = volumes[2].replaceAll('"', '');
+            final String driveLabel = volumes[5].replaceAll('"', '');
+            final int driveType = volumes[1].isNotEmpty ? int.parse(volumes[4].replaceAll('"', '')) : 0;
 
             disks.add(ShackletonDisk(
                 devicePath: devicePath,
                 mountPath: mountPath.isNotEmpty ? mountPath : devicePath,
-                totalSize: usedSpace + freeSpace,
+                totalSize: totalSize,
                 usedSpace: usedSpace,
-                usedPercentage: roundDouble((usedSpace / (usedSpace + freeSpace)) * 100.0, 2),
+                usedPercentage: roundDouble((usedSpace / totalSize) * 100.0, 2),
                 availableSpace: freeSpace,
                 isRemovable: driveType == 2 || driveType == 4,
                 label: driveLabel));
@@ -91,30 +90,6 @@ class DiskSizeDetails extends _$DiskSizeDetails {
     }
 
     return disks;
-  }
-
-  Future<Map<String, int>> _getDriveTypes() async {
-    final powerShell = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe';
-    final powerShellArgs = [
-      '-command',
-      'get-wmiobject',
-      'Win32_volume',
-      '|',
-      'Select',
-      'DriveLetter, DriveType',
-      '|',
-      'ConvertTo-Csv', '-NoTypeInformation'
-    ];
-
-    Map<String, int> results = {};
-    ProcessResult psResult = await runExecutableArguments(powerShell, powerShellArgs);
-    final List<String> volumeLines = LineSplitter().convert(psResult.stdout);
-    for (int i = 1; i < volumeLines.length; i++) {
-      List<String> volumes = volumeLines[i].split(',');
-      results[volumes[0].replaceAll('"', '')] = volumes[1].isNotEmpty ? int.parse(volumes[1].replaceAll('"', '')) : 0;
-    }
-
-    return results;
   }
 
   void scanDisks() async {
