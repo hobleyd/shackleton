@@ -2,11 +2,10 @@ import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:shackleton/providers/editing_entity.dart';
 
 import '../../misc/utils.dart';
 import '../../models/file_of_interest.dart';
-import '../../providers/contents/folder_contents.dart';
+import '../../providers/editing_entity.dart';
 import '../../providers/contents/selected_folder_contents.dart';
 import 'folder_pane_controller.dart';
 
@@ -14,9 +13,8 @@ class EntityRow extends ConsumerWidget {
   final FileOfInterest entity;
   final bool showDetailedView;
   final FolderPaneController paneController;
-  late FolderContents contents;
 
-  EntityRow({super.key, required this.entity, required this.showDetailedView, required this.paneController});
+  const EntityRow({super.key, required this.entity, required this.showDetailedView, required this.paneController});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,10 +34,7 @@ class EntityRow extends ConsumerWidget {
                 keyboardType: TextInputType.text,
                 maxLines: 1,
                 onSubmitted: (tags) => _renameFile(ref, tagController.text),
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodySmall),
+                style: Theme.of(context).textTheme.bodySmall),
           ),
           IconButton(
               icon: const Icon(Icons.save),
@@ -52,22 +47,13 @@ class EntityRow extends ConsumerWidget {
         ],
         if (!entity.editing) ...[
           Expanded(
-            child: Text(entity.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme
-                .of(context)
-                .textTheme
-                .bodySmall),
+            child: Text(entity.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
         if (showDetailedView) ...[
-          SizedBox(width: 40, child: Text(getEntitySizeString(entity: entity, decimals: 0), textAlign: TextAlign.right, style: Theme
-              .of(context)
-              .textTheme
-              .bodySmall),),
+          SizedBox(width: 40, child: Text(getEntitySizeString(entity: entity, decimals: 0), textAlign: TextAlign.right, style: Theme.of(context).textTheme.bodySmall),),
           const SizedBox(width: 10),
-          SizedBox(width: 120, child: Text(DateFormat('dd MMM yyyy HH:mm').format(entity.stat.modified), style: Theme
-              .of(context)
-              .textTheme
-              .bodySmall, textAlign: TextAlign.right),),
+          SizedBox(width: 120, child: Text(DateFormat('dd MMM yyyy HH:mm').format(entity.stat.modified), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.right),),
         ],
         const SizedBox(width: 10),
       ],
