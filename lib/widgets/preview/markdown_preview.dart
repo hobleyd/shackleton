@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 
 import '../../models/file_of_interest.dart';
 
@@ -17,6 +17,8 @@ class MarkdownPreview extends ConsumerStatefulWidget {
 }
 
 class _MarkdownPreview extends ConsumerState<MarkdownPreview> {
+  ScrollController _scrollController = ScrollController();
+
   get entityPreview => widget.entity;
   get isSelected    => widget.isSelected;
 
@@ -44,7 +46,11 @@ class _MarkdownPreview extends ConsumerState<MarkdownPreview> {
             alignment: Alignment.center,
             color: background,
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Markdown(data: (entityPreview.entity as File).readAsStringSync()),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              scrollDirection: Axis.vertical,
+              child: GptMarkdown((entityPreview.entity as File).readAsStringSync()),
+            ),
           ),
         ),
       ],

@@ -175,7 +175,7 @@ class FileOfInterest implements Comparable {
     File file = entity as File;
     try {
       return file.renameSync(destinationPath);
-    } on FileSystemException catch (e) {
+    } on FileSystemException {
       final newFile = file.copySync(destinationPath);
       entity.deleteSync();
       return newFile;
