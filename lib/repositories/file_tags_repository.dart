@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../database/app_database.dart';
@@ -39,6 +40,17 @@ class FileTagsRepository extends _$FileTagsRepository {
     return getTags();
   }
 
+  Future<bool> deleteOrphanedTags(int tagId) async {
+    int tagCount = await _database.getCount('file_tags', where: 'tagId = ?', whereArgs: [tagId.toString()]);
+
+    if (tagCount == 0) {
+      _database.delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
+      return true;
+    }
+
+    return false;
+  }
+
   Future<int> getEntityId(Entity entity) async {
     if (entity.id == null) {
       List<Map<String, dynamic>> results = await _database.query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
@@ -71,25 +83,19 @@ class FileTagsRepository extends _$FileTagsRepository {
     return results.map((row) => Tag.fromMap(row)).toList();
   }
   
-  Future<List<Tag>> getTagsForEntity(Entity entity) async {
+  Future<Set<int>> getTagIdsForEntity(Entity entity) async {
     List<Map<String, dynamic>> results = await _database.query('file_tags', columns: ['tagId'], where: 'fileId = ?', whereArgs: [entity.id.toString()]);
-    return results.map((row) => Tag.fromMap(row)).toList();
+    return results.map((row) => row.values.first).whereType<int>().toSet();
   }
 
-  Future<bool> removeTagForEntity(Entity entity, Tag tag) async {
+  Future<bool> removeTagForEntity(Entity entity, int tagId) async {
     int id = await getEntityId(entity);
 
     // remove the tags for that file
-    await _database.delete('file_tags', where: 'fileId = ? and tagId = ?', whereArgs: [id.toString(), tag.id!.toString()]);
+    await _database.delete('file_tags', where: 'fileId = ? and tagId = ?', whereArgs: [id.toString(), tagId.toString()]);
 
     // Check for Orphaned tags
-    int tagCount = await _database.getCount('file_tags', where: 'tagId = ?', whereArgs: [tag.id.toString()]);
-    if (tagCount == 0) {
-      _database.delete('tags', where: 'tagId = ?', whereArgs: [tag.id.toString()]);
-      return true;
-    }
-
-    return false;
+    return await deleteOrphanedTags(tagId);
   }
 
   Future<void> removeTagsForEntity(Entity entity, { bool deleteEntity = true }) async {
@@ -97,19 +103,17 @@ class FileTagsRepository extends _$FileTagsRepository {
     int id = await getEntityId(entity);
 
     // Get the tags related to that EntityId
-    List<Tag> tags = await getTagsForEntity(entity);
+    Set<int> tags = await getTagIdsForEntity(entity);
 
     // remove the tags for that file
     await _database.delete('file_tags', where: 'fileId = ?', whereArgs: [id.toString()]);
 
     // check to see if any of those tags are now orphaned
-    bool deletedTags = false;
-    for (Tag tag in tags) {
-      int tagCount = await _database.getCount('file_tags', where: 'tagId = ?', whereArgs: [tag.id.toString()]);
-
-      if (tagCount == 0) {
-        _database.delete('tags', where: 'tagId = ?', whereArgs: [tag.id.toString()]);
-        deletedTags = true;
+    bool refreshState = false;
+    for (int tagId in tags) {
+      bool deleted = await deleteOrphanedTags(tagId);
+      if (deleted) {
+        refreshState = true;
       }
     }
 
@@ -119,7 +123,7 @@ class FileTagsRepository extends _$FileTagsRepository {
     }
 
     // Rebuild the state if we have modified the list of tags.
-    if (deletedTags) {
+    if (refreshState) {
       state = AsyncData(await getTags());
     }
   }
@@ -130,10 +134,13 @@ class FileTagsRepository extends _$FileTagsRepository {
     // Get the id for the FSE
     entity.id = await getEntityId(entity);
 
-    List<Tag> storedTagsForEntity = await getTagsForEntity(entity);
-    List<Tag> missingTags = storedTagsForEntity.where((element) => !entity.tags.contains(element)).toList();
-    for (var tag in missingTags) {
-      refreshState = await removeTagForEntity(entity, tag);
+    // Delete any tags that have been removed.
+    Set<int> storedEntityTagIds = await getTagIdsForEntity(entity);
+    Set<int> entityTagIds = entity.tags.map((tag) => tag.id).whereType<int>().toSet();
+    for (var tagId in storedEntityTagIds) {
+      if (!entityTagIds.contains(tagId)) {
+        refreshState = await removeTagForEntity(entity, tagId);
+      }
     }
 
     // Insert all the Tags, updating the id for the next foreign key

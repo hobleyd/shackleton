@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/app_settings.dart';
+import '../models/file_of_interest.dart';
+import '../providers/error.dart';
+import '../providers/metadata.dart';
 import '../repositories/app_settings_repository.dart';
 import '../repositories/app_statistics_repository.dart';
 import 'shackleton_statistics.dart';
@@ -32,10 +37,9 @@ class ShackletonSettings extends ConsumerWidget {
             title: Text('Settings', style: Theme.of(context).textTheme.labelSmall),
           ),
           body: Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: SizedBox(
-              width: 500,
+              padding: const EdgeInsets.all(6.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -114,11 +118,15 @@ class ShackletonSettings extends ConsumerWidget {
                         onPressed: () => _clearCache(ref),
                         child: Text('Clear Cache', style: Theme.of(context).textTheme.labelSmall),
                       ),
+                      Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                      ElevatedButton(
+                        onPressed: () => _scanLibrary(ref),
+                        child: Text('Scan metadata', style: Theme.of(context).textTheme.labelSmall),
+                      ),
                     ],
                   ),
                 ],
               ),
-            ),
           ),
         );
       },
@@ -141,5 +149,24 @@ class ShackletonSettings extends ConsumerWidget {
     var appStatisticsProvider = ref.read(appStatisticsRepositoryProvider.notifier);
     appStatisticsProvider.clear();
     return true;
+  }
+
+  void _scanLibrary(WidgetRef ref) async {
+    var settings = ref.read(appSettingsRepositoryProvider);
+
+    if (settings.value != null) {
+      Directory library = Directory(settings.value!.libraryPath);
+      if (!library.existsSync()) {
+        ref.read(errorProvider.notifier).setError('Library folder ${settings.value?.libraryPath} does not exist!');
+        return;
+      }
+
+      library.list(recursive: true, followLinks: false).listen((FileSystemEntity entity) {
+        FileOfInterest foi = FileOfInterest(entity: entity);
+        if (foi.isMetadataSupported) {
+          ref.read(metadataProvider(foi));
+        }
+      });
+    }
   }
 }

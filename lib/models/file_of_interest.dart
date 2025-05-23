@@ -34,6 +34,7 @@ class FileOfInterest implements Comparable {
   get isDirectory => entity is Directory;
   get isFile => entity.statSync().type == FileSystemEntityType.file;
   get isImage => imageExtensions.contains(extension);
+  get isLocationSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension);
   get isHidden => name.startsWith('.');
   get isMetadataSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension) || documentExtensions.contains(extension);
   get isVideo => videoExtensions.contains(extension);
