@@ -28,7 +28,7 @@ class ShackletonDisk {
   /// The disk's available space in bytes.
   final int availableSpace;
 
-  // Only used on Windows
+  // Only used on Windows - the name of the Mount i.e. Windows for C:
   final String label;
 
   // Only used on Windows
