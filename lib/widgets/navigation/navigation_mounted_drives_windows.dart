@@ -40,7 +40,7 @@ class _NavigationMountedDrivesWindows extends ConsumerState<NavigationMountedDri
                           children: [
                             Expanded(
                               child: Text(
-                                disks[index].label.isNotEmpty ? '${disks[index].label} (${disks[index].mountPath})' : disks[index].mountPath,
+                                '${disks[index].label} (${disks[index].devicePath})',
                                 style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center,
                               ),
                             ),

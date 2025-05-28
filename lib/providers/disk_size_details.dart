@@ -69,9 +69,12 @@ class DiskSizeDetails extends _$DiskSizeDetails {
             final int totalSize = volumes[4].isNotEmpty ? int.parse(volumes[4].replaceAll('"', '')) : 0;
             final int usedSpace = totalSize - freeSpace;
             final String mountPath = volumes[2].replaceAll('"', '');
-            final String driveLabel = volumes[5].replaceAll('"', '');
             final int driveType = volumes[1].isNotEmpty ? int.parse(volumes[4].replaceAll('"', '')) : 0;
 
+            String driveLabel = volumes[5].replaceAll('"', '');
+            if (mountPath.isNotEmpty) {
+              driveLabel = mountPath.split(r'\').last;
+            }
             disks.add(ShackletonDisk(
                 devicePath: devicePath,
                 mountPath: mountPath.isNotEmpty ? mountPath : devicePath,
