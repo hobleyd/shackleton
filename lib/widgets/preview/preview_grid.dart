@@ -28,8 +28,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler{
 
   @override
   Widget build(BuildContext context) {
-    gridController = GridController(context: context, ref: ref);
-
     MapSettings map = ref.watch(mapPaneProvider);
     entities = ref.watch(gridContentsProvider);
 
@@ -65,6 +63,13 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler{
     gridController.deregister();
 
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    gridController = GridController(context: context, ref: ref);
   }
 
   @override

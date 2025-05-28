@@ -42,7 +42,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> implements KeyboardC
       padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
       child: MouseRegion(
         onEnter: (_) {
-          handler.hasFocus = tagController.text.isEmpty;
+          handler.hasFocus = tagController.text.isNotEmpty;
         },
         onExit: (_) {
           handler.hasFocus = false;
