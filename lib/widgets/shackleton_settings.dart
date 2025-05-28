@@ -4,16 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/app_settings.dart';
+import '../models/error.dart';
 import '../models/file_of_interest.dart';
-import '../providers/error.dart';
+import '../providers/notification.dart';
 import '../providers/metadata.dart';
 import '../repositories/app_settings_repository.dart';
 import '../repositories/app_statistics_repository.dart';
+import 'shackleton_notifications.dart';
 import 'shackleton_statistics.dart';
 
 class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
   final TextEditingController libraryFolderController = TextEditingController();
+  Error? libraryFolderError;
 
   ShackletonSettings({super.key,});
 
@@ -23,113 +26,124 @@ class ShackletonSettings extends ConsumerWidget {
     // DB Statistics
     return Consumer(builder: (context, watch, child) {
       var appSettings = ref.watch(appSettingsRepositoryProvider);
-      return appSettings.when(error: (error, stackTrace) {
-        return Text('Failed to get settings.', style: Theme.of(context).textTheme.bodySmall);
-      }, loading: () {
-        return const CircularProgressIndicator();
-      }, data: (AppSettings appSettings) {
-        libraryFolderController.text = appSettings.libraryPath;
-        fontSizeController.text = '${appSettings.fontSize}';
-        return Scaffold(
-          appBar: AppBar(
-            elevation: 2,
-            shadowColor: Theme.of(context).shadowColor,
-            title: Text('Settings', style: Theme.of(context).textTheme.labelSmall),
-          ),
-          body: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(width: 120, child: Text('Library folder: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall)),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: TextField(
-                            autofocus: true,
-                            controller: libraryFolderController,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
+      return appSettings.when(
+        error: (error, stackTrace) {
+          return Text('Failed to get settings.', style: Theme.of(context).textTheme.bodySmall);
+        },
+        loading: () {
+          return const CircularProgressIndicator();
+        },
+        data: (AppSettings appSettings) {
+          libraryFolderController.text = appSettings.libraryPath;
+          fontSizeController.text = '${appSettings.fontSize}';
+          return Scaffold(
+            appBar: AppBar(
+              elevation: 2,
+              shadowColor: Theme.of(context).shadowColor,
+              title: Text('Settings', style: Theme.of(context).textTheme.labelSmall),
+            ),
+            body: Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(width: 120, child: Text('Library folder: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall)),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: TextField(
+                                  autofocus: true,
+                                  controller: libraryFolderController,
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                  ),
+                                  keyboardType: TextInputType.text,
+                                  maxLines: 1,
+                                  onSubmitted: (path) => _submitLibraryFolder(ref, appSettings, path),
+                                  style: Theme.of(context).textTheme.bodySmall),
                             ),
-                            keyboardType: TextInputType.text,
-                            maxLines: 1,
-                            onSubmitted: (path) => ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(libraryPath: path)),
-                            style: Theme.of(context).textTheme.bodySmall),
-                      ),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 120,
+                              child: Text('Font Size: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall),
+                            ),
+                            const SizedBox(width: 15),
+                            IconButton(
+                              icon: const Icon(Icons.remove),
+                              constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                              iconSize: 12,
+                              padding: EdgeInsets.zero,
+                              splashRadius: 0.0001,
+                              tooltip: 'Decrease font size...',
+                              onPressed: () => _changeFontSize(ref, appSettings, -1),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                controller: fontSizeController,
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                ),
+                                keyboardType: TextInputType.text,
+                                maxLines: 1,
+                                onSubmitted: (_) => _changeFontSize(ref, appSettings, 0),
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            IconButton(
+                              icon: const Icon(Icons.add),
+                              constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                              iconSize: 12,
+                              padding: EdgeInsets.zero,
+                              splashRadius: 0.0001,
+                              tooltip: 'Increase font size...',
+                              onPressed: () => _changeFontSize(ref, appSettings, 1),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
+                        const SizedBox(height: 10),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const ShackletonStatistics(),
+                            Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                            ElevatedButton(
+                              onPressed: () => _clearCache(ref),
+                              child: Text('Clear Cache', style: Theme.of(context).textTheme.labelSmall),
+                            ),
+                            Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                            ElevatedButton(
+                              onPressed: () => _scanLibrary(ref),
+                              child: Text('Scan metadata', style: Theme.of(context).textTheme.labelSmall),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                          width: 120,
-                          child: Text('Font Size: ', textAlign: TextAlign.right, style: Theme.of(context).textTheme.labelSmall),
-                      ),
-                      const SizedBox(width: 15),
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
-                        iconSize: 12,
-                        padding: EdgeInsets.zero,
-                        splashRadius: 0.0001,
-                        tooltip: 'Decrease font size...',
-                        onPressed: () => _changeFontSize(ref, appSettings, -1),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 30,
-                        child: TextField(
-                          controller: fontSizeController,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            isDense: true,
-                          ),
-                          keyboardType: TextInputType.text,
-                          maxLines: 1,
-                          onSubmitted: (_) => _changeFontSize(ref, appSettings, 0),
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.center,),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
-                        iconSize: 12,
-                        padding: EdgeInsets.zero,
-                        splashRadius: 0.0001,
-                        tooltip: 'Increase font size...',
-                        onPressed: () => _changeFontSize(ref, appSettings, 1),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const ShackletonStatistics(),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
-                      ElevatedButton(
-                        onPressed: () => _clearCache(ref),
-                        child: Text('Clear Cache', style: Theme.of(context).textTheme.labelSmall),
-                      ),
-                      Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
-                      ElevatedButton(
-                        onPressed: () => _scanLibrary(ref),
-                        child: Text('Scan metadata', style: Theme.of(context).textTheme.labelSmall),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-          ),
-        );
-      },
+                ),
+                ShackletonNotifications(),
+              ],
+            ),
+          );
+        },
       );
     });
   }
@@ -157,7 +171,7 @@ class ShackletonSettings extends ConsumerWidget {
     if (settings.value != null) {
       Directory library = Directory(settings.value!.libraryPath);
       if (!library.existsSync()) {
-        ref.read(errorProvider.notifier).setError('Library folder ${settings.value?.libraryPath} does not exist!');
+        libraryFolderError = ref.read(notificationProvider.notifier).setError('Library folder ${settings.value?.libraryPath} does not exist!',);
         return;
       }
 
@@ -167,6 +181,13 @@ class ShackletonSettings extends ConsumerWidget {
           ref.read(metadataProvider(foi));
         }
       });
+    }
+  }
+
+  void _submitLibraryFolder(WidgetRef ref, AppSettings appSettings, String path) {
+    ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(libraryPath: path));
+    if (libraryFolderError != null) {
+      ref.read(notificationProvider.notifier).removeError(libraryFolderError!);
     }
   }
 }

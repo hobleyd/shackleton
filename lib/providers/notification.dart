@@ -1,19 +1,41 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'error.g.dart';
+import '../models/error.dart';
+
+part 'notification.g.dart';
 
 @Riverpod(keepAlive: true)
-class Error extends _$Error {
+class Notification extends _$Notification {
   @override
-  List<String> build() {
+  List<Error> build() {
     return [];
   }
 
-  void setError(String error, { int lifeSpan = -1 }) {
-    List<String> errors = List.from(state);
-    errors.insert(0, error);
+  void clear() {
+    state = [];
+  }
+
+  void removeError(Error e) {
+    List<Error> errors = List.from(state);
+    errors.remove(e);
 
     state = errors;
+  }
+
+  Error setError(String error, { int lifespan = -1 }) {
+    Error e = Error(message: error, lifespan: lifespan);
+    List<Error> errors = List.from(state);
+    errors.insert(0, e);
+
+    if (lifespan > 0) {
+      Future.delayed(Duration(milliseconds: 1000 * lifespan), () {
+        removeError(e);
+      });
+    }
+
+    state = errors;
+
+    return e;
   }
 }
 

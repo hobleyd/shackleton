@@ -14,7 +14,7 @@ import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../models/tag.dart';
-import '../providers/error.dart';
+import '../providers/notification.dart';
 
 part 'metadata.g.dart';
 
@@ -42,7 +42,7 @@ class Metadata extends _$Metadata {
       }
     } else {
       // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(errorProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
     }
 
     return null;
@@ -138,13 +138,13 @@ class Metadata extends _$Metadata {
           }
         } else {
           // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(errorProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
+          ref.read(notificationProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
           state = state.copyWith(corruptedMetadata: true);
         }
       }
       else {
         // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(errorProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+        ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
       }
     }
 
