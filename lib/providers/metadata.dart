@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/repositories/app_settings_repository.dart';
 import 'package:shackleton/repositories/file_tags_repository.dart';
 
 
+import '../models/app_settings.dart';
 import '../models/entity.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../models/tag.dart';
-import '../providers/error.dart';
+import '../providers/notification.dart';
 
 part 'metadata.g.dart';
 
@@ -39,7 +42,7 @@ class Metadata extends _$Metadata {
       }
     } else {
       // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(errorProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
     }
 
     return null;
@@ -47,7 +50,11 @@ class Metadata extends _$Metadata {
 
   Future<FileMetaData> getMetadata(FileOfInterest entity) async {
     List<Tag> tags = await getTagsFromFile(entity);
-    LatLng? location = await getLocationFromFile(entity);
+    LatLng? location;
+
+    if (entity.isLocationSupported) {
+      location = await getLocationFromFile(entity);
+    }
 
     return FileMetaData(entity: entity, tags: tags, gpsLocation: location);
   }
@@ -89,7 +96,6 @@ class Metadata extends _$Metadata {
       LatLng? location = await getLocationFromFile(entity);
 
       state = FileMetaData(entity: entity, tags: tags, gpsLocation: location);
-
       Future(() {
         ref.read(fileTagsRepositoryProvider.notifier).writeTags(Entity(path: entity.path, metadata: state));
       });
@@ -116,11 +122,15 @@ class Metadata extends _$Metadata {
       bool hasExiftool = whichSync('exiftool') != null ? true : false;
 
       String tagString = getStringFromTags(state.tags);
-      String latitude = getLocation(state, true).replaceAll("'", "\\'").replaceAll('"', '\\"');
-      String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
 
+      List<String> locationArgs = [];
+      if (state.entity!.isLocationSupported) {
+        String latitude = getLocation(state, true).replaceAll("'", "\\'").replaceAll('"', '\\"');
+        String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
+        locationArgs = ["-gpslatitude=$latitude", "-gpslongitude=$longitude"];
+      }
       if (hasExiftool && entity.isMetadataSupported) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', "-gpslatitude=$latitude", "-gpslongitude=$longitude", state.entity!.path]);
+        ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', ...locationArgs, state.entity!.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           if (output.outText.trim() == '1 image files updated') {
             state = state.copyWith(corruptedMetadata: false);
@@ -128,13 +138,13 @@ class Metadata extends _$Metadata {
           }
         } else {
           // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(errorProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
+          ref.read(notificationProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
           state = state.copyWith(corruptedMetadata: true);
         }
       }
       else {
         // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(errorProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+        ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
       }
     }
 

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:process_run/cmd_run.dart';
 
 import '../providers/disk_size_details.dart';
-import '../providers/error.dart';
+import '../providers/notification.dart';
 
 class ShackletonDisk {
   /// The original device path such as `\\nasdrive` or `C:\` on Windows and
@@ -28,7 +28,7 @@ class ShackletonDisk {
   /// The disk's available space in bytes.
   final int availableSpace;
 
-  // Only used on Windows
+  // Only used on Windows - the name of the Mount i.e. Windows for C:
   final String label;
 
   // Only used on Windows
@@ -78,7 +78,7 @@ class ShackletonDisk {
     }
 
     if (result.exitCode != 0) {
-      ref.read(errorProvider.notifier).setError(result.stderr ?? result.stdout);
+      ref.read(notificationProvider.notifier).setError(result.stderr ?? result.stdout);
     } else {
       ref.read(diskSizeDetailsProvider.notifier).scanDisks();
     }

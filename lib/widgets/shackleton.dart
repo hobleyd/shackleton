@@ -10,7 +10,7 @@ import '../models/map_settings.dart';
 import '../models/preview_settings.dart';
 import '../providers/contents/grid_contents.dart';
 import '../providers/folder_path.dart';
-import '../providers/error.dart';
+import '../providers/notification.dart';
 import '../providers/map_pane.dart';
 import '../providers/preview.dart';
 import '../providers/contents/selected_folder_contents.dart';
@@ -20,6 +20,7 @@ import 'folders/folder_list.dart';
 import 'import_folder.dart';
 import 'navigation.dart';
 import 'preview/preview_grid.dart';
+import 'shackleton_notifications.dart';
 import 'shackleton_settings.dart';
 
 class Shackleton extends ConsumerStatefulWidget {
@@ -37,7 +38,6 @@ class _Shackleton extends ConsumerState<Shackleton> {
     List<Directory> paths = ref.watch(folderPathProvider);
     PreviewSettings preview = ref.watch(previewProvider);
     MapSettings map = ref.watch(mapPaneProvider);
-    String error = ref.watch(errorProvider);
 
     Widget widgetState = Scaffold(
       appBar: AppBar(
@@ -51,45 +51,44 @@ class _Shackleton extends ConsumerState<Shackleton> {
           IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(top: 6, bottom: 6),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          Align(alignment: Alignment.center, child: SizedBox(height: preview.height, child: const PreviewGrid())),
-          MouseRegion(
-              cursor: SystemMouseCursors.resizeRow,
-              child: GestureDetector(
-                onVerticalDragUpdate: (DragUpdateDetails details) {
-                  ref.read(previewProvider.notifier).changeHeight(details.delta.dy);
-                },
-                child: Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
-              )),
+      body: Row(
+        children: [
           Expanded(
-            child: Scrollbar(
-              thumbVisibility: true,
-              controller: scrollController,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                controller: scrollController,
-                child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    itemCount: paths.length + 1,
-                    itemBuilder: (context, index) {
-                      //folderKeys[index] = GlobalKey();
-                      return index == 0 ? const Navigation() : FolderList(path: paths[index - 1]);
-                    }),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 6),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Align(alignment: Alignment.center, child: SizedBox(height: preview.height, child: const PreviewGrid())),
+                MouseRegion(
+                    cursor: SystemMouseCursors.resizeRow,
+                    child: GestureDetector(
+                      onVerticalDragUpdate: (DragUpdateDetails details) {
+                        ref.read(previewProvider.notifier).changeHeight(details.delta.dy);
+                      },
+                      child: Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
+                    )),
+                Expanded(
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    controller: scrollController,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      controller: scrollController,
+                      child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemCount: paths.length + 1,
+                          itemBuilder: (context, index) {
+                            //folderKeys[index] = GlobalKey();
+                            return index == 0 ? const Navigation() : FolderList(path: paths[index - 1]);
+                          }),
+                    ),
+                  ),
+                ),
+              ]),
             ),
           ),
-          if (error.isNotEmpty)
-            Container(
-                color: Theme.of(context).colorScheme.error,
-                width: MediaQuery.of(context).size.width,
-                child: Text(error, style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.center,),
-            ),
-        ]),
+          ShackletonNotifications(),
+        ],
       ),
     );
 
@@ -132,10 +131,10 @@ class _Shackleton extends ConsumerState<Shackleton> {
 
   void _showMap(WidgetRef ref, bool visible) {
     if (ref.read(gridContentsProvider).isEmpty) {
-      ref.read(errorProvider.notifier).setError('The Map is unavailable until you have selected items to preview!');
+      ref.read(notificationProvider.notifier).setError('The Map is unavailable until you have selected items to preview!');
     } else {
       ref.read(mapPaneProvider.notifier).setVisibility(!visible);
-      ref.read(errorProvider.notifier).setError('');
+      ref.read(notificationProvider.notifier).setError('');
     }
   }
 }
