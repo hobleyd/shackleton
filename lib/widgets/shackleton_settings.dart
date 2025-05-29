@@ -1,22 +1,23 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/app_settings.dart';
-import '../models/error.dart';
+import '../models/notification.dart';
 import '../models/file_of_interest.dart';
-import '../providers/notification.dart';
+import '../providers/notify.dart';
 import '../providers/metadata.dart';
 import '../repositories/app_settings_repository.dart';
 import '../repositories/app_statistics_repository.dart';
+import '../repositories/file_tags_repository.dart';
 import 'shackleton_notifications.dart';
 import 'shackleton_statistics.dart';
 
 class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
   final TextEditingController libraryFolderController = TextEditingController();
-  Error? libraryFolderError;
+  Notification? libraryFolderError;
 
   ShackletonSettings({super.key,});
 
@@ -133,7 +134,11 @@ class ShackletonSettings extends ConsumerWidget {
                               onPressed: () => _scanLibrary(ref),
                               child: Text('Scan metadata', style: Theme.of(context).textTheme.labelSmall),
                             ),
-                          ],
+                            Container(color: const Color.fromRGBO(217, 217, 217, 100), width: 3),
+                            ElevatedButton(
+                              onPressed: () => _cleanOrphanedTags(ref),
+                              child: Text('Clean Orphaned Tags', style: Theme.of(context).textTheme.labelSmall),
+                            ),                          ],
                         ),
                       ],
                     ),
@@ -165,13 +170,18 @@ class ShackletonSettings extends ConsumerWidget {
     return true;
   }
 
+  void _cleanOrphanedTags(WidgetRef ref) async {
+    var settings = ref.read(fileTagsRepositoryProvider.notifier);
+    settings.cleanOrphanedTags();
+  }
+
   void _scanLibrary(WidgetRef ref) async {
     var settings = ref.read(appSettingsRepositoryProvider);
 
     if (settings.value != null) {
       Directory library = Directory(settings.value!.libraryPath);
       if (!library.existsSync()) {
-        libraryFolderError = ref.read(notificationProvider.notifier).setError('Library folder ${settings.value?.libraryPath} does not exist!',);
+        libraryFolderError = ref.read(notifyProvider.notifier).addNotification(message: 'Library folder ${settings.value?.libraryPath} does not exist!',);
         return;
       }
 
@@ -187,7 +197,7 @@ class ShackletonSettings extends ConsumerWidget {
   void _submitLibraryFolder(WidgetRef ref, AppSettings appSettings, String path) {
     ref.read(appSettingsRepositoryProvider.notifier).updateSettings(appSettings.copyWith(libraryPath: path));
     if (libraryFolderError != null) {
-      ref.read(notificationProvider.notifier).removeError(libraryFolderError!);
+      ref.read(notifyProvider.notifier).removeError(libraryFolderError!);
     }
   }
 }

@@ -4,17 +4,14 @@ import 'dart:io';
 import 'package:latlong2/latlong.dart';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/repositories/app_settings_repository.dart';
-import 'package:shackleton/repositories/file_tags_repository.dart';
 
-
-import '../models/app_settings.dart';
 import '../models/entity.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../misc/utils.dart';
 import '../models/tag.dart';
-import '../providers/notification.dart';
+import '../providers/notify.dart';
+import '../repositories/file_tags_repository.dart';
 
 part 'metadata.g.dart';
 
@@ -42,7 +39,7 @@ class Metadata extends _$Metadata {
       }
     } else {
       // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
     }
 
     return null;
@@ -138,13 +135,13 @@ class Metadata extends _$Metadata {
           }
         } else {
           // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(notificationProvider.notifier).setError('Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
+          ref.read(notifyProvider.notifier).addNotification(message: 'Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
           state = state.copyWith(corruptedMetadata: true);
         }
       }
       else {
         // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+        ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
       }
     }
 

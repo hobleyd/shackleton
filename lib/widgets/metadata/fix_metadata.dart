@@ -6,7 +6,6 @@ import 'package:shackleton/providers/exif.dart';
 import 'package:shackleton/providers/metadata.dart';
 
 import '../../models/file_of_interest.dart';
-import '../../providers/notification.dart';
 
 class FixMetadata extends ConsumerStatefulWidget {
   final FileOfInterest file;
@@ -205,7 +204,6 @@ class _FixMetadata extends ConsumerState<FixMetadata> {
   void _deleteOriginal() {
     FileOfInterest foi = FileOfInterest(entity: File('${widget.file.path}_original'));
     foi.delete();
-    ref.read(notificationProvider.notifier).setError('');
     ref.read(metadataProvider(widget.file).notifier).saveMetadata(updateFile: true);
 
     setState(() {

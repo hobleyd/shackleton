@@ -1,16 +1,17 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
 import '../models/map_settings.dart';
+import '../models/notification.dart';
 import '../models/preview_settings.dart';
 import '../providers/contents/grid_contents.dart';
 import '../providers/folder_path.dart';
-import '../providers/notification.dart';
+import '../providers/notify.dart';
 import '../providers/map_pane.dart';
 import '../providers/preview.dart';
 import '../providers/contents/selected_folder_contents.dart';
@@ -32,6 +33,7 @@ class Shackleton extends ConsumerStatefulWidget {
 
 class _Shackleton extends ConsumerState<Shackleton> {
   final ScrollController scrollController = ScrollController();
+  Notification? mapError;
 
   @override
   Widget build(BuildContext context) {
@@ -131,10 +133,14 @@ class _Shackleton extends ConsumerState<Shackleton> {
 
   void _showMap(WidgetRef ref, bool visible) {
     if (ref.read(gridContentsProvider).isEmpty) {
-      ref.read(notificationProvider.notifier).setError('The Map is unavailable until you have selected items to preview!');
+      mapError = ref.read(notifyProvider.notifier).addNotification(message: 'The Map is unavailable until you have selected items to preview!', lifespan: 5);
     } else {
       ref.read(mapPaneProvider.notifier).setVisibility(!visible);
-      ref.read(notificationProvider.notifier).setError('');
+
+      if (mapError != null) {
+        ref.read(notifyProvider.notifier).removeError(mapError!);
+        mapError = null;
+      }
     }
   }
 }

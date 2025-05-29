@@ -1,5 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'dart:io';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shackleton/providers/notify.dart';
 
 import '../database/app_database.dart';
 import '../models/entity.dart';
@@ -38,6 +40,23 @@ class FileTagsRepository extends _$FileTagsRepository {
     _database = ref.watch(appDbProvider);
 
     return getTags();
+  }
+
+  Future<bool> cleanOrphanedTags() async {
+    List<Map<String, dynamic>> results = await _database.query('files', columns: ['path']);
+    if (results.isNotEmpty) {
+      for (var file in results) {
+        String path = file['path'];
+        if (!File(path).existsSync()) {
+          ref.read(notifyProvider.notifier).addNotification(message: "$path doesn't exist, removing tags.");
+          removeTagsForEntity(Entity(path: path));
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   Future<bool> deleteOrphanedTags(int tagId) async {

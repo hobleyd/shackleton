@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../models/file_of_interest.dart';
 import '../models/import_entity.dart';
+import '../models/notification.dart';
 import '../providers/contents/selected_folder_contents.dart';
 import '../providers/import.dart';
+import '../providers/notify.dart';
 
 class ImportFolder extends ConsumerStatefulWidget {
   const ImportFolder({super.key,});
@@ -182,6 +183,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
     for (var entity in entitiesToProcess) {
       try {
         if (entity.willImport) {
+          ref.read(notifyProvider.notifier).addNotification(message: 'Importing ${entity.renamedFile}', type: NotificationType.INFO);
           entity.fileToImport.moveFile(entity.renamedFile);
           setState(() {
             entities.remove(entity);

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../providers/notification.dart';
+import '../providers/notify.dart';
 
 part 'exif.g.dart';
 
@@ -27,12 +27,12 @@ class Exif extends _$Exif {
         }
       } else {
         // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(notificationProvider.notifier).setError('Resetting exif data failed for $path - ${output.stderr.trim()}');
+        ref.read(notifyProvider.notifier).addNotification(message: 'Resetting exif data failed for $path - ${output.stderr.trim()}');
         //TODO: state = state.copyWith(corruptedMetadata: true);
       }
     } else {
       // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(notificationProvider.notifier).setError('exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
     }
 
     return false;
