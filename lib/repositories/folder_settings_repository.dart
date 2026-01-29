@@ -9,8 +9,6 @@ part 'folder_settings_repository.g.dart';
 
 @riverpod
 class FolderSettingsRepository extends _$FolderSettingsRepository {
-  late AppDatabase _database;
-
   static const String tableName = 'folder_settings';
   static const String createFolderSettings = '''
         create table if not exists $tableName(
@@ -24,13 +22,11 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
 
   @override
   Future<FolderUISettings> build(String path) {
-    _database = AppDatabase();
-
     return getSettings(path);
   }
 
   Future<FolderUISettings> getSettings(String path) async {
-    List<Map<String, dynamic>> rows = await _database.query(tableName, where: 'entity = ?', whereArgs: [ path ]);
+    List<Map<String, dynamic>> rows = await ref.read(appDatabaseProvider.notifier).query(tableName, where: 'entity = ?', whereArgs: [ path ]);
 
     if (rows.isNotEmpty) {
       return FolderUISettings.fromJson(rows.first);
@@ -44,7 +40,7 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
   }
 
   Future<void> updateSettings(FolderUISettings folderSettings) async {
-    _database.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    ref.read(appDatabaseProvider.notifier).insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = AsyncValue.data(folderSettings);
   }
 

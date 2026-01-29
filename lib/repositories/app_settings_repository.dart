@@ -11,8 +11,6 @@ part 'app_settings_repository.g.dart';
 
 @riverpod
 class AppSettingsRepository extends _$AppSettingsRepository {
-  late AppDatabase _database;
-
   static const String tableName = 'app_settings';
   static const String createAppSettings = '''
         create table if not exists $tableName(
@@ -24,14 +22,12 @@ class AppSettingsRepository extends _$AppSettingsRepository {
 
   @override
   Future<AppSettings> build() {
-    _database = AppDatabase();
-
     return getSettings();
   }
 
   Future<AppSettings> getSettings() async {
     late AppSettings appSettings;
-    List<Map<String, dynamic>> rows = await _database.query(tableName, where: 'id = ?', whereArgs: [ 0 ]);
+    List<Map<String, dynamic>> rows = await ref.read(appDatabaseProvider.notifier).query(tableName, where: 'id = ?', whereArgs: [ 0 ]);
     if (rows.isNotEmpty) {
       appSettings = AppSettings.fromJson(rows.first);
     } else {
@@ -45,7 +41,7 @@ class AppSettingsRepository extends _$AppSettingsRepository {
   Future<int> updateSettings(AppSettings appSettings) async {
     ref.read(shackletonThemeProvider.notifier).setFontSize(appSettings.fontSize.toDouble());
 
-    int rowId = await _database.insert(tableName, appSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    int rowId = await ref.read(appDatabaseProvider.notifier).insert(tableName, appSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = await AsyncValue.guard(() => getSettings());
     return rowId;
   }

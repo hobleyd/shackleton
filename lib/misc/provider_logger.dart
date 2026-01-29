@@ -3,9 +3,9 @@ import 'package:logger/logger.dart';
 
 var logger = Logger();
 
-class ProviderLogger extends ProviderObserver {
+final class ProviderLogger extends ProviderObserver {
   @override
-  void didUpdateProvider(ProviderBase provider, Object? previousValue, Object? newValue, ProviderContainer container,) {
-    //logger.d('[${provider.name ?? provider.runtimeType}] value: $newValue');
+  void didUpdateProvider(ProviderObserverContext context, Object? previousValue, Object? newValue,) {
+    logger.d('[${context.provider.name ?? context.provider.runtimeType}] value: $newValue');
   }
 }

@@ -8,8 +8,6 @@ part 'favourites_repository.g.dart';
 
 @riverpod
 class FavouritesRepository extends _$FavouritesRepository {
-  late AppDatabase _database;
-
   static const String tableName = 'favourites';
   static const String createFavourites = '''
         create table if not exists favourites(
@@ -24,21 +22,19 @@ class FavouritesRepository extends _$FavouritesRepository {
 
   @override
   Future<List<Favourite>> build() async {
-    _database = AppDatabase();
-
     return _getFavourites();
   }
 
   Future<int> insertFavourite(Favourite favourite) async {
     int rowid = -1;
-    List<Map<String, dynamic>> result = await _database.query('favourites', where: 'path = ?', whereArgs: [favourite.path]);
+    List<Map<String, dynamic>> result = await ref.read(appDatabaseProvider.notifier).query('favourites', where: 'path = ?', whereArgs: [favourite.path]);
     if (result.isNotEmpty) {
       if (result.first['sort_order'] != favourite.sortOrder) {
-        rowid = await _database.update('favourites', { 'sort_order' : favourite.sortOrder }, 'path = ?', [favourite.path]);
+        rowid = await ref.read(appDatabaseProvider.notifier).updateTable('favourites', { 'sort_order' : favourite.sortOrder }, 'path = ?', [favourite.path]);
       }
       rowid = result.first['id'];
     } else {
-      rowid = await _database.insert('favourites', favourite.toMap());
+      rowid = await ref.read(appDatabaseProvider.notifier).insert('favourites', favourite.toMap());
     }
 
     updateFavourites();
@@ -50,7 +46,7 @@ class FavouritesRepository extends _$FavouritesRepository {
   }
 
   Future<List<Favourite>> _getFavourites() async {
-    List<Map<String, dynamic>> results = await _database.query('favourites', orderBy: 'sort_order');
+    List<Map<String, dynamic>> results = await ref.read(appDatabaseProvider.notifier).query('favourites', orderBy: 'sort_order');
     if (results.isEmpty) {
       Favourite root = Favourite(path: '/', name: 'My Computer', sortOrder: 1);
       Favourite home = Favourite(path: getHomeFolder(), sortOrder: 2);

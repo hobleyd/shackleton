@@ -12,19 +12,14 @@ import '../repositories/folder_settings_repository.dart';
 part 'app_database.g.dart';
 
 @Riverpod(keepAlive: true)
-AppDatabase appDb(AppDbRef ref) {
-  return AppDatabase();
-}
-
-class AppDatabase {
+class AppDatabase extends _$AppDatabase {
   late Database _cachedStorage;
 
-  // I know Riverpod says that we should not be using Singletons, but the provider pattern keeps creating
-  // new instances. If someone can tell me what I am doing wrong, I'd appreciate it.
-  AppDatabase._privateConstructor();
-  static final AppDatabase _instance = AppDatabase._privateConstructor();
-  factory AppDatabase() {
-    return _instance;
+  Database get database => _cachedStorage;
+
+  @override
+  Future<Database> build() async {
+    return openDatabase();
   }
 
   void _createTables(Database db, int oldVersion, int newVersion) {
@@ -61,7 +56,7 @@ class AppDatabase {
     return database;
   }
 
-  Future<void> openDatabase() async {
+  Future<Database> openDatabase() async {
     sqfliteFfiInit();
 
     _cachedStorage = await databaseFactoryFfi.openDatabase(await _getDatabasePath(),
@@ -79,6 +74,8 @@ class AppDatabase {
             onUpgrade: (db, oldVersion, newVersion) {
               _createTables(db, oldVersion, newVersion);
             }));
+
+    return _cachedStorage;
   }
 
   void close() {
@@ -106,7 +103,7 @@ class AppDatabase {
     return _cachedStorage.rawQuery(sql, arguments);
   }
 
-  Future<int> update(String table, Map<String, dynamic> values, String? where, List<String>? whereArgs) {
+  Future<int> updateTable(String table, Map<String, dynamic> values, String? where, List<String>? whereArgs) {
     return _cachedStorage.update(table, values, where: where, whereArgs: whereArgs);
   }
 }

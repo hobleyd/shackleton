@@ -49,6 +49,8 @@ class Exif extends _$Exif {
           List<String> exifData = exif.split(':');
           exifTags[exifData[0].trim()] = (orig: exifData[1].trim(), reset: '');
         }
+      } else {
+        ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
       }
 
       output = await runExecutableArguments('exiftool', ['-s', '-s', '${path}_original']);
@@ -58,6 +60,8 @@ class Exif extends _$Exif {
           var previous = exifTags[exifData[0].trim()];
           exifTags[exifData[0].trim()] = (orig: previous?.orig ?? '', reset: exifData[1].trim());
         }
+      } else {
+        ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
       }
     }
 
