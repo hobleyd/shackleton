@@ -15,11 +15,24 @@ class Exif extends _$Exif {
     return const {};
   }
 
-  Future<bool> fixMetadata(String path) async {
-    bool hasExiftool = whichSync('exiftool') != null ? true : false;
+  String? get hasExifTool {
+    String? exifPath = whichSync('exiftool');
+    if (exifPath != null) {
+      return exifPath;
+    }
 
-    if (hasExiftool) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-all=', '-tagsfromfile', '@', '-all:all', '-unsafe', '-icc_profile', path]);
+    // Not sure why the app isn't looking on the path, so assume installed via homebrew
+    exifPath = '/opt/homebrew/bin/exiftool';
+    File exiftool = File(exifPath);
+    if (exiftool.existsSync()) {
+      return exifPath;
+    }
+
+    return null;
+  }
+  Future<bool> fixMetadata(String path) async {
+    if (hasExifTool != null) {
+      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-all=', '-tagsfromfile', '@', '-all:all', '-unsafe', '-icc_profile', path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         if (output.outText.trim() == '1 image files updated') {
           loadExifTags(path);
@@ -41,9 +54,8 @@ class Exif extends _$Exif {
   Future<void> loadExifTags(String path) async {
     Map<String, ({ String orig, String reset })> exifTags = {};
 
-    bool hasExiftool = whichSync('exiftool') != null ? true : false;
-    if (hasExiftool) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', path]);
+    if (hasExifTool != null) {
+      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-s', '-s', path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         for (var exif in output.outLines) {
           List<String> exifData = exif.split(':');
@@ -53,7 +65,7 @@ class Exif extends _$Exif {
         ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
       }
 
-      output = await runExecutableArguments('exiftool', ['-s', '-s', '${path}_original']);
+      output = await runExecutableArguments(hasExifTool!, ['-s', '-s', '${path}_original']);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         for (var exif in output.outLines) {
           List<String> exifData = exif.split(':');
