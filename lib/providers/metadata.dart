@@ -23,13 +23,28 @@ class Metadata extends _$Metadata {
     return const FileMetaData(entity: null, tags: []);
   }
 
+  String? get hasExifTool {
+    String? exifPath = whichSync('exiftool');
+    if (exifPath != null) {
+      return exifPath;
+    }
+
+    // Not sure why the app isn't looking on the path, so assume installed via homebrew
+    exifPath = '/opt/homebrew/bin/exiftool';
+    File exiftool = File(exifPath);
+    if (exiftool.existsSync()) {
+      return exifPath;
+    }
+    ref.read(notifyProvider.notifier).addNotification(message: exiftool.path);
+
+    return null;
+  }
+
   bool contains(Tag tag) => state.contains(tag);
 
   Future<LatLng?> getLocationFromFile(FileOfInterest entity) async {
-    bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-    if (hasExiftool) {
-      ProcessResult output = await runExecutableArguments('exiftool', ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
+    if (hasExifTool != null) {
+      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         List<String> location = output.stdout.split('\n');
         try {
@@ -58,10 +73,8 @@ class Metadata extends _$Metadata {
 
   Future<List<Tag>> getTagsFromFile(FileOfInterest entity) async {
     if (entity.isMetadataSupported) {
-      bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-      if (hasExiftool) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-subject', entity.path]);
+      if (hasExifTool != null) {
+        ProcessResult output = await runExecutableArguments(hasExifTool!, ['-s', '-s', '-s', '-subject', entity.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           List<Tag> tagList = [];
           tagList.addAll(getTagsFromString(output.stdout));
@@ -126,8 +139,8 @@ class Metadata extends _$Metadata {
         String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
         locationArgs = ["-gpslatitude=$latitude", "-gpslongitude=$longitude"];
       }
-      if (hasExiftool && entity.isMetadataSupported) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-overwrite_original', '-subject=$tagString', ...locationArgs, state.entity!.path]);
+      if (hasExifTool != null && entity.isMetadataSupported) {
+        ProcessResult output = await runExecutableArguments(hasExifTool!, ['-overwrite_original', '-subject=$tagString', ...locationArgs, state.entity!.path]);
         if (output.exitCode == 0 && output.stdout.isNotEmpty) {
           if (output.outText.trim() == '1 image files updated') {
             state = state.copyWith(corruptedMetadata: false);

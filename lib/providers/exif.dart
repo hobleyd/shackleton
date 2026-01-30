@@ -15,9 +15,8 @@ class Exif extends _$Exif {
     return const {};
   }
 
-  String? get hasExifTool {
+  String? hasExifTool() {
     String? exifPath = whichSync('exiftool');
-    ref.read(notifyProvider.notifier).addNotification(message: exifPath ?? 'no output from which');
     if (exifPath != null) {
       return exifPath;
     }
@@ -32,9 +31,10 @@ class Exif extends _$Exif {
 
     return null;
   }
+
   Future<bool> fixMetadata(String path) async {
-    if (hasExifTool != null) {
-      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-all=', '-tagsfromfile', '@', '-all:all', '-unsafe', '-icc_profile', path]);
+    if (hasExifTool() != null) {
+      ProcessResult output = await runExecutableArguments(hasExifTool()!, ['-all=', '-tagsfromfile', '@', '-all:all', '-unsafe', '-icc_profile', path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         if (output.outText.trim() == '1 image files updated') {
           loadExifTags(path);
@@ -56,8 +56,10 @@ class Exif extends _$Exif {
   Future<void> loadExifTags(String path) async {
     Map<String, ({ String orig, String reset })> exifTags = {};
 
-    if (hasExifTool != null) {
-      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-s', '-s', path]);
+    ref.read(notifyProvider.notifier).addNotification(message: 'looking for exiftool.');
+
+    if (hasExifTool() != null) {
+      ProcessResult output = await runExecutableArguments(hasExifTool()!, ['-s', '-s', path]);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         for (var exif in output.outLines) {
           List<String> exifData = exif.split(':');
@@ -67,7 +69,7 @@ class Exif extends _$Exif {
         ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
       }
 
-      output = await runExecutableArguments(hasExifTool!, ['-s', '-s', '${path}_original']);
+      output = await runExecutableArguments(hasExifTool()!, ['-s', '-s', '${path}_original']);
       if (output.exitCode == 0 && output.stdout.isNotEmpty) {
         for (var exif in output.outLines) {
           List<String> exifData = exif.split(':');
