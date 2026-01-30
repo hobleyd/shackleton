@@ -19,6 +19,14 @@ bad idea when Steve Jobs insisted on them and who has seen one in the last 10 ye
 Performance is not ideal with large folders of images; but I'll look at that post the 1.0 release as
 everything works, just a little more slowly than preferred.
 
+Note that Apple are trying to force people not to download software unless developers pay Apple for
+the privilege. I would totally support this on the grounds of security if they did literally anything
+to validate that applications are dodgy (which should be totally possible these days). But they don't.
+Instead they put up a scary warning message to get people to run away, afraid. Well the source code 
+is right here - take a look yourself. Or ask AI to investigate if you don't read code. The built dmg
+is automated from the code so there won't be any divergence from the code you can see. Download it and 
+stick it to the tech companies who are trying to control the World! You'll need to open up Settings -> 
+Privacy & Security and allow the app to open (after you have tried to open it first and failed). Sigh.
 ## External Dependencies
 - We use exiftool to manipulate metadata in files hence this is required to be installed if you want to edit metadata. At least until there is a Flutter package to do it in code. On MacOS, I install this using homebrew.
 - Rust is required to compile Shackleton due to downstream dependencies.
