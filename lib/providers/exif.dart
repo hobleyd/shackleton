@@ -17,6 +17,7 @@ class Exif extends _$Exif {
 
   String? get hasExifTool {
     String? exifPath = whichSync('exiftool');
+    ref.read(notifyProvider.notifier).addNotification(message: exifPath ?? 'no output from which');
     if (exifPath != null) {
       return exifPath;
     }
@@ -27,6 +28,7 @@ class Exif extends _$Exif {
     if (exiftool.existsSync()) {
       return exifPath;
     }
+    ref.read(notifyProvider.notifier).addNotification(message: exiftool.path);
 
     return null;
   }
