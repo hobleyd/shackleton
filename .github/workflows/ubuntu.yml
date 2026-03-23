@@ -79,7 +79,7 @@ jobs:
           EOF
           
           flatpak-builder --force-clean --repo=repo build-dir au.com.sharpblue.shackleton.yaml
-          flatpak build-bundle repo inkworm-${VERSION}-linux-x86_64.flatpak au.com.sharpblue.shackleton
+          flatpak build-bundle repo shackleton-${VERSION}-linux-x86_64.flatpak au.com.sharpblue.shackleton
       - name: Upload Linux Flatpak to Release
         uses: softprops/action-gh-release@v0.1.15
         with:
