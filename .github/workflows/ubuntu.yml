@@ -144,7 +144,7 @@ jobs:
               buildsystem: simple
               build-commands:
                 - install -Dm755 shackleton /app/bin/shackleton
-                - cp -r lib /app/lib
+                - cp -r lib/* /app/lib
                 - cp -r data /app/data
                 - mkdir -p /app/lib/ffmpeg
                 - install -Dm644 au.com.sharpblue.shackleton.desktop /app/share/applications/au.com.sharpblue.shackleton.desktop
