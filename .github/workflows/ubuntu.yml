@@ -30,6 +30,54 @@ jobs:
       - name: Prepare bundle assets
         run:
           cp assets/explorer.png build/linux/x64/release/bundle/shackleton.png
+      - name: Copy missing libs into bundle
+        run: |
+          BUNDLE_LIB=build/linux/x64/release/bundle/lib
+          copy_if_missing() {
+            local lib=$1
+            local found=$(find /usr/lib/x86_64-linux-gnu /usr/lib -name "$lib" 2>/dev/null | head -1)
+            if [ -n "$found" ]; then
+              echo "Copying $found"
+              cp "$found" "$BUNDLE_LIB/"
+            else
+              echo "WARNING: $lib not found on host"
+            fi
+          }
+          # Run ldd and copy everything flagged as not found
+          ldd build/linux/x64/release/bundle/shackleton \
+            | grep "not found" \
+            | awk '{print $1}' \
+            | while read lib; do copy_if_missing "$lib"; done
+          for solib in "$BUNDLE_LIB"/*.so*; do
+            ldd "$solib" 2>/dev/null \
+              | grep "not found" \
+              | awk '{print $1}' \
+              | while read lib; do copy_if_missing "$lib"; done
+          done
+      - name: Copy missing libs into bundle
+        run: |
+          BUNDLE_LIB=build/linux/x64/release/bundle/lib
+          copy_if_missing() {
+            local lib=$1
+            local found=$(find /usr/lib/x86_64-linux-gnu /usr/lib -name "$lib" 2>/dev/null | head -1)
+            if [ -n "$found" ]; then
+              echo "Copying $found"
+              cp "$found" "$BUNDLE_LIB/"
+            else
+              echo "WARNING: $lib not found on host"
+            fi
+          }
+          # Run ldd and copy everything flagged as not found
+          ldd build/linux/x64/release/bundle/shackleton \
+            | grep "not found" \
+            | awk '{print $1}' \
+            | while read lib; do copy_if_missing "$lib"; done
+          for solib in "$BUNDLE_LIB"/*.so*; do
+            ldd "$solib" 2>/dev/null \
+              | grep "not found" \
+              | awk '{print $1}' \
+              | while read lib; do copy_if_missing "$lib"; done
+          done
       - name: Install Flatpak tooling
         run: |
           sudo apt-get update
