@@ -94,19 +94,59 @@ jobs:
           runtime-version: '24.08'
           sdk: org.freedesktop.Sdk
           command: shackleton
+          add-extensions:
+                org.freedesktop.Platform.ffmpeg-full:
+                  directory: lib/ffmpeg
+                  version: '24.08'
+                  add-ld-path: .
           finish-args:
             - --share=ipc
             - --socket=fallback-x11
             - --socket=wayland
             - --device=dri
             - --filesystem=home
+            - --env=LD_LIBRARY_PATH=/app/lib:/app/lib64
           modules:
+            - name: libplacebo
+              buildsystem: meson
+              config-opts:
+                - -Dvulkan=disabled
+                - -Dd3d11=disabled
+                - -Ddemos=false
+                - --prefix=/app
+              sources:
+                - type: git
+                  url: https://github.com/haasn/libplacebo.git
+                  tag: v6.338.2
+            - name: libass
+              buildsystem: autotools
+              sources:
+                - type: git
+                  url: https://github.com/libass/libass.git
+                  tag: 0.17.3
+            - name: mpv
+              buildsystem: meson
+              build-options:
+                env:
+                  PKG_CONFIG_PATH: /app/lib/pkgconfig:/app/lib64/pkgconfig
+              config-opts:
+                - -Dlibmpv=true
+                - -Dcplayer=false
+                - -Dtests=false
+                - -Dmanpage-build=disabled
+                - -Dcdda=disabled
+                - -Ddvdnav=disabled
+              sources:
+                - type: archive
+                  url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.41.0.tar.gz
+                  sha256: ee21092a5ee427353392360929dc64645c54479aefdb5babc5cfbb5fad626209
             - name: shackleton
               buildsystem: simple
               build-commands:
                 - install -Dm755 shackleton /app/bin/shackleton
                 - cp -r lib /app/lib
                 - cp -r data /app/data
+                - mkdir -p /app/lib/ffmpeg
                 - install -Dm644 au.com.sharpblue.shackleton.desktop /app/share/applications/au.com.sharpblue.shackleton.desktop
                 - install -Dm644 shackleton.png /app/share/icons/hicolor/512x512/apps/au.com.sharpblue.shackleton.png
               sources:
