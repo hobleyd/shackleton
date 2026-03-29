@@ -152,6 +152,7 @@ jobs:
                   SCRIPT
                 - install -Dm755 shackleton.sh /app/bin/shackleton.sh
                 - cp -r lib/* /app/lib
+                - chmod 755 /app/lib/*.so*
                 - cp -r data /app/data
                 - mkdir -p /app/lib/ffmpeg
                 - install -Dm644 au.com.sharpblue.shackleton.desktop /app/share/applications/au.com.sharpblue.shackleton.desktop
