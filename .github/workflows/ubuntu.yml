@@ -93,7 +93,7 @@ jobs:
           runtime: org.freedesktop.Platform
           runtime-version: '24.08'
           sdk: org.freedesktop.Sdk
-          command: shackleton
+          command: shackleton.sh
           add-extensions:
                 org.freedesktop.Platform.ffmpeg-full:
                   directory: lib/ffmpeg
@@ -144,6 +144,13 @@ jobs:
               buildsystem: simple
               build-commands:
                 - install -Dm755 shackleton /app/bin/shackleton
+                - |
+                  cat > shackleton.sh << 'SCRIPT'
+                  #!/bin/bash
+                  export LD_LIBRARY_PATH=/app/lib:$LD_LIBRARY_PATH
+                  exec /app/bin/shackleton "$@"
+                  SCRIPT
+                - install -Dm755 shackleton.sh /app/bin/shackleton.sh
                 - cp -r lib/* /app/lib
                 - cp -r data /app/data
                 - mkdir -p /app/lib/ffmpeg
@@ -159,7 +166,7 @@ jobs:
           cat > au.com.sharpblue.shackleton.desktop <<'EOF'
           [Desktop Entry]
           Name=Shackleton
-          Exec=Shackleton
+          Exec=shackleton.sh
           Type=Application
           Categories=Office;Education;
           Icon=au.com.sharpblue.shackleton
