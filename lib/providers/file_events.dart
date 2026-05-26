@@ -1,45 +1,45 @@
 import 'dart:io';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/repositories/file_tags_repository.dart';
 
+import '../application/use_cases/delete_files_use_case.dart';
+import '../domain/repositories/i_file_tags_repository.dart';
 import '../interfaces/file_events_callback.dart';
-import '../models/entity.dart';
 import '../models/file_of_interest.dart';
+import '../repositories/file_tags_repository.dart';
 
 part 'file_events.g.dart';
 
 @Riverpod(keepAlive: true)
 class FileEvents extends _$FileEvents {
+  late final DeleteFilesUseCase _deleteUseCase;
+
   @override
   List<FileEventsCallback> build() {
+    ref.keepAlive();
+    final IFileTagsRepository tags = ref.read(fileTagsRepositoryProvider.notifier);
+    _deleteUseCase = DeleteFilesUseCase(tagsRepository: tags);
     return [];
   }
 
-  void delete(FileOfInterest entity, { required bool deleteEntity }) {
-    if (entity.isDirectory) {
-      if (entity.exists) {
-        Directory d = entity.entity as Directory;
-        for (var file in d.listSync()) {
-          delete(FileOfInterest(entity: file), deleteEntity: deleteEntity);
-        }
+  void delete(FileOfInterest entity, {required bool deleteEntity}) {
+    if (entity.isDirectory && entity.exists) {
+      for (final file in (entity.entity as Directory).listSync()) {
+        delete(FileOfInterest(entity: file), deleteEntity: deleteEntity);
       }
     }
 
-    for (var callback in state) {
+    for (final callback in state) {
       callback.remove(entity);
     }
 
     if (entity.exists && deleteEntity) {
-      entity.delete();
-      // We also need to clean up the filetags cache in the database.
-      final filetags = ref.read(fileTagsRepositoryProvider.notifier);
-      filetags.removeTagsForEntity(Entity(path: entity.path));
+      _deleteUseCase.execute(entity);
     }
   }
 
   void deleteAll(Set<FileOfInterest> entities) {
-    for (var e in entities) {
+    for (final e in entities) {
       delete(e, deleteEntity: true);
     }
   }

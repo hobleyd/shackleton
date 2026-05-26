@@ -1,11 +1,3 @@
-import 'dart:io';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:process_run/cmd_run.dart';
-
-import '../providers/disk_size_details.dart';
-import '../providers/notify.dart';
-
 class ShackletonDisk {
   /// The original device path such as `\\nasdrive` or `C:\` on Windows and
   /// `/dev/sdX` on Linux.
@@ -68,19 +60,4 @@ class ShackletonDisk {
       totalSize.hashCode ^
       usedSpace.hashCode ^
       availableSpace.hashCode;
-
-  void eject(WidgetRef ref) async {
-    ProcessResult result;
-    if (Platform.isWindows) {
-      result = await runExecutableArguments('powershell.exe', ['-command', '(New-Object -comObject Shell.Application).NameSpace(17).ParseName("$mountPath").InvokeVerb("Eject")']);
-    } else {
-      result = await runExecutableArguments('umount', [mountPath]);
-    }
-
-    if (result.exitCode != 0) {
-      ref.read(notifyProvider.notifier).addNotification(message: result.stderr ?? result.stdout);
-    } else {
-      ref.read(diskSizeDetailsProvider.notifier).scanDisks();
-    }
-  }
 }

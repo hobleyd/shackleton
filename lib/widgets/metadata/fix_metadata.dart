@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/providers/exif.dart';
@@ -201,30 +199,19 @@ class _FixMetadata extends ConsumerState<FixMetadata> {
     fixedExifTags = false;
   }
 
-  void _deleteOriginal() {
-    FileOfInterest foi = FileOfInterest(entity: File('${widget.file.path}_original'));
-    foi.delete();
+  void _deleteOriginal() async {
+    await ref.read(exifProvider(widget.file.path).notifier).acceptFix(widget.file.path);
     ref.read(metadataProvider(widget.file).notifier).saveMetadata(updateFile: true);
-
-    setState(() {
-      fixedExifTags = false;
-    });
-
-    Navigator.of(context, rootNavigator: true).maybePop(context);
+    setState(() => fixedExifTags = false);
+    if (mounted) Navigator.of(context, rootNavigator: true).maybePop(context);
   }
 
   void _fixMetadata() async {
-    bool fixed = await ref.read(exifProvider(widget.file.path).notifier).fixMetadata(widget.file.path);
-    setState(() {
-      fixedExifTags = fixed;
-    });
+    final fixed = await ref.read(exifProvider(widget.file.path).notifier).fixMetadata(widget.file.path);
+    setState(() => fixedExifTags = fixed);
   }
 
-  void _renameOriginal() {
-    File original = File('${widget.file.path}_original');
-    if (original.existsSync()) {
-      widget.file.delete();
-      original.rename(widget.file.path);
-    }
+  void _renameOriginal() async {
+    await ref.read(exifProvider(widget.file.path).notifier).rejectFix(widget.file.path);
   }
 }

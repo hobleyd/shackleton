@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:process_run/cmd_run.dart';
 
 import '../../providers/contents/folder_contents.dart';
+import '../../providers/disk_size_details.dart';
 import '../../providers/folder_path.dart';
 
 class NavigationMountedDrives extends ConsumerStatefulWidget {
@@ -27,13 +27,17 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Text(Platform.isMacOS ? 'Locations' : 'Mounted Drives', textAlign: TextAlign.left, style: Theme.of(context).textTheme.labelSmall),
+          Text(Platform.isMacOS ? 'Locations' : 'Mounted Drives',
+              textAlign: TextAlign.left,
+              style: Theme.of(context).textTheme.labelSmall),
           const SizedBox(height: 5),
           ListView.builder(
               itemCount: mountPointRepository.length,
               itemBuilder: (context, index) {
                 return InkWell(
-                  onTap: () => ref.read(folderPathProvider.notifier).setFolder(mountPointRepository[index].entity as Directory),
+                  onTap: () => ref
+                      .read(folderPathProvider.notifier)
+                      .setFolder(mountPointRepository[index].entity as Directory),
                   child: Stack(
                     children: [
                       Row(
@@ -53,12 +57,15 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
                           alignment: Alignment.centerRight,
                           child: IconButton(
                               icon: const Icon(Icons.eject),
-                              constraints: const BoxConstraints(minHeight: 12, maxHeight: 12),
+                              constraints:
+                                  const BoxConstraints(minHeight: 12, maxHeight: 12),
                               iconSize: 12,
                               padding: EdgeInsets.zero,
                               splashRadius: 0.0001,
                               tooltip: 'Eject...',
-                              onPressed: () => _unmountVolume(mountPointRepository[index].path!)),
+                              onPressed: () => ref
+                                  .read(diskSizeDetailsProvider.notifier)
+                                  .unmountPath(mountPointRepository[index].path!)),
                         ),
                       ),
                     ],
@@ -66,13 +73,9 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
                 );
               },
               scrollDirection: Axis.vertical,
-              shrinkWrap: true)
+              shrinkWrap: true),
         ],
       );
     });
-  }
-
-  void _unmountVolume(String path) async {
-    await runExecutableArguments('umount', [path]);
   }
 }

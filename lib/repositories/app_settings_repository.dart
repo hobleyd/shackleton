@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
+import '../domain/repositories/i_app_settings_repository.dart';
 import '../misc/utils.dart';
 import '../models/app_settings.dart';
 import '../providers/shackleton_theme.dart';
@@ -10,39 +11,41 @@ import '../providers/shackleton_theme.dart';
 part 'app_settings_repository.g.dart';
 
 @riverpod
-class AppSettingsRepository extends _$AppSettingsRepository {
+class AppSettingsRepository extends _$AppSettingsRepository implements IAppSettingsRepository {
   static const String tableName = 'app_settings';
-  static const String createAppSettings = '''
-        create table if not exists $tableName(
-          id                integer primary key, 
-          libraryPath       text    not null,
-          fontSize          int     not null
-          );
-          ''';
+
+  late final AppDatabase _db;
+  late final ShackletonTheme _theme;
 
   @override
   Future<AppSettings> build() {
+    ref.keepAlive();
+    _db = ref.read(appDatabaseProvider.notifier);
+    _theme = ref.read(shackletonThemeProvider.notifier);
     return getSettings();
   }
 
+  @override
   Future<AppSettings> getSettings() async {
     late AppSettings appSettings;
-    List<Map<String, dynamic>> rows = await ref.read(appDatabaseProvider.notifier).query(tableName, where: 'id = ?', whereArgs: [ 0 ]);
+    List<Map<String, dynamic>> rows = await _db.query(tableName, where: 'id = ?', whereArgs: [ 0 ]);
     if (rows.isNotEmpty) {
       appSettings = AppSettings.fromJson(rows.first);
     } else {
       appSettings = AppSettings(id: 0, libraryPath: join(getHomeFolder(), 'Pictures'), fontSize: 12);
     }
 
-    ref.read(shackletonThemeProvider.notifier).setFontSize(appSettings.fontSize.toDouble());
+    _theme.setFontSize(appSettings.fontSize.toDouble());
     return appSettings;
   }
 
+  @override
   Future<int> updateSettings(AppSettings appSettings) async {
-    ref.read(shackletonThemeProvider.notifier).setFontSize(appSettings.fontSize.toDouble());
+    _theme.setFontSize(appSettings.fontSize.toDouble());
 
-    int rowId = await ref.read(appDatabaseProvider.notifier).insert(tableName, appSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
-    state = await AsyncValue.guard(() => getSettings());
+    int rowId = await _db.insert(tableName, appSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    final newState = await AsyncValue.guard(() => getSettings());
+    if (ref.mounted) state = newState;
     return rowId;
   }
 }

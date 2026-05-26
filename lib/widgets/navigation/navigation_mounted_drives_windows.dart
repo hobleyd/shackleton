@@ -76,6 +76,6 @@ class _NavigationMountedDrivesWindows extends ConsumerState<NavigationMountedDri
   }
 
   void _unmountVolume(ShackletonDisk disk) async {
-    disk.eject(ref);
+    ref.read(diskSizeDetailsProvider.notifier).ejectDisk(disk);
   }
 }

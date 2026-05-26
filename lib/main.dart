@@ -4,7 +4,6 @@ import 'package:logger/logger.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'database/app_database.dart';
 import 'misc/provider_logger.dart';
 import 'providers/shackleton_theme.dart';
 import 'repositories/app_settings_repository.dart';

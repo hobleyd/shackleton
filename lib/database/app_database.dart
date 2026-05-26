@@ -4,106 +4,104 @@ import 'package:path/path.dart' as path;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../repositories/app_settings_repository.dart';
-import '../repositories/favourites_repository.dart';
-import '../repositories/file_tags_repository.dart';
-import '../repositories/folder_settings_repository.dart';
+import 'schema.dart';
 
 part 'app_database.g.dart';
 
 @Riverpod(keepAlive: true)
 class AppDatabase extends _$AppDatabase {
-  late Database _cachedStorage;
-
-  Database get database => _cachedStorage;
-
   @override
   Future<Database> build() async {
     return openDatabase();
   }
 
-  void _createTables(Database db, int oldVersion, int newVersion) {
-    _enableForeignKeys(db);
-    if (oldVersion < 1) {
-      db.execute(FileTagsRepository.createFiles);
-      db.execute(FileTagsRepository.createTags);
-      db.execute(FileTagsRepository.createFileTags);
-      db.execute(FolderSettingsRepository.createFolderSettings);
-      db.execute(AppSettingsRepository.createAppSettings);
-      db.execute(FavouritesRepository.createFavourites);
+  Future<Database> openDatabase() async {
+    sqfliteFfiInit();
 
-      db.execute(FileTagsRepository.createFilesIndex);
-      db.execute(FolderSettingsRepository.folderSettingsIndex);
-      db.execute(FavouritesRepository.createFavouritesIndex);
-    }
-    return;
+    return databaseFactoryFfi.openDatabase(
+      await _getDatabasePath(),
+      options: OpenDatabaseOptions(
+        version: 1,
+        onConfigure: (db) => _enableForeignKeys(db),
+        onCreate: (db, version) => _createTables(db, 0, version),
+        onUpgrade: (db, oldVersion, newVersion) =>
+            _createTables(db, oldVersion, newVersion),
+      ),
+    );
   }
 
-  Future _enableForeignKeys(Database db) async {
+  Future<void> _createTables(Database db, int oldVersion, int newVersion) async {
+    await _enableForeignKeys(db);
+    if (oldVersion < 1) {
+      await AppSchema.createAll(db);
+    }
+  }
+
+  Future<void> _enableForeignKeys(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON;');
   }
 
   Future<String> _getDatabasePath() async {
-    String database = "";
+    String dbDir;
     if (Platform.isWindows) {
-      database = path.join(Platform.environment['APPDATA']!, 'Shackleton');
+      dbDir = path.join(Platform.environment['APPDATA']!, 'Shackleton');
     } else {
-      database = path.join(Platform.environment['HOME']!, '.shackleton');
+      dbDir = path.join(Platform.environment['HOME']!, '.shackleton');
     }
-    await Directory(database).create(recursive: true);
-
-    database = path.join(database, 'shackleton.db');
-    return database;
+    await Directory(dbDir).create(recursive: true);
+    return path.join(dbDir, 'shackleton.db');
   }
 
-  Future<Database> openDatabase() async {
-    sqfliteFfiInit();
+  // ── transaction support ────────────────────────────────────────────────────
 
-    _cachedStorage = await databaseFactoryFfi.openDatabase(await _getDatabasePath(),
-        options: OpenDatabaseOptions(
-            version: 1,
-            onConfigure: (db) {
-              _enableForeignKeys(db);
-            },
-            onCreate: (db, version) {
-              _createTables(db, 0, version);
-            },
-            onOpen: (db) {
-
-            },
-            onUpgrade: (db, oldVersion, newVersion) {
-              _createTables(db, oldVersion, newVersion);
-            }));
-
-    return _cachedStorage;
+  Future<T> transaction<T>(Future<T> Function(Transaction txn) action) async {
+    return (await future).transaction(action);
   }
 
-  void close() {
-    _cachedStorage.close();
+  // ── query helpers ──────────────────────────────────────────────────────────
+
+  Future<void> close() async {
+    (await future).close();
   }
 
-  Future<int> delete(String table, { String? where, List<String>? whereArgs }) {
-    return _cachedStorage.delete(table, where: where, whereArgs: whereArgs);
+  Future<int> delete(String table,
+      {String? where, List<String>? whereArgs}) async {
+    return (await future).delete(table, where: where, whereArgs: whereArgs);
   }
 
-  Future<int> getCount(String table, { String? where, List<dynamic>? whereArgs }) async {
-    List<Map<String, dynamic>> results = await _cachedStorage.query(table, columns: ['count(*) as count'], where: where, whereArgs: whereArgs);
+  Future<int> getCount(String table,
+      {String? where, List<dynamic>? whereArgs}) async {
+    final results = await (await future).query(table,
+        columns: ['count(*) as count'], where: where, whereArgs: whereArgs);
     return results.first['count'] as int;
   }
 
-  Future<int> insert(String table, Map<String, dynamic> rows, { ConflictAlgorithm? conflictAlgorithm }) async {
-    return _cachedStorage.insert(table, rows, conflictAlgorithm: conflictAlgorithm);
+  Future<int> insert(String table, Map<String, dynamic> rows,
+      {ConflictAlgorithm? conflictAlgorithm}) async {
+    return (await future)
+        .insert(table, rows, conflictAlgorithm: conflictAlgorithm);
   }
 
-  Future<List<Map<String, dynamic>>> query(String table, { List<String>? columns, String? where, List<dynamic>? whereArgs, String? orderBy }) async {
-    return _cachedStorage.query(table, columns: columns, where: where, whereArgs: whereArgs, orderBy: orderBy);
+  Future<List<Map<String, dynamic>>> query(String table,
+      {List<String>? columns,
+      String? where,
+      List<dynamic>? whereArgs,
+      String? orderBy}) async {
+    return (await future).query(table,
+        columns: columns,
+        where: where,
+        whereArgs: whereArgs,
+        orderBy: orderBy);
   }
 
-  Future<List<Map<String, dynamic>>> rawQuery(String sql, List<Object?>? arguments) async {
-    return _cachedStorage.rawQuery(sql, arguments);
+  Future<List<Map<String, dynamic>>> rawQuery(
+      String sql, List<Object?>? arguments) async {
+    return (await future).rawQuery(sql, arguments);
   }
 
-  Future<int> updateTable(String table, Map<String, dynamic> values, String? where, List<String>? whereArgs) {
-    return _cachedStorage.update(table, values, where: where, whereArgs: whereArgs);
+  Future<int> updateTable(String table, Map<String, dynamic> values,
+      String? where, List<String>? whereArgs) async {
+    return (await future)
+        .update(table, values, where: where, whereArgs: whereArgs);
   }
 }

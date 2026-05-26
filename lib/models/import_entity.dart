@@ -1,10 +1,3 @@
-import 'dart:io';
-
-import 'package:intl/intl.dart';
-import 'package:path/path.dart';
-import 'package:process_run/process_run.dart';
-
-import '../misc/utils.dart';
 import 'file_of_interest.dart';
 
 class ImportEntity {
@@ -35,40 +28,6 @@ class ImportEntity {
       hasConflict: hasConflict ?? this.hasConflict,
       error: error ?? this.error,
     );
-  }
-
-  Future<void> getPathInLibrary() async {
-    renamedFile = "";
-
-    if (willImport && fileToImport.exists) {
-      bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-      if (hasExiftool) {
-        ProcessResult output = await runExecutableArguments('exiftool', ['-s', '-s', '-s', '-CreateDate', fileToImport.path]);
-        DateTime creationDateTime;
-        if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          // Create Date: 2016:06:26 14:46:58
-          creationDateTime = DateFormat("yyyy:MM:dd HH:mm:ss").parse(output.stdout);
-        } else {
-          creationDateTime = DateTime.now();
-        }
-        String year = DateFormat('yyyy').format(creationDateTime);
-        String month = DateFormat('MM - MMMM').format(creationDateTime);
-        renamedFile = join(getHomeFolder(), 'Pictures', year, month, fileToImport.name);
-        await validateEntityName();
-      }
-    } else {
-      willImport = false;
-      hasConflict = true;
-    }
-  }
-
-  Future<void> validateEntityName() async {
-    FileSystemEntity dest = getEntity(renamedFile);
-    hasConflict = dest.existsSync() && await fileToImport.different(FileOfInterest(entity: dest));
-    if (hasConflict) {
-      willImport = false;
-    }
   }
 
   @override

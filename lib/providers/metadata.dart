@@ -1,15 +1,14 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:latlong2/latlong.dart';
-import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../models/entity.dart';
+import '../application/exceptions.dart';
+import '../application/use_cases/load_metadata_use_case.dart';
+import '../application/use_cases/save_metadata_use_case.dart';
+import '../domain/services/i_exif_tool_service.dart';
 import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
-import '../misc/utils.dart';
 import '../models/tag.dart';
+import '../providers/exif_tool_service_provider.dart';
 import '../providers/notify.dart';
 import '../repositories/file_tags_repository.dart';
 
@@ -17,148 +16,60 @@ part 'metadata.g.dart';
 
 @riverpod
 class Metadata extends _$Metadata {
+  late final IExifToolService _exif;
+  late final LoadMetadataUseCase _loadUseCase;
+  late final SaveMetadataUseCase _saveUseCase;
+  late final dynamic _notify;
+
   @override
   FileMetaData build(FileOfInterest entity) {
-    loadMetadataFromFile(entity);
+    ref.keepAlive();
+    _exif = ref.read(exifToolServiceProvider);
+    final tags = ref.read(fileTagsRepositoryProvider.notifier);
+    _notify = ref.read(notifyProvider.notifier);
+    _loadUseCase = LoadMetadataUseCase(exifService: _exif, tagsRepository: tags);
+    _saveUseCase = SaveMetadataUseCase(exifService: _exif, tagsRepository: tags);
+    _load(entity);
     return const FileMetaData(entity: null, tags: []);
   }
 
-  String? get hasExifTool {
-    String? exifPath = whichSync('exiftool');
-    if (exifPath != null) {
-      return exifPath;
-    }
-
-    // Not sure why the app isn't looking on the path, so assume installed via homebrew
-    exifPath = '/opt/homebrew/bin/exiftool';
-    File exiftool = File(exifPath);
-    if (exiftool.existsSync()) {
-      return exifPath;
-    }
-    ref.read(notifyProvider.notifier).addNotification(message: exiftool.path);
-
-    return null;
-  }
+  bool get hasExifTool => _exif.findExifTool() != null;
 
   bool contains(Tag tag) => state.contains(tag);
 
-  Future<LatLng?> getLocationFromFile(FileOfInterest entity) async {
-    if (hasExifTool != null) {
-      ProcessResult output = await runExecutableArguments(hasExifTool!, ['-n', '-s', '-s', '-s', '-gpslatitude', '-gpslongitude', entity.path]);
-      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-        List<String> location = output.stdout.split('\n');
-        try {
-          return LatLng(double.parse(location[0]), double.parse(location[1]));
-        // ignore: empty_catches
-        } on FormatException {}
-      }
-    } else {
-      // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+  Future<void> _load(FileOfInterest entity) async {
+    if (!hasExifTool) {
+      // Schedule asynchronously — calling notify synchronously during build
+      // would modify another provider while this one is still initializing.
+      Future(() => _notify.addNotification(
+          message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.'));
+      return;
     }
 
-    return null;
-  }
-
-  Future<FileMetaData> getMetadata(FileOfInterest entity) async {
-    List<Tag> tags = await getTagsFromFile(entity);
-    LatLng? location;
-
-    if (entity.isLocationSupported) {
-      location = await getLocationFromFile(entity);
-    }
-
-    return FileMetaData(entity: entity, tags: tags, gpsLocation: location);
-  }
-
-  Future<List<Tag>> getTagsFromFile(FileOfInterest entity) async {
-    if (entity.isMetadataSupported) {
-      if (hasExifTool != null) {
-        ProcessResult output = await runExecutableArguments(hasExifTool!, ['-s', '-s', '-s', '-subject', entity.path]);
-        if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          List<Tag> tagList = [];
-          tagList.addAll(getTagsFromString(output.stdout));
-
-          return tagList;
-        }
-      }
-    }
-    return [];
-  }
-
-  String getStringFromTags(List<Tag> tags) {
-    String tagString = "";
-    if (tags.isNotEmpty) {
-      tagString = tags.toString();
-      tagString = tagString.substring(1, tagString.length-1);
-    }
-
-    return tagString;
-  }
-
-  List<Tag> getTagsFromString(String tags) {
-    return tags.split(',').map((e) => Tag(tag: e.trim())).toList();
-  }
-
-  Future<void> loadMetadataFromFile(FileOfInterest entity) async {
-    if (entity.isMetadataSupported) {
-      List<Tag> tags = await getTagsFromFile(entity);
-      LatLng? location = await getLocationFromFile(entity);
-
-      state = FileMetaData(entity: entity, tags: tags, gpsLocation: location);
-      Future(() {
-        ref.read(fileTagsRepositoryProvider.notifier).writeTags(Entity(path: entity.path, metadata: state));
-      });
-    }
+    final metadata = await _loadUseCase.execute(entity);
+    if (metadata != null && ref.mounted) state = metadata;
   }
 
   void removeTags(Tag tag) {
-    List<Tag> tags = [
-      for (var t in state.tags)
-        if (t != tag)
-          t
-    ];
-
+    final tags = [for (var t in state.tags) if (t != tag) t];
     state = state.copyWith(tags: tags);
     saveMetadata(updateFile: true);
   }
 
-  Future<bool> saveMetadata({ bool updateFile = false }) async {
-    // Always write tags to DB even if file writing fails? I feel like this makes sense.
-    // ignore: avoid_manual_providers_as_generated_provider_dependency
-    ref.read(fileTagsRepositoryProvider.notifier).writeTags(Entity(path: state.entity!.path, metadata: state));
-
-    if (updateFile) {
-      bool hasExiftool = whichSync('exiftool') != null ? true : false;
-
-      String tagString = getStringFromTags(state.tags);
-
-      List<String> locationArgs = [];
-      if (state.entity!.isLocationSupported) {
-        String latitude = getLocation(state, true).replaceAll("'", "\\'").replaceAll('"', '\\"');
-        String longitude = getLocation(state, false).replaceAll("'", "\\'").replaceAll('"', '\\"');
-        locationArgs = ["-gpslatitude=$latitude", "-gpslongitude=$longitude"];
-      }
-      if (hasExifTool != null && entity.isMetadataSupported) {
-        ProcessResult output = await runExecutableArguments(hasExifTool!, ['-overwrite_original', '-subject=$tagString', ...locationArgs, state.entity!.path]);
-        if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-          if (output.outText.trim() == '1 image files updated') {
-            state = state.copyWith(corruptedMetadata: false);
-            return true;
-          }
-        } else {
-          // ignore: avoid_manual_providers_as_generated_provider_dependency
-          ref.read(notifyProvider.notifier).addNotification(message: 'Unable to write metadata to ${state.entity!.name} - ${output.stderr.trim()}');
-          state = state.copyWith(corruptedMetadata: true);
-        }
-      }
-      else {
-        // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
-      }
+  Future<bool> saveMetadata({bool updateFile = false}) async {
+    try {
+      final updated = await _saveUseCase.execute(state, updateFile: updateFile);
+      if (ref.mounted) state = updated;
+      return true;
+    } on ExifToolMissingException {
+      _notify.addNotification(
+          message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      return false;
+    } on MetadataWriteException catch (e) {
+      _notify.addNotification(message: 'Unable to write metadata to ${e.fileName}');
+      if (ref.mounted) state = state.copyWith(corruptedMetadata: true);
+      return false;
     }
-
-    return false;
   }
 
   Future<bool> setLocation(LatLng location) async {
@@ -166,22 +77,16 @@ class Metadata extends _$Metadata {
     return saveMetadata(updateFile: true);
   }
 
-  Future<bool> replaceTagsFromString(String tags, { bool updateFile = true }) async {
-    state = state.copyWith(tags: getTagsFromString(tags));
-    if (updateFile) {
-      return saveMetadata(updateFile: true);
-    } else {
-      return true;
-    }
+  Future<bool> replaceTagsFromString(String tags, {bool updateFile = true}) async {
+    state = state.copyWith(tags: _exif.parseTagsFromString(tags));
+    if (updateFile) return saveMetadata(updateFile: true);
+    return true;
   }
 
-  void updateTagsFromString(String tags, { bool updateFile = true }) {
-    List<Tag> newTags = List.from(state.tags);
-    newTags.addAll(getTagsFromString(tags));
+  void updateTagsFromString(String tags, {bool updateFile = true}) {
+    final newTags = List<Tag>.from(state.tags)..addAll(_exif.parseTagsFromString(tags));
     state = state.copyWith(tags: [...{...newTags}]);
-    if (updateFile) {
-      saveMetadata(updateFile: true);
-    }
+    if (updateFile) saveMetadata(updateFile: true);
   }
 
   void setEditable(bool editable) {

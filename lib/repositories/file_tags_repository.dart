@@ -3,51 +3,35 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/notify.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
+import '../domain/repositories/i_file_tags_repository.dart';
 import '../models/entity.dart';
+import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 
 part 'file_tags_repository.g.dart';
 
 @riverpod
-class FileTagsRepository extends _$FileTagsRepository {
-  static const String createFiles = '''
-        create table if not exists files(
-          id integer primary key,
-          path text not null,
-          unique (path) on conflict ignore);
-          ''';
-  static const String createTags = '''
-        create table if not exists tags(
-          id integer primary key,
-          tag text not null,
-          unique (tag) on conflict ignore);
-          ''';
-  static const String createFileTags = '''
-        create table if not exists file_tags(
-          fileId integer not null, 
-          tagId integer not null, 
-          foreign key(fileId) references files(id),
-          foreign key(tagId) references tags(id));
-          ''';
-
-  static const String createFilesIndex = 'create index files_idx on files(path);';
+class FileTagsRepository extends _$FileTagsRepository implements IFileTagsRepository {
+  late final AppDatabase _db;
 
   @override
   Future<List<Tag>> build() {
+    ref.keepAlive();
+    _db = ref.read(appDatabaseProvider.notifier);
     return getTags();
   }
 
+  @override
   Future<bool> cleanOrphanedTags() async {
-
-    List<Map<String, dynamic>> results = await ref.read(appDatabaseProvider.notifier).query('files', columns: ['path']);
+    final notify = ref.read(notifyProvider.notifier);
+    List<Map<String, dynamic>> results = await _db.query('files', columns: ['path']);
     if (results.isNotEmpty) {
       for (var file in results) {
         String path = file['path'];
         if (!File(path).existsSync()) {
-          ref.read(notifyProvider.notifier).addNotification(message: "$path doesn't exist, removing tags.");
+          notify.addNotification(message: "$path doesn't exist, removing tags.");
           removeTagsForEntity(Entity(path: path));
         }
       }
@@ -59,11 +43,11 @@ class FileTagsRepository extends _$FileTagsRepository {
   }
 
   Future<bool> deleteOrphanedTags(int tagId) async {
-    int tagCount = await ref.read(appDatabaseProvider.notifier).getCount('file_tags', where: 'tagId = ?', whereArgs: [tagId.toString()]);
+    int tagCount = await _db.getCount('file_tags', where: 'tagId = ?', whereArgs: [tagId.toString()]);
 
     if (tagCount == 0) {
       debugPrint('deleting tag: $tagId with $tagCount');
-      ref.read(appDatabaseProvider.notifier).delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
+      _db.delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
       return true;
     }
 
@@ -72,62 +56,69 @@ class FileTagsRepository extends _$FileTagsRepository {
 
   Future<int> getEntityId(Entity entity) async {
     if (entity.id == null) {
-      List<Map<String, dynamic>> results = await ref.read(appDatabaseProvider.notifier).query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
+      List<Map<String, dynamic>> results = await _db.query('files', columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
       if (results.isNotEmpty) {
         entity.id = results.first['id'];
       } else {
-        entity.id = await ref.read(appDatabaseProvider.notifier).insert('files', entity.toMap());
+        entity.id = await _db.insert('files', entity.toMap());
       }
     }
-    
+
     return entity.id!;
   }
-  
+
   Future<int> getTagId(Tag tag) async {
     if (tag.id == null) {
-      List<Map> tagRecords = await ref.read(appDatabaseProvider.notifier).query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+      List<Map> tagRecords = await _db.query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
       if (tagRecords.isNotEmpty) {
         return tagRecords.first['id'] as int;
       }
       else {
-        return await ref.read(appDatabaseProvider.notifier).insert('tags', tag.toMap());
+        return await _db.insert('tags', tag.toMap());
       }
     }
 
     return tag.id!;
   }
 
+  @override
+  Future<List<FileOfInterest>> getFilesForTag(Tag tag) async {
+    final rows = await _db.rawQuery(
+      'select * from files where id in '
+      '(select fileId from file_tags, tags '
+      'where tags.id = file_tags.tagId and tags.tag = ?)',
+      [tag.tag],
+    );
+    return [
+      for (final row in rows)
+        if (File(row['path'] as String).existsSync())
+          FileOfInterest(entity: File(row['path'] as String)),
+    ];
+  }
+
+  @override
   Future<List<Tag>> getTags() async {
-    List<Map<String, dynamic>> results = await ref.read(appDatabaseProvider.notifier).query('tags', columns: ['id', 'tag'], orderBy: 'tag');
+    List<Map<String, dynamic>> results = await _db.query('tags', columns: ['id', 'tag'], orderBy: 'tag');
     return results.map((row) => Tag.fromMap(row)).toList();
   }
-  
+
   Future<Set<int>> getTagIdsForEntity(Entity entity) async {
-    List<Map<String, dynamic>> results = await ref.read(appDatabaseProvider.notifier).query('file_tags', columns: ['tagId'], where: 'fileId = ?', whereArgs: [entity.id.toString()]);
+    List<Map<String, dynamic>> results = await _db.query('file_tags', columns: ['tagId'], where: 'fileId = ?', whereArgs: [entity.id.toString()]);
     return results.map((row) => row.values.first).whereType<int>().toSet();
   }
 
   Future<bool> removeTagForEntity(Entity entity, int tagId) async {
     int id = await getEntityId(entity);
-
-    // remove the tags for that file
-    await ref.read(appDatabaseProvider.notifier).delete('file_tags', where: 'fileId = ? and tagId = ?', whereArgs: [id.toString(), tagId.toString()]);
-
-    // Check for Orphaned tags
+    await _db.delete('file_tags', where: 'fileId = ? and tagId = ?', whereArgs: [id.toString(), tagId.toString()]);
     return await deleteOrphanedTags(tagId);
   }
 
+  @override
   Future<void> removeTagsForEntity(Entity entity, { bool deleteEntity = true }) async {
-    // Given a file, get the fileId first.
     int id = await getEntityId(entity);
-
-    // Get the tags related to that EntityId
     Set<int> tags = await getTagIdsForEntity(entity);
+    await _db.delete('file_tags', where: 'fileId = ?', whereArgs: [id.toString()]);
 
-    // remove the tags for that file
-    await ref.read(appDatabaseProvider.notifier).delete('file_tags', where: 'fileId = ?', whereArgs: [id.toString()]);
-
-    // check to see if any of those tags are now orphaned
     bool refreshState = false;
     for (int tagId in tags) {
       bool deleted = await deleteOrphanedTags(tagId);
@@ -136,56 +127,91 @@ class FileTagsRepository extends _$FileTagsRepository {
       }
     }
 
-    // finally remove the actual entity from the database, if we are deleting it.
     if (deleteEntity) {
-      await ref.read(appDatabaseProvider.notifier).delete('files', where: 'path = ?', whereArgs: [entity.path]);
+      await _db.delete('files', where: 'path = ?', whereArgs: [entity.path]);
     }
 
-    // Rebuild the state if we have modified the list of tags.
     if (refreshState) {
-      state = AsyncData(await getTags());
+      final tags = await getTags();
+      if (ref.mounted) state = AsyncData(tags);
     }
   }
 
+  @override
   Future<void> writeTags(Entity entity) async {
-    bool refreshState = false;
+    bool changed = false;
 
-    // Get the id for the FSE
-    entity.id = await getEntityId(entity);
-
-    // Delete any tags that have been removed.
-    Set<int> storedEntityTagIds = await getTagIdsForEntity(entity);
-    Set<int> entityTagIds = entity.tags.map((tag) => tag.id).whereType<int>().toSet();
-    for (var tagId in storedEntityTagIds) {
-      if (!entityTagIds.contains(tagId)) {
-        refreshState = await removeTagForEntity(entity, tagId);
+    await _db.transaction((txn) async {
+      // 1. Ensure file record exists.
+      if (entity.id == null) {
+        final rows = await txn.query('files',
+            columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
+        entity.id = rows.isNotEmpty
+            ? rows.first['id'] as int
+            : await txn.insert('files', entity.toMap());
       }
-    }
 
-    // Insert all the Tags, updating the id for the next foreign key
-    if (entity.tags.isNotEmpty) {
-      for (var tag in entity.tags) {
+      // 2. Resolve/create tag records for incoming tags.
+      final incomingTagIds = <int>{};
+      for (final tag in entity.tags) {
         if (tag.tag.isEmpty) continue;
-
-        tag.id = await getTagId(tag);
-        refreshState = true;
-
-        // We have a race condition here - if we create a new tag for multiple files, the second insert can fail before the query above returns the correct id.
-        // I am sure there is a more elegant solution, but for now...
-        if (tag.id == 0) {
-          tag.id = await getTagId(tag);
+        if (tag.id == null) {
+          final existing = await txn
+              .query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+          tag.id = existing.isNotEmpty
+              ? existing.first['id'] as int
+              : await txn.insert('tags', tag.toMap());
+          // Race-condition guard.
+          if (tag.id == 0) {
+            final refetch = await txn
+                .query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+            tag.id = refetch.first['id'] as int;
+          }
         }
+        incomingTagIds.add(tag.id!);
+        changed = true;
+      }
 
-        List<Map> fileTagRecords = await ref.read(appDatabaseProvider.notifier).query('file_tags', columns: ['tagId'], where: 'tagId = ? and fileId = ?', whereArgs: [tag.id, entity.id]);
-        if (fileTagRecords.isEmpty) {
-          debugPrint('attempting to insert ${entity.path} (${entity.id}) -> ${tag.tag} (${tag.id})');
-          await ref.read(appDatabaseProvider.notifier).insert('file_tags', { 'tagId': tag.id, 'fileId': entity.id});
+      // 3. Get currently stored tag IDs for this entity.
+      final storedRows = await txn.query('file_tags',
+          columns: ['tagId'], where: 'fileId = ?', whereArgs: [entity.id]);
+      final storedTagIds = storedRows.map((r) => r['tagId'] as int).toSet();
+
+      // 4. Remove junction records for tags no longer on the entity;
+      //    delete the tag row itself if no other file references it.
+      for (final tagId in storedTagIds) {
+        if (!incomingTagIds.contains(tagId)) {
+          await txn.delete('file_tags',
+              where: 'fileId = ? and tagId = ?',
+              whereArgs: [entity.id, tagId]);
+          final refs = await txn.rawQuery(
+              'select count(*) as cnt from file_tags where tagId = ?', [tagId]);
+          if ((refs.first['cnt'] as int) == 0) {
+            debugPrint('deleting tag: $tagId with 0');
+            await txn.delete('tags', where: 'id = ?', whereArgs: [tagId]);
+          }
+          changed = true;
         }
       }
-    }
 
-    if (refreshState) {
-      state = AsyncData(await getTags());
+      // 5. Insert new junction records.
+      for (final tag in entity.tags) {
+        if (tag.tag.isEmpty || tag.id == null) continue;
+        final existing = await txn.query('file_tags',
+            columns: ['tagId'],
+            where: 'tagId = ? and fileId = ?',
+            whereArgs: [tag.id, entity.id]);
+        if (existing.isEmpty) {
+          debugPrint(
+              'attempting to insert ${entity.path} (${entity.id}) -> ${tag.tag} (${tag.id})');
+          await txn.insert('file_tags', {'tagId': tag.id, 'fileId': entity.id});
+        }
+      }
+    });
+
+    if (changed) {
+      final tags = await getTags();
+      if (ref.mounted) state = AsyncData(tags);
     }
   }
 }

@@ -2,31 +2,28 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
+import '../domain/repositories/i_folder_settings_repository.dart';
 import '../misc/utils.dart';
 import '../models/folder_ui_settings.dart';
 
 part 'folder_settings_repository.g.dart';
 
 @riverpod
-class FolderSettingsRepository extends _$FolderSettingsRepository {
+class FolderSettingsRepository extends _$FolderSettingsRepository implements IFolderSettingsRepository {
   static const String tableName = 'folder_settings';
-  static const String createFolderSettings = '''
-        create table if not exists $tableName(
-          entity          text    primary key,
-          width           int     not null,
-          detailedView    int     not null,
-          showHiddenFiles int     not null,
-          unique (entity) on conflict ignore);
-        ''';
-  static const String folderSettingsIndex = 'create index ${tableName}_idx on $tableName(entity);';
+
+  late final AppDatabase _db;
 
   @override
   Future<FolderUISettings> build(String path) {
+    ref.keepAlive();
+    _db = ref.read(appDatabaseProvider.notifier);
     return getSettings(path);
   }
 
+  @override
   Future<FolderUISettings> getSettings(String path) async {
-    List<Map<String, dynamic>> rows = await ref.read(appDatabaseProvider.notifier).query(tableName, where: 'entity = ?', whereArgs: [ path ]);
+    List<Map<String, dynamic>> rows = await _db.query(tableName, where: 'entity = ?', whereArgs: [ path ]);
 
     if (rows.isNotEmpty) {
       return FolderUISettings.fromJson(rows.first);
@@ -39,11 +36,13 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
     }
   }
 
+  @override
   Future<void> updateSettings(FolderUISettings folderSettings) async {
-    ref.read(appDatabaseProvider.notifier).insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    _db.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = AsyncValue.data(folderSettings);
   }
 
+  @override
   updateShowDetailedView(bool showDetailedView) {
     state.when(
         data: (FolderUISettings settings) => updateSettings(settings.copyWith(detailedView: showDetailedView)),
@@ -51,6 +50,7 @@ class FolderSettingsRepository extends _$FolderSettingsRepository {
         loading: () => null);
   }
 
+  @override
   void updateShowHiddenFiles(bool showHiddenFiles) {
     state.when(
         data: (FolderUISettings settings) => updateSettings(settings.copyWith(showHiddenFiles: showHiddenFiles)),

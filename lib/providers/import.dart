@@ -1,47 +1,28 @@
-import 'dart:io';
-
+import 'package:path/path.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../application/use_cases/import_files_use_case.dart';
+import '../misc/utils.dart';
 import '../models/file_of_interest.dart';
 import '../models/import_entity.dart';
+import '../providers/exif_tool_service_provider.dart';
 
 part 'import.g.dart';
 
 @riverpod
 class Import extends _$Import {
+  late final ImportFilesUseCase _useCase;
   List<ImportEntity> _importEntities = [];
 
   @override
   Future<List<ImportEntity>> build(Set<FileOfInterest> entities) async {
-    return _traverseEntities(entities);
-  }
-
-  Future<List<ImportEntity>> _processEntity(FileOfInterest entity) async {
-    List<ImportEntity> entities = [];
-
-    if (entity.isDirectory) {
-      Directory d = entity.entity as Directory;
-      for (var entity in d.listSync()) {
-        entities.addAll(await _processEntity(FileOfInterest(entity: entity)));
-      }
-    } else if (entity.isFile) {
-      ImportEntity e = ImportEntity(fileToImport: entity);
-      await e.getPathInLibrary();
-      entities.add(e);
-    }
-
-    _importEntities = List.from(entities);
-    return entities;
-  }
-
-  Future<List<ImportEntity>> _traverseEntities(Set<FileOfInterest> entities) async {
-    List<ImportEntity> files = [];
-
-    for (var entity in entities) {
-      files.addAll(await _processEntity(entity));
-    }
-
-    return files;
+    ref.keepAlive();
+    _useCase = ImportFilesUseCase(
+      exifService: ref.read(exifToolServiceProvider),
+      libraryPath: join(getHomeFolder(), 'Pictures'),
+    );
+    _importEntities = await _useCase.processEntities(entities);
+    return _importEntities;
   }
 
   void replace(ImportEntity entity, ImportEntity replacement) async {

@@ -1,18 +1,14 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
-import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:win32/win32.dart';
 
 import '../misc/utils.dart';
-import '../providers/metadata.dart';
+import '../platform/windows_recycle.dart';
 
 const Set<String> documentExtensions = { 'md', 'pdf' };
 const Set<String> imageExtensions = { 'gif', 'jpeg', 'jpg', 'png', 'tiff', 'tif' };
@@ -51,18 +47,6 @@ class FileOfInterest implements Comparable {
 
   @override
   int compareTo(other) => path.compareTo(other.path);
-
-  Future<void> cacheFileOfInterest(WidgetRef ref) async {
-    if (isDirectory) {
-      Directory d = entity as Directory;
-      for (var entity in d.listSync()) {
-        await FileOfInterest(entity: entity).cacheFileOfInterest(ref);
-      }
-    } else {
-      var metadata = ref.read(metadataProvider(this).notifier);
-      await metadata.saveMetadata(updateFile: false);
-    }
-  }
 
   void copyDirectory(Directory source, Directory destination) {
     if (source != destination) {
@@ -119,14 +103,11 @@ class FileOfInterest implements Comparable {
       while (true) {
         final chunk = await reader.readChunk(chunkSize);
         if (chunk.isEmpty) {
-          // indicate end of file
           break;
         }
         input.add(chunk);
       }
     } finally {
-      // We always cancel the ChunkedStreamReader,
-      // this ensures the underlying stream is cancelled.
       reader.cancel();
     }
 
@@ -136,17 +117,14 @@ class FileOfInterest implements Comparable {
   }
 
   bool isValidMoveLocation(String destination) {
-    // Needs to be a directory.
     if (!FileSystemEntity.isDirectorySync(dirname(destination)))  {
       return false;
     }
 
-    // Can't move /a/b/c to /a/b/c
     if (entity.path.trimCharRight('/') == destination.trimCharRight('/')) {
       return false;
     }
 
-    // Can't move /a/b/c to /a/b/c/d
     if (destination.startsWith(path)) {
       return false;
     }
@@ -160,10 +138,8 @@ class FileOfInterest implements Comparable {
     Directory dir = entity as Directory;
     if (isValidMoveLocation(destinationPath)) {
       try {
-        // prefer using rename as it is probably faster
         await dir.rename(destinationPath);
       } on FileSystemException {
-        // if rename fails, recursively copy the directory and all it's contents.
         copyDirectory(dir, Directory(destinationPath));
         dir.delete(recursive: true);
       }
@@ -200,30 +176,6 @@ class FileOfInterest implements Comparable {
     if (await canLaunchUrl(entity.uri)) {
       launchUrl(entity.uri);
     }
-  }
-
-  bool recycleFile(String file) {
-    if (Platform.isWindows) {
-      final hwnd = GetActiveWindow();
-      final pFrom = [file].toWideCharArray();
-      final lpFileOp =
-      calloc<SHFILEOPSTRUCT>()
-        ..ref.hwnd = hwnd
-        ..ref.wFunc = FO_DELETE
-        ..ref.pFrom = pFrom
-        ..ref.pTo = nullptr
-        ..ref.fFlags = FOF_ALLOWUNDO;
-
-      try {
-        final result = SHFileOperation(lpFileOp);
-        return result == 0;
-      } finally {
-        free(pFrom);
-        free(lpFileOp);
-      }
-    }
-
-    return false;
   }
 
   FileOfInterest rename(String name) {

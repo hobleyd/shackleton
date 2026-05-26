@@ -1,86 +1,59 @@
-import 'dart:io';
-
-import 'package:process_run/process_run.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../domain/services/i_exif_tool_service.dart';
+import '../providers/exif_tool_service_provider.dart';
 import '../providers/notify.dart';
 
 part 'exif.g.dart';
 
 @riverpod
 class Exif extends _$Exif {
+  late final IExifToolService _exif;
+  late final dynamic _notify;
+
   @override
   Map<String, ({ String orig, String reset })> build(String path) {
+    ref.keepAlive();
+    _exif = ref.read(exifToolServiceProvider);
+    _notify = ref.read(notifyProvider.notifier);
     loadExifTags(path);
     return const {};
   }
 
-  String? hasExifTool() {
-    String? exifPath = whichSync('exiftool');
-    if (exifPath != null) {
-      return exifPath;
-    }
-
-    // Not sure why the app isn't looking on the path, so assume installed via homebrew
-    exifPath = '/opt/homebrew/bin/exiftool';
-    File exiftool = File(exifPath);
-    if (exiftool.existsSync()) {
-      return exifPath;
-    }
-    ref.read(notifyProvider.notifier).addNotification(message: exiftool.path);
-
-    return null;
-  }
-
   Future<bool> fixMetadata(String path) async {
-    if (hasExifTool() != null) {
-      ProcessResult output = await runExecutableArguments(hasExifTool()!, ['-all=', '-tagsfromfile', '@', '-all:all', '-unsafe', '-icc_profile', path]);
-      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-        if (output.outText.trim() == '1 image files updated') {
-          loadExifTags(path);
-          return true;
-        }
-      } else {
-        // ignore: avoid_manual_providers_as_generated_provider_dependency
-        ref.read(notifyProvider.notifier).addNotification(message: 'Resetting exif data failed for $path - ${output.stderr.trim()}');
-        //TODO: state = state.copyWith(corruptedMetadata: true);
-      }
-    } else {
-      // ignore: avoid_manual_providers_as_generated_provider_dependency
-      ref.read(notifyProvider.notifier).addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+    if (_exif.findExifTool() == null) {
+      _notify.addNotification(message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.');
+      return false;
     }
 
-    return false;
+    final success = await _exif.fixMetadata(path);
+    if (success) {
+      loadExifTags(path);
+    } else {
+      _notify.addNotification(message: 'Resetting exif data failed for $path');
+    }
+    return success;
   }
 
   Future<void> loadExifTags(String path) async {
-    Map<String, ({ String orig, String reset })> exifTags = {};
-
-    ref.read(notifyProvider.notifier).addNotification(message: 'looking for exiftool.');
-
-    if (hasExifTool() != null) {
-      ProcessResult output = await runExecutableArguments(hasExifTool()!, ['-s', '-s', path]);
-      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-        for (var exif in output.outLines) {
-          List<String> exifData = exif.split(':');
-          exifTags[exifData[0].trim()] = (orig: exifData[1].trim(), reset: '');
-        }
-      } else {
-        ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
-      }
-
-      output = await runExecutableArguments(hasExifTool()!, ['-s', '-s', '${path}_original']);
-      if (output.exitCode == 0 && output.stdout.isNotEmpty) {
-        for (var exif in output.outLines) {
-          List<String> exifData = exif.split(':');
-          var previous = exifTags[exifData[0].trim()];
-          exifTags[exifData[0].trim()] = (orig: previous?.orig ?? '', reset: exifData[1].trim());
-        }
-      } else {
-        ref.read(notifyProvider.notifier).addNotification(message: output.stderr);
-      }
+    if (_exif.findExifTool() == null) {
+      _notify.addNotification(message: 'exiftool not installed.');
+      return;
     }
 
-    state = exifTags;
+    final data = await _exif.readAllExifData(path);
+    if (ref.mounted) state = data;
+  }
+
+  /// Accepts the metadata fix: removes the exiftool backup and refreshes.
+  Future<void> acceptFix(String path) async {
+    await _exif.deleteBackup(path);
+    await loadExifTags(path);
+  }
+
+  /// Reverts the metadata fix: restores the exiftool backup and refreshes.
+  Future<void> rejectFix(String path) async {
+    await _exif.restoreBackup(path);
+    await loadExifTags(path);
   }
 }

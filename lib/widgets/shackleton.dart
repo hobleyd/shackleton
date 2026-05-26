@@ -6,6 +6,7 @@ import 'package:path/path.dart';
 
 import '../models/file_of_interest.dart';
 import '../models/folder_ui_settings.dart';
+import '../providers/metadata.dart';
 import '../models/map_settings.dart';
 import '../models/notification.dart';
 import '../models/preview_settings.dart';
@@ -127,7 +128,19 @@ class _Shackleton extends ConsumerState<Shackleton> {
   void _cacheMetadata(WidgetRef ref) async {
     Set<FileOfInterest> selectedEntities = ref.read(selectedFolderContentsProvider);
     for (FileOfInterest foi in selectedEntities) {
-      await foi.cacheFileOfInterest(ref);
+      await _cacheFileOfInterest(foi, ref);
+    }
+  }
+
+  Future<void> _cacheFileOfInterest(FileOfInterest foi, WidgetRef ref) async {
+    if (foi.isDirectory) {
+      Directory d = foi.entity as Directory;
+      for (var entity in d.listSync()) {
+        await _cacheFileOfInterest(FileOfInterest(entity: entity), ref);
+      }
+    } else {
+      var metadata = ref.read(metadataProvider(foi).notifier);
+      await metadata.saveMetadata(updateFile: false);
     }
   }
 
