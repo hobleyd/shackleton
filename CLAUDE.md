@@ -18,7 +18,7 @@ flutter run -d macos         # or linux, windows
 
 # Run tests
 flutter test
-flutter test test/metadata_test.dart   # single test file
+flutter test test/repositories/file_tags_repository_test.dart   # single test file
 
 # Code generation (required after editing models/providers with @freezed or @Riverpod annotations)
 dart run build_runner build --delete-conflicting-outputs
@@ -32,41 +32,78 @@ flutter analyze
 
 ## Architecture
 
+### Layered clean architecture
+
+Code is organised into four layers. Dependencies only flow inward.
+
+```
+widgets / providers  →  use cases  →  domain interfaces  →  (implemented by) repositories / services
+```
+
+| Layer             | Location                    | Role                                                               |
+|-------------------|-----------------------------|--------------------------------------------------------------------|
+| Domain interfaces | `lib/domain/`               | Abstract contracts; no Flutter/sqflite imports                     |
+| Repositories      | `lib/repositories/`         | SQLite data access; Riverpod providers                             |
+| Services          | `lib/services/`             | External process wrappers (exiftool, disk/USB)                     |
+| Use cases         | `lib/application/use_cases/` | Business logic; plain Dart classes; constructor-injected interfaces |
+| Providers         | `lib/providers/`            | Thin Riverpod state wrappers; delegate to use cases                |
+| Widgets           | `lib/widgets/`              | UI only; read providers via `ref`                                  |
+
+Typed exceptions for cross-layer error signalling live in `lib/application/exceptions.dart` (`ExifToolMissingException`, `MetadataWriteException`).
+
 ### State Management — Riverpod with code generation
 
-All providers use `@Riverpod` / `@riverpod` annotations from `riverpod_annotation`. The generated `.g.dart` files must be regenerated with `build_runner` after any provider or model change. Most singleton providers use `keepAlive: true`.
+All providers use `@Riverpod` / `@riverpod` annotations from `riverpod_annotation`. The generated `.g.dart` files must be regenerated with `build_runner` after any provider or model change. Most singleton providers use `ref.keepAlive()`.
+
+**Riverpod 3 async-gap rule:** capture `ref.read(provider)` into `late final` fields inside `build()` before any `await`. Guard all `state =` assignments with `if (ref.mounted)`.
 
 ### Data Models — Freezed
 
 All domain models (`Entity`, `FileMetadata`, `Tag`, `AppSettings`, etc.) are `@freezed` classes. These are immutable and auto-generate `copyWith`, equality, and JSON serialization. `.freezed.dart` and `.g.dart` files are generated artifacts — do not edit them manually.
 
-### Repository Pattern
-
-`lib/repositories/` contains the data access layer (settings, tags, favourites, folder settings, statistics). Repositories are thin wrappers over SQLite and are themselves Riverpod providers.
-
 ### Database
 
-`lib/database/app_database.dart` — a `keepAlive` Riverpod provider wrapping `sqflite_common_ffi` for cross-platform SQLite. Database location: `~/.shackleton/shackleton.db` (Unix) / `%APPDATA%\Shackleton\shackleton.db` (Windows). Schema is versioned; migrations live in `app_database.dart`.
+`lib/database/app_database.dart` — a `keepAlive` Riverpod provider wrapping `sqflite_common_ffi` for cross-platform SQLite. Database location: `~/.shackleton/shackleton.db` (Unix) / `%APPDATA%\Shackleton\shackleton.db` (Windows).
 
-### Widget / Provider structure
+All DDL lives in `lib/database/schema.dart` (`AppSchema.createAll(DatabaseExecutor)`). Migrations belong in `app_database.dart`. `AppDatabase` exposes a `transaction<T>()` helper; use it in repositories for multi-step writes.
+
+### Directory structure
 
 ```
 lib/
-├── main.dart                  # ProviderScope + windowManager + MediaKit init
-├── models/                    # Freezed domain models
-├── database/                  # SQLite provider
-├── repositories/              # Data access (Riverpod providers)
-├── providers/                 # App state (Riverpod providers)
-│   └── contents/              # Folder/grid/pane content state
-├── widgets/                   # UI
-│   ├── shackleton_prime.dart  # Root widget
-│   ├── folders/               # Folder tree navigation
-│   ├── metadata/              # Metadata editing panels
-│   ├── navigation/            # Nav components
-│   └── preview/               # File preview (images, PDF, video)
-├── interfaces/                # Callback interfaces for cross-widget events
-└── misc/                      # Utilities (drag-drop, keyboard, platform)
+├── main.dart                     # ProviderScope + windowManager + MediaKit init
+├── models/                       # Freezed domain models
+├── database/                     # SQLite provider + schema DDL
+├── domain/
+│   ├── repositories/             # Abstract repository interfaces (I*Repository)
+│   └── services/                 # Abstract service interfaces (I*Service)
+├── repositories/                 # Concrete SQLite repositories (Riverpod providers)
+├── services/                     # Concrete service implementations
+├── application/
+│   ├── exceptions.dart           # Typed cross-layer exceptions
+│   └── use_cases/                # Business logic (plain Dart, no Riverpod)
+├── providers/                    # App state (Riverpod providers, thin wrappers)
+│   └── contents/                 # Folder/grid/pane content state
+├── widgets/                      # UI
+│   ├── folders/                  # Folder tree navigation
+│   ├── metadata/                 # Metadata editing panels
+│   ├── navigation/               # Nav components
+│   └── preview/                  # File preview (images, PDF, video)
+├── interfaces/                   # Callback interfaces for cross-widget events
+├── platform/                     # Platform-specific helpers
+└── misc/                         # Utilities (drag-drop, keyboard, platform)
 ```
+
+### Tests
+
+Tests mirror source structure under `test/`. An in-memory SQLite helper is in `test/helpers/test_database.dart` (`createTestContainer()` returns a `ProviderContainer` wired with `InMemoryAppDatabase`).
+
+| Directory | What's tested |
+|---|---|
+| `test/application/` | Use case unit tests (mocked interfaces via `mocktail`) |
+| `test/providers/` | Provider integration tests |
+| `test/repositories/` | Repository integration tests against in-memory SQLite |
+| `test/database/` | Schema DDL correctness, constraint enforcement, transaction atomicity |
 
 ### Platform differences
 
