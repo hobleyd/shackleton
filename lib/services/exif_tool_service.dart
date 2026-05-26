@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
@@ -110,6 +111,21 @@ class ExifToolService implements IExifToolService {
       // Daemon failure (crash, timeout) — reset so the next call restarts it.
       _daemon = null;
       return empty;
+    }
+  }
+
+  @override
+  Future<Uint8List?> readThumbnail(String path) async {
+    final exifTool = findExifTool();
+    if (exifTool == null) return null;
+
+    try {
+      final bytes = await _getOrCreateDaemon(exifTool)
+          .executeBytes(['-b', '-ThumbnailImage', path]);
+      return bytes.isEmpty ? null : bytes;
+    } catch (_) {
+      _daemon = null;
+      return null;
     }
   }
 

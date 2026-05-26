@@ -1,37 +1,36 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 /// Manages a persistent exiftool process in -stay_open mode.
 ///
 /// Commands are serialised: each caller awaits its own response before the
-/// next command is sent to stdin, so no response interleaving is possible.
-///
-/// Usage:
-///   final daemon = ExifToolDaemon('/usr/bin/exiftool');
-///   final json = await daemon.execute(['-j', '-subject', '/path/file.jpg']);
-///   await daemon.stop();
+/// next command is sent to stdin. Responses are returned as raw [Uint8List]
+/// bytes, which supports both JSON/text output and binary output (e.g. -b
+/// for embedded thumbnails). Callers that need text use [execute]; callers
+/// that need bytes use [executeBytes].
 class ExifToolDaemon {
   final String _exifToolPath;
 
   Process? _process;
-  StreamSubscription<String>? _stdoutSub;
+  StreamSubscription<List<int>>? _stdoutSub;
   StreamSubscription<String>? _stderrSub;
-  final StringBuffer _buf = StringBuffer();
-  Completer<String>? _pending;
+  final List<int> _buf = [];
+  Completer<Uint8List>? _pending;
 
-  // Serialisation: each execute() captures the previous lock and installs its own.
-  // Callers calling execute() concurrently will form a chain and run in order.
+  // Serialisation: each execute captures the previous lock and installs its own.
   Future<void>? _lock;
 
   ExifToolDaemon(this._exifToolPath);
 
-  /// Sends [args] to the daemon and returns stdout up to the {ready} marker.
+  /// Sends [args] to the daemon and returns the raw byte response (content
+  /// before the trailing `{ready}` marker).
   ///
-  /// Concurrent callers are queued and executed in order.
-  Future<String> execute(List<String> args) {
-    // Both assignments happen synchronously, before any await, so the chain
-    // is always correct even when many callers call execute() concurrently.
+  /// Concurrent callers queue and execute in order.
+  Future<Uint8List> executeBytes(List<String> args) {
+    // Both assignments run synchronously, so the chain is always correct
+    // even when many callers call this concurrently.
     final prev = _lock;
     final done = Completer<void>();
     _lock = done.future;
@@ -44,7 +43,7 @@ class ExifToolDaemon {
       }
       try {
         await _ensureStarted();
-        _pending = Completer<String>();
+        _pending = Completer<Uint8List>();
         _buf.clear();
         for (final arg in args) {
           _process!.stdin.writeln(arg);
@@ -63,23 +62,38 @@ class ExifToolDaemon {
     });
   }
 
+  /// Sends [args] and returns the response decoded as UTF-8.
+  Future<String> execute(List<String> args) async {
+    return utf8.decode(await executeBytes(args));
+  }
+
   Future<void> _ensureStarted() async {
     if (_process != null) return;
     _process = await Process.start(_exifToolPath, ['-stay_open', 'True', '-@', '-']);
-    _stdoutSub = _process!.stdout
-        .transform(utf8.decoder)
-        .listen(_onStdout, onDone: _restart, onError: (_) => _restart());
+    _stdoutSub = _process!.stdout.listen(
+      _onBytes,
+      onDone: _restart,
+      onError: (_) => _restart(),
+    );
     _stderrSub = _process!.stderr.transform(utf8.decoder).listen((_) {});
   }
 
-  void _onStdout(String chunk) {
-    _buf.write(chunk);
-    final s = _buf.toString();
-    final match = RegExp(r'\{ready\w*\}').firstMatch(s);
-    if (match != null && _pending != null && !_pending!.isCompleted) {
-      final output = s.substring(0, match.start).trim();
+  void _onBytes(List<int> chunk) {
+    _buf.addAll(chunk);
+    if (_pending == null || _pending!.isCompleted) return;
+
+    // The {ready} marker is pure ASCII so we can safely scan the tail of the
+    // buffer without decoding potentially large binary payloads.  Searching
+    // only the last 30 bytes is sufficient because {ready} is always the last
+    // thing exiftool writes for a given command.
+    final searchFrom = _buf.length > 30 ? _buf.length - 30 : 0;
+    final tail = String.fromCharCodes(_buf, searchFrom);
+    final match = RegExp(r'\{ready\w*\}\s*').firstMatch(tail);
+    if (match != null) {
+      final responseEnd = searchFrom + match.start;
+      final response = Uint8List.fromList(_buf.sublist(0, responseEnd));
       _buf.clear();
-      _pending!.complete(output);
+      _pending!.complete(response);
     }
   }
 

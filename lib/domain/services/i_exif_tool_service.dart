@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:latlong2/latlong.dart';
 
 import '../../models/tag.dart';
@@ -15,6 +17,10 @@ abstract class IExifToolService {
 
   /// Read subject tags and GPS location from [path] in a single exiftool call.
   Future<({List<Tag> tags, LatLng? location})> readTagsAndLocation(String path);
+
+  /// Extract the embedded JPEG thumbnail from [path].
+  /// Returns null if the file has no embedded thumbnail or exiftool is unavailable.
+  Future<Uint8List?> readThumbnail(String path);
 
   /// Read all raw exif key/value pairs from [path] and its _original backup.
   Future<Map<String, ({String orig, String reset})>> readAllExifData(String path);
