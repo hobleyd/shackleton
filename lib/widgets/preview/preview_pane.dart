@@ -103,7 +103,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
             },
             itemCount: entities.length,
             itemBuilder: (BuildContext context, int pos) {
-              return EntityPreview(entity: entities[pos], isSelected: false, displayMetadata: false, previewWidth: MediaQuery.of(context).size.width - 210);
+              return EntityPreview(entity: entities[pos], displayMetadata: false, previewWidth: MediaQuery.of(context).size.width - 210);
             },
           ),
           Align(

@@ -62,8 +62,8 @@ void main() {
   group('Metadata provider', () {
     test('hasExifTool returns true when service finds exiftool', () async {
       final entity = jpegEntity();
-      when(() => mockExif.readTags(any())).thenAnswer((_) async => []);
-      when(() => mockExif.readLocation(any())).thenAnswer((_) async => null);
+      when(() => mockExif.readTagsAndLocation(any()))
+          .thenAnswer((_) async => (tags: <Tag>[], location: null));
 
       container.read(metadataProvider(entity));
       expect(container.read(metadataProvider(entity).notifier).hasExifTool, isTrue);
@@ -72,8 +72,6 @@ void main() {
 
     test('hasExifTool returns false when exiftool is not installed', () async {
       when(() => mockExif.findExifTool()).thenReturn(null);
-      when(() => mockExif.readTags(any())).thenAnswer((_) async => []);
-      when(() => mockExif.readLocation(any())).thenAnswer((_) async => null);
 
       final entity = jpegEntity();
       container.read(metadataProvider(entity));
@@ -83,8 +81,9 @@ void main() {
 
     test('loadMetadataFromFile populates state tags from exiftool', () async {
       final entity = jpegEntity();
-      when(() => mockExif.readTags(entity.path)).thenAnswer((_) async => [Tag(tag: 'nature'), Tag(tag: 'travel')]);
-      when(() => mockExif.readLocation(entity.path)).thenAnswer((_) async => null);
+      when(() => mockExif.readTagsAndLocation(entity.path)).thenAnswer(
+        (_) async => (tags: [Tag(tag: 'nature'), Tag(tag: 'travel')], location: null),
+      );
 
       container.read(metadataProvider(entity));
 
@@ -97,8 +96,8 @@ void main() {
 
     test('replaceTagsFromString updates state without writing to file', () async {
       final entity = jpegEntity();
-      when(() => mockExif.readTags(any())).thenAnswer((_) async => []);
-      when(() => mockExif.readLocation(any())).thenAnswer((_) async => null);
+      when(() => mockExif.readTagsAndLocation(any()))
+          .thenAnswer((_) async => (tags: <Tag>[], location: null));
 
       // Initialise the provider state with a known entity so entity! is non-null.
       container.read(metadataProvider(entity));

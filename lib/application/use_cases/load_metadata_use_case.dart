@@ -21,9 +21,8 @@ class LoadMetadataUseCase {
     if (!entity.isMetadataSupported) return null;
     if (_exifService.findExifTool() == null) return null;
 
-    final tags = await _exifService.readTags(entity.path);
-    final location = await _exifService.readLocation(entity.path);
-    final metadata = FileMetaData(entity: entity, tags: tags, gpsLocation: location);
+    final result = await _exifService.readTagsAndLocation(entity.path);
+    final metadata = FileMetaData(entity: entity, tags: result.tags, gpsLocation: result.location);
     await _tagsRepository.writeTags(Entity(path: entity.path, metadata: metadata));
     return metadata;
   }

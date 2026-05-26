@@ -25,13 +25,12 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
   List<GlobalKey?> keys = [];
   int lastVisibleRow = 0;
 
-  get gridController => widget.gridController;
+  GridController get gridController => widget.gridController;
 
   @override
   Widget build(BuildContext context) {
     MapSettings map = ref.watch(mapPaneProvider);
     List<FileOfInterest> entities = ref.watch(gridContentsProvider);
-    List<FileOfInterest> selectedEntities = ref.watch(selectedGridEntitiesProvider);
 
     keys = List.filled(entities.length, null, growable: false);
 
@@ -64,9 +63,8 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
                       },
                       child: DraggableWidget(
                           dragItemsProvider: (context) {
-                            // Dragging multiple items is possible, but requires us to return the list of DragItemWidgets from each individual Draggable.
-                            // So, we need to loop over selectedEntities and find the DragItemWidget that relates to this entity using the list of
-                            // GlobalKeys we created with the ListView.builder to extract the correct DragItem out.
+                            // Read selection at drag-start time only — no ongoing watch needed.
+                            final selectedEntities = ref.read(selectedGridEntitiesProvider);
                             List<DragItemWidgetState> dragItems = [];
                             for (var e in selectedEntities) {
                               var itemIndex = entities.indexOf(e);
@@ -80,7 +78,6 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
                           },
                           child: EntityPreview(
                             entity: entities[idx],
-                            isSelected: selectedEntities.contains(entities[idx]),
                             displayMetadata: true,
                             previewWidth: (MediaQuery.of(context).size.width - 210 - map.width),
                           ),

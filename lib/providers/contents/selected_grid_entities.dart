@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../interfaces/file_events_callback.dart';
@@ -5,6 +6,12 @@ import '../../models/file_of_interest.dart';
 import '../../providers/file_events.dart';
 
 part 'selected_grid_entities.g.dart';
+
+/// Derived O(1)-lookup set of selected file paths.
+/// Use with `.select()` to rebuild only when a specific entity's membership changes.
+final selectedGridPathsProvider = Provider<Set<String>>((ref) {
+  return ref.watch(selectedGridEntitiesProvider).map<String>((e) => e.path).toSet();
+});
 
 @Riverpod(keepAlive: true)
 class SelectedGridEntities extends _$SelectedGridEntities implements FileEventsCallback {

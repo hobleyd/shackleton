@@ -4,6 +4,7 @@ import 'package:intersperse/intersperse.dart';
 
 import '../../models/file_of_interest.dart';
 import '../../models/file_metadata.dart';
+import '../../providers/contents/selected_grid_entities.dart';
 import '../../providers/metadata.dart';
 import '../metadata/fix_metadata.dart';
 import '../preview/image_preview.dart';
@@ -13,11 +14,10 @@ import '../preview/video_preview.dart';
 
 class EntityPreview extends ConsumerStatefulWidget {
   final FileOfInterest entity;
-  final bool isSelected;
   final bool displayMetadata;
   final double previewWidth;
 
-  const EntityPreview({super.key, required this.entity, required this.isSelected, required this.previewWidth, this.displayMetadata = true});
+  const EntityPreview({super.key, required this.entity, required this.previewWidth, this.displayMetadata = true});
 
   @override
   ConsumerState<EntityPreview> createState() => _EntityPreview();
@@ -26,15 +26,17 @@ class EntityPreview extends ConsumerStatefulWidget {
 class _EntityPreview extends ConsumerState<EntityPreview> {
   late FileMetaData metadata;
 
-  get displayMetaData => widget.displayMetadata;
-  get selectedEntity  => widget.entity;
-  get isSelected      => widget.isSelected;
-  get previewWidth    => widget.previewWidth;
-  get background      => isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
+  bool get displayMetaData => widget.displayMetadata;
+  FileOfInterest get selectedEntity => widget.entity;
+  double get previewWidth => widget.previewWidth;
 
   @override
   Widget build(BuildContext context) {
     metadata = ref.watch(metadataProvider(selectedEntity));
+    final isSelected = ref.watch(
+      selectedGridPathsProvider.select((paths) => paths.contains(selectedEntity.path)),
+    );
+    final background = isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -46,7 +48,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
                   alignment: Alignment.center,
                   color: background,
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: _getPreview(),
+                  child: _getPreview(isSelected),
                 ),
               )
             : Expanded(
@@ -77,6 +79,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   }
 
   Widget _getMetadata(BuildContext context, WidgetRef ref, bool isSelected) {
+    final background = isSelected ? Theme.of(context).textSelectionTheme.selectionHandleColor! : Colors.transparent;
     return Container(
         padding: const EdgeInsets.only(left: 2),
         color: metadata.corruptedMetadata ? Colors.red : background,
@@ -105,7 +108,7 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
     }
   }
 
-  Widget _getPreview() {
+  Widget _getPreview(bool isSelected) {
     return switch (selectedEntity.extension) {
       'pdf'                                           => PDFPreview(entity: selectedEntity, isSelected: isSelected, showFullFile: !displayMetaData),
       'md'                                            => MarkdownPreview(entity: selectedEntity, isSelected: isSelected),

@@ -13,6 +13,9 @@ abstract class IExifToolService {
   /// Read GPS coordinates from [path]. Returns null if not present.
   Future<LatLng?> readLocation(String path);
 
+  /// Read subject tags and GPS location from [path] in a single exiftool call.
+  Future<({List<Tag> tags, LatLng? location})> readTagsAndLocation(String path);
+
   /// Read all raw exif key/value pairs from [path] and its _original backup.
   Future<Map<String, ({String orig, String reset})>> readAllExifData(String path);
 

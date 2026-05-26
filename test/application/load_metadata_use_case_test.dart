@@ -65,9 +65,9 @@ void main() {
 
     test('reads tags and location then persists to repository', () async {
       when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
-      when(() => mockExif.readTags(any()))
-          .thenAnswer((_) async => [Tag(tag: 'nature'), Tag(tag: 'travel')]);
-      when(() => mockExif.readLocation(any())).thenAnswer((_) async => null);
+      when(() => mockExif.readTagsAndLocation(any())).thenAnswer(
+        (_) async => (tags: [Tag(tag: 'nature'), Tag(tag: 'travel')], location: null),
+      );
 
       final result = await useCase.execute(jpeg());
 
@@ -79,9 +79,9 @@ void main() {
 
     test('includes GPS location when exiftool returns coordinates', () async {
       when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
-      when(() => mockExif.readTags(any())).thenAnswer((_) async => []);
-      when(() => mockExif.readLocation(any()))
-          .thenAnswer((_) async => const LatLng(27.47, 153.02));
+      when(() => mockExif.readTagsAndLocation(any())).thenAnswer(
+        (_) async => (tags: <Tag>[], location: const LatLng(27.47, 153.02) as LatLng?),
+      );
 
       final result = await useCase.execute(jpeg());
 

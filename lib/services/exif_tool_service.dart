@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
@@ -48,6 +49,46 @@ class ExifToolService implements IExifToolService {
       }
     }
     return null;
+  }
+
+  @override
+  Future<({List<Tag> tags, LatLng? location})> readTagsAndLocation(String path) async {
+    final exifTool = findExifTool();
+    const empty = (tags: <Tag>[], location: null);
+    if (exifTool == null) return empty;
+
+    final output = await runExecutableArguments(
+      exifTool,
+      ['-j', '-n', '-subject', '-gpslatitude', '-gpslongitude', path],
+    );
+    if (output.exitCode != 0 || output.stdout.trim().isEmpty) return empty;
+
+    final parsed = jsonDecode(output.stdout) as List<dynamic>;
+    if (parsed.isEmpty) return empty;
+    final data = parsed.first as Map<String, dynamic>;
+
+    // Subject appears as 'Subject' (XMP) or 'Keywords' (IPTC) depending on the file.
+    final rawSubject = data['Subject'] ?? data['Keywords'];
+    List<Tag> tags = [];
+    if (rawSubject is List) {
+      tags = rawSubject
+          .map((s) => Tag(tag: s.toString().trim()))
+          .where((t) => t.tag.isNotEmpty)
+          .toList();
+    } else if (rawSubject is String && rawSubject.isNotEmpty) {
+      tags = parseTagsFromString(rawSubject);
+    }
+
+    LatLng? location;
+    final lat = data['GPSLatitude'];
+    final lng = data['GPSLongitude'];
+    if (lat != null && lng != null) {
+      try {
+        location = LatLng((lat as num).toDouble(), (lng as num).toDouble());
+      } catch (_) {}
+    }
+
+    return (tags: tags, location: location);
   }
 
   @override
