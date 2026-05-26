@@ -181,21 +181,77 @@ void main() {
       });
     });
 
-    group('write operations throw UnsupportedError', () {
-      test('writeTags throws', () {
-        expect(() => service.writeTags('x.jpg', []), throwsUnsupportedError);
+    group('writeTags', () {
+      test('writes tags and reads them back', () async {
+        final path = await writeJpeg('rw.jpg', JpegBuilder.withExif(
+          TiffBuilder.withDate('2023:01:01 00:00:00'),
+        ));
+        final tags = service.parseTagsFromString('nature, travel');
+
+        final ok = await service.writeTags(path, tags);
+        expect(ok, isTrue);
+
+        final result = await service.readTagsAndLocation(path);
+        expect(result.tags.map((t) => t.tag), containsAll(['nature', 'travel']));
       });
 
+      test('overwrites existing IPTC keywords', () async {
+        final path = await writeJpeg('overwrite.jpg',
+          JpegBuilder.withIptc(JpegBuilder.encodeIptcKeywords(['old'])));
+        final tags = service.parseTagsFromString('new');
+
+        final ok = await service.writeTags(path, tags);
+        expect(ok, isTrue);
+
+        final result = await service.readTagsAndLocation(path);
+        expect(result.tags.map((t) => t.tag).toList(), equals(['new']));
+      });
+
+      test('preserves EXIF GPS coordinates after writing tags', () async {
+        final tiff = TiffBuilder.withGps(
+          latDeg: 27, latMin: 28, latSec: 30, latRef: 'N',
+          lngDeg: 153, lngMin: 1, lngSec: 12, lngRef: 'E',
+        );
+        final path = await writeJpeg('gps_preserve.jpg', JpegBuilder.withExif(tiff));
+        final tags = service.parseTagsFromString('tagged');
+
+        await service.writeTags(path, tags);
+        final result = await service.readTagsAndLocation(path);
+
+        expect(result.location, isNotNull);
+        expect(result.location!.latitude, closeTo(27.475, 0.01));
+        expect(result.tags.map((t) => t.tag), contains('tagged'));
+      });
+
+      test('returns false for non-JPEG file', () async {
+        final file = File('${tempDir.path}/data.bin');
+        await file.writeAsBytes([0x00, 0x01]);
+        final ok = await service.writeTags(
+            file.path, service.parseTagsFromString('tag'));
+        expect(ok, isFalse);
+      });
+
+      test('returns false for missing file', () async {
+        final ok = await service.writeTags(
+            '${tempDir.path}/missing.jpg', service.parseTagsFromString('tag'));
+        expect(ok, isFalse);
+      });
+
+      test('writes empty tag list (clears tags)', () async {
+        final path = await writeJpeg('clear.jpg',
+          JpegBuilder.withIptc(JpegBuilder.encodeIptcKeywords(['remove'])));
+
+        final ok = await service.writeTags(path, []);
+        expect(ok, isTrue);
+
+        final result = await service.readTagsAndLocation(path);
+        expect(result.tags, isEmpty);
+      });
+    });
+
+    group('write operations still unsupported', () {
       test('fixMetadata throws', () {
         expect(() => service.fixMetadata('x.jpg'), throwsUnsupportedError);
-      });
-
-      test('deleteBackup throws', () {
-        expect(() => service.deleteBackup('x.jpg'), throwsUnsupportedError);
-      });
-
-      test('restoreBackup throws', () {
-        expect(() => service.restoreBackup('x.jpg'), throwsUnsupportedError);
       });
 
       test('readAllExifData throws', () {

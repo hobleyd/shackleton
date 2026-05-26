@@ -25,9 +25,16 @@ class XmpReader {
     final liPattern = RegExp('<rdf:li[^>]*>(.*?)</rdf:li>', dotAll: true);
     final results = <String>[];
     for (final match in liPattern.allMatches(bagContent)) {
-      final value = match.group(1)!.trim();
+      final value = _unescape(match.group(1)!.trim());
       if (value.isNotEmpty) results.add(value);
     }
     return results;
   }
+
+  static String _unescape(String s) => s
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&apos;', "'");
 }

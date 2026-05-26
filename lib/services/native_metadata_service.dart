@@ -7,17 +7,22 @@ import '../domain/services/i_exif_tool_service.dart';
 import '../models/tag.dart';
 import 'native/exif_reader.dart';
 import 'native/iptc_reader.dart';
+import 'native/iptc_writer.dart';
 import 'native/jpeg_segment_reader.dart';
+import 'native/jpeg_segment_writer.dart';
 import 'native/xmp_reader.dart';
+import 'native/xmp_writer.dart';
 
-/// Phase-1 read-only metadata service backed by native Dart parsers.
+/// Native Dart metadata service for JPEG files.
 ///
 /// Reads IPTC keywords (primary), XMP subjects (fallback), EXIF GPS
-/// coordinates, creation dates, and embedded JPEG thumbnails — all without
-/// spawning an external process.
+/// coordinates, creation dates, and embedded JPEG thumbnails.
 ///
-/// Write operations throw [UnsupportedError]; they will be implemented in a
-/// later phase.
+/// Writes IPTC keywords and XMP subjects; the EXIF GPS segment is preserved
+/// verbatim when writing tags (GPS coordinate updates are not yet supported).
+///
+/// [readAllExifData] and [fixMetadata] require [ExifToolService] and throw
+/// [UnsupportedError].
 class NativeMetadataService implements IExifToolService {
   @override
   String? findExifTool() => null;
@@ -79,31 +84,57 @@ class NativeMetadataService implements IExifToolService {
   Future<Map<String, ({String orig, String reset})>> readAllExifData(
       String path) {
     throw UnsupportedError(
-        'NativeMetadataService.readAllExifData is not implemented in Phase 1');
+        'NativeMetadataService does not support readAllExifData');
   }
 
+  /// Writes [tags] as IPTC keywords and XMP subjects.
+  ///
+  /// The EXIF segment (and any GPS coordinates already in the file) is
+  /// preserved unchanged. If [location] is non-null it is accepted but not
+  /// written — GPS writing is not yet implemented natively.
   @override
-  Future<bool> writeTags(String path, List<Tag> tags, {LatLng? location}) {
-    throw UnsupportedError(
-        'NativeMetadataService.writeTags is not implemented in Phase 1');
+  Future<bool> writeTags(String path, List<Tag> tags,
+      {LatLng? location}) async {
+    try {
+      final file = File(path);
+      final bytes = await file.readAsBytes();
+      final reader = JpegSegmentReader(bytes);
+      if (!reader.isValidJpeg) return false;
+
+      final keywords = tags.map((t) => t.tag).where((s) => s.isNotEmpty).toList();
+      final iptcBytes = IptcWriter.encodeKeywords(keywords);
+      final xmpXml = XmpWriter.buildXmpWithSubjects(keywords);
+
+      final updated = JpegSegmentWriter.writeMetadata(
+        bytes,
+        iptcIimBytes: iptcBytes,
+        xmpXml: xmpXml,
+      );
+
+      await file.writeAsBytes(updated);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
   Future<bool> fixMetadata(String path) {
-    throw UnsupportedError(
-        'NativeMetadataService.fixMetadata is not implemented in Phase 1');
+    throw UnsupportedError('NativeMetadataService does not support fixMetadata');
   }
 
   @override
-  Future<void> deleteBackup(String path) {
-    throw UnsupportedError(
-        'NativeMetadataService.deleteBackup is not implemented in Phase 1');
+  Future<void> deleteBackup(String path) async {
+    final backup = File('${path}_original');
+    if (backup.existsSync()) backup.deleteSync();
   }
 
   @override
-  Future<void> restoreBackup(String path) {
-    throw UnsupportedError(
-        'NativeMetadataService.restoreBackup is not implemented in Phase 1');
+  Future<void> restoreBackup(String path) async {
+    final backup = File('${path}_original');
+    if (!backup.existsSync()) return;
+    File(path).deleteSync();
+    backup.renameSync(path);
   }
 
   @override
