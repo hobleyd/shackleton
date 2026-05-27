@@ -225,6 +225,25 @@ class ExifToolService implements IExifToolService {
   }
 
   @override
+  Future<int> readOrientationQuarterTurns(String path) async {
+    final exifTool = findExifTool();
+    if (exifTool == null) return 0;
+    try {
+      final raw = await _getOrCreateDaemon(exifTool)
+          .execute(['-s', '-s', '-s', '-Orientation', path]);
+      return switch (raw.trim()) {
+        'Rotate 90 CW'  => 1,
+        'Rotate 180'    => 2,
+        'Rotate 270 CW' => 3,
+        _               => 0,
+      };
+    } catch (_) {
+      _daemon = null;
+      return 0;
+    }
+  }
+
+  @override
   List<Tag> parseTagsFromString(String tags) {
     return tags.split(',').map((e) => Tag(tag: e.trim())).where((t) => t.tag.isNotEmpty).toList();
   }

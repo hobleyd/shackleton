@@ -43,6 +43,11 @@ abstract class IExifToolService {
   /// Read the original creation date from [path]. Returns null if unavailable.
   Future<DateTime?> readCreationDate(String path);
 
+  /// Returns the number of clockwise quarter-turns needed to display the image
+  /// at [path] correctly, based on its EXIF Orientation tag. Returns 0 when
+  /// the tag is absent or the file is not a supported image.
+  Future<int> readOrientationQuarterTurns(String path);
+
   /// Parse a comma-separated tag string into [Tag] objects.
   List<Tag> parseTagsFromString(String tags);
 

@@ -48,6 +48,10 @@ class HybridMetadataService implements IExifToolService {
       _native.writeTags(path, tags, location: location);
 
   @override
+  Future<int> readOrientationQuarterTurns(String path) =>
+      _native.readOrientationQuarterTurns(path);
+
+  @override
   Future<Map<String, ({String orig, String reset})>> readAllExifData(
           String path) =>
       _exifTool.readAllExifData(path);

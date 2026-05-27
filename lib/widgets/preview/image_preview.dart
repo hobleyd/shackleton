@@ -32,6 +32,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
   final _rotateUseCase = RotateImageUseCase();
   Uint8List? _rotatedBytes;
   Uint8List? _thumbnailBytes;
+  int _thumbnailQuarterTurns = 0;
   bool _thumbnailLoading = false;
   bool _isRotatingImage = false;
 
@@ -51,6 +52,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     if (oldWidget.entity.path != widget.entity.path && widget.showThumbnail) {
       setState(() {
         _thumbnailBytes = null;
+        _thumbnailQuarterTurns = 0;
         _thumbnailLoading = false;
       });
       _loadThumbnail();
@@ -60,8 +62,19 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
   Future<void> _loadThumbnail() async {
     setState(() => _thumbnailLoading = true);
     final service = ref.read(exifToolServiceProvider);
-    final bytes = await service.readThumbnail(entityPreview.path);
-    if (mounted) setState(() { _thumbnailBytes = bytes; _thumbnailLoading = false; });
+    final results = await Future.wait([
+      service.readThumbnail(entityPreview.path),
+      service.readOrientationQuarterTurns(entityPreview.path),
+    ]);
+    final bytes = results[0] as Uint8List?;
+    final quarterTurns = results[1] as int;
+    if (mounted) {
+      setState(() {
+        _thumbnailBytes = bytes;
+        _thumbnailQuarterTurns = quarterTurns;
+        _thumbnailLoading = false;
+      });
+    }
   }
 
   @override
@@ -112,10 +125,13 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
         return const Center(child: CircularProgressIndicator.adaptive(strokeWidth: 2));
       }
       if (_thumbnailBytes != null) {
-        return Image.memory(_thumbnailBytes!,
-            alignment: Alignment.center,
-            fit: BoxFit.contain,
-            width: previewWidth);
+        return RotatedBox(
+          quarterTurns: _thumbnailQuarterTurns,
+          child: Image.memory(_thumbnailBytes!,
+              alignment: Alignment.center,
+              fit: BoxFit.contain,
+              width: previewWidth),
+        );
       }
       // No embedded thumbnail — fall through to full image below.
     }

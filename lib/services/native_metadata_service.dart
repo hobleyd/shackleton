@@ -81,6 +81,20 @@ class NativeMetadataService implements IExifToolService {
   }
 
   @override
+  Future<int> readOrientationQuarterTurns(String path) async {
+    try {
+      final bytes = await File(path).readAsBytes();
+      final reader = JpegSegmentReader(bytes);
+      if (!reader.isValidJpeg) return 0;
+      final exifBytes = reader.getExifBytes();
+      if (exifBytes == null) return 0;
+      return ExifReader.readOrientationQuarterTurns(exifBytes);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  @override
   Future<Map<String, ({String orig, String reset})>> readAllExifData(
       String path) {
     throw UnsupportedError(
