@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -21,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
     return databaseFactoryFfi.openDatabase(
       await _getDatabasePath(),
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onConfigure: (db) => _enableForeignKeys(db),
         onCreate: (db, version) => _createTables(db, 0, version),
         onUpgrade: (db, oldVersion, newVersion) =>
@@ -34,6 +35,50 @@ class AppDatabase extends _$AppDatabase {
     await _enableForeignKeys(db);
     if (oldVersion < 1) {
       await AppSchema.createAll(db);
+    }
+    if (oldVersion < 2) {
+      await AppDatabase.migrateV2SplitCommaTagsInDb(db);
+    }
+  }
+
+  @visibleForTesting
+  static Future<void> migrateV2SplitCommaTagsInDb(Database db) async {
+    final commaRows = await db.query('tags',
+        columns: ['id', 'tag'], where: "tag LIKE '%,%'");
+
+    for (final row in commaRows) {
+      final oldId = row['id'] as int;
+      final oldTag = row['tag'] as String;
+
+      final parts = oldTag
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (parts.length <= 1) continue;
+
+      final fileRows = await db.query('file_tags',
+          columns: ['fileId'], where: 'tagId = ?', whereArgs: [oldId]);
+      final fileIds = fileRows.map((r) => r['fileId'] as int).toList();
+
+      for (final part in parts) {
+        final existing = await db.query('tags',
+            columns: ['id'], where: 'tag = ?', whereArgs: [part]);
+        final newTagId = existing.isNotEmpty
+            ? existing.first['id'] as int
+            : await db.insert('tags', {'tag': part});
+
+        for (final fileId in fileIds) {
+          final linked = await db.query('file_tags',
+              where: 'tagId = ? AND fileId = ?', whereArgs: [newTagId, fileId]);
+          if (linked.isEmpty) {
+            await db.insert('file_tags', {'tagId': newTagId, 'fileId': fileId});
+          }
+        }
+      }
+
+      await db.delete('file_tags', where: 'tagId = ?', whereArgs: [oldId]);
+      await db.delete('tags', where: 'id = ?', whereArgs: [oldId]);
     }
   }
 

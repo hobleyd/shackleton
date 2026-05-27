@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shackleton/database/app_database.dart';
 import 'package:shackleton/database/schema.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -71,6 +74,74 @@ void main() {
         () => db.insert('file_tags', {'fileId': 1, 'tagId': 9999}),
         throwsA(anything),
       );
+    });
+  });
+
+  group('AppDatabase.migrateV2SplitCommaTagsInDb', () {
+    late Directory tempDir;
+    late Database migDb;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('migration_v2_test_');
+      migDb = await databaseFactoryFfi.openDatabase(
+        '${tempDir.path}/test.db',
+        options: OpenDatabaseOptions(
+          version: 1,
+          onConfigure: (d) => d.execute('PRAGMA foreign_keys = ON;'),
+          onCreate: (d, _) => AppSchema.createAll(d),
+        ),
+      );
+    });
+
+    tearDown(() async {
+      if (migDb.isOpen) await migDb.close();
+      await tempDir.delete(recursive: true);
+    });
+
+    test('splits a single comma-separated IPTC tag into individual rows', () async {
+      final fileId = await migDb.insert('files', {'path': '/photo.jpg'});
+      final tagId = await migDb.insert('tags', {'tag': 'Annette, Bob, David, Diane'});
+      await migDb.insert('file_tags', {'tagId': tagId, 'fileId': fileId});
+
+      await AppDatabase.migrateV2SplitCommaTagsInDb(migDb);
+
+      final tags = await migDb.query('tags', columns: ['tag'], orderBy: 'tag');
+      expect(tags.map((r) => r['tag']), containsAll(['Annette', 'Bob', 'David', 'Diane']));
+      expect(tags.length, equals(4));
+
+      final junctions = await migDb.query('file_tags', where: 'fileId = ?', whereArgs: [fileId]);
+      expect(junctions.length, equals(4));
+    });
+
+    test('leaves single-word tags unchanged', () async {
+      final fileId = await migDb.insert('files', {'path': '/photo.jpg'});
+      final tagId = await migDb.insert('tags', {'tag': 'nature'});
+      await migDb.insert('file_tags', {'tagId': tagId, 'fileId': fileId});
+
+      await AppDatabase.migrateV2SplitCommaTagsInDb(migDb);
+
+      final tags = await migDb.query('tags', columns: ['tag']);
+      expect(tags.map((r) => r['tag']).toList(), equals(['nature']));
+    });
+
+    test('merges with existing individual tags and avoids duplicate junctions', () async {
+      final fileId = await migDb.insert('files', {'path': '/photo.jpg'});
+      // Pre-existing individual tag
+      final existingId = await migDb.insert('tags', {'tag': 'Bob'});
+      await migDb.insert('file_tags', {'tagId': existingId, 'fileId': fileId});
+      // Legacy comma tag that overlaps with existing
+      final commaId = await migDb.insert('tags', {'tag': 'Annette, Bob'});
+      await migDb.insert('file_tags', {'tagId': commaId, 'fileId': fileId});
+
+      await AppDatabase.migrateV2SplitCommaTagsInDb(migDb);
+
+      final tags = await migDb.query('tags', columns: ['tag'], orderBy: 'tag');
+      expect(tags.map((r) => r['tag']), containsAll(['Annette', 'Bob']));
+      expect(tags.length, equals(2));
+
+      // Exactly one file_tags row per unique tag for this file
+      final junctions = await migDb.query('file_tags', where: 'fileId = ?', whereArgs: [fileId]);
+      expect(junctions.length, equals(2));
     });
   });
 
