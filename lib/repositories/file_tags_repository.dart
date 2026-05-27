@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/notify.dart';
 
@@ -46,7 +45,6 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
     int tagCount = await _db.getCount('file_tags', where: 'tagId = ?', whereArgs: [tagId.toString()]);
 
     if (tagCount == 0) {
-      debugPrint('deleting tag: $tagId with $tagCount');
       _db.delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
       return true;
     }
@@ -138,6 +136,34 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   }
 
   @override
+  Future<void> addTagToFile(String filePath, String tagName) async {
+    if (tagName.trim().isEmpty) return;
+
+    await _db.transaction((txn) async {
+      final fileRows = await txn.query('files',
+          columns: ['id'], where: 'path = ?', whereArgs: [filePath]);
+      final fileId = fileRows.isNotEmpty
+          ? fileRows.first['id'] as int
+          : await txn.insert('files', {'path': filePath});
+
+      final tagRows = await txn.query('tags',
+          columns: ['id'], where: 'tag = ?', whereArgs: [tagName]);
+      final tagId = tagRows.isNotEmpty
+          ? tagRows.first['id'] as int
+          : await txn.insert('tags', {'tag': tagName});
+
+      final existing = await txn.query('file_tags',
+          where: 'fileId = ? and tagId = ?', whereArgs: [fileId, tagId]);
+      if (existing.isEmpty) {
+        await txn.insert('file_tags', {'fileId': fileId, 'tagId': tagId});
+      }
+    });
+
+    final tags = await getTags();
+    if (ref.mounted) state = AsyncData(tags);
+  }
+
+  @override
   Future<void> writeTags(Entity entity) async {
     bool changed = false;
 
@@ -187,7 +213,6 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
           final refs = await txn.rawQuery(
               'select count(*) as cnt from file_tags where tagId = ?', [tagId]);
           if ((refs.first['cnt'] as int) == 0) {
-            debugPrint('deleting tag: $tagId with 0');
             await txn.delete('tags', where: 'id = ?', whereArgs: [tagId]);
           }
           changed = true;
@@ -202,8 +227,6 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
             where: 'tagId = ? and fileId = ?',
             whereArgs: [tag.id, entity.id]);
         if (existing.isEmpty) {
-          debugPrint(
-              'attempting to insert ${entity.path} (${entity.id}) -> ${tag.tag} (${tag.id})');
           await txn.insert('file_tags', {'tagId': tag.id, 'fileId': entity.id});
         }
       }

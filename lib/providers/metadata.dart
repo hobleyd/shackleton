@@ -16,10 +16,10 @@ part 'metadata.g.dart';
 
 @riverpod
 class Metadata extends _$Metadata {
-  late final IExifToolService _exif;
-  late final LoadMetadataUseCase _loadUseCase;
-  late final SaveMetadataUseCase _saveUseCase;
-  late final dynamic _notify;
+  late IExifToolService _exif;
+  late LoadMetadataUseCase _loadUseCase;
+  late SaveMetadataUseCase _saveUseCase;
+  late dynamic _notify;
 
   @override
   FileMetaData build(FileOfInterest entity) {

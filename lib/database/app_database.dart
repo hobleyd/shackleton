@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
     return databaseFactoryFfi.openDatabase(
       await _getDatabasePath(),
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onConfigure: (db) => _enableForeignKeys(db),
         onCreate: (db, version) => _createTables(db, 0, version),
         onUpgrade: (db, oldVersion, newVersion) =>
@@ -38,6 +38,9 @@ class AppDatabase extends _$AppDatabase {
     }
     if (oldVersion < 2) {
       await AppDatabase.migrateV2SplitCommaTagsInDb(db);
+    }
+    if (oldVersion < 3) {
+      await AppSchema.createFaceTables(db);
     }
   }
 

@@ -76,6 +76,41 @@ class AppSchema {
   static const String createFavouritesIndex =
       'create index if not exists favourites_idx on favourites(path);';
 
+  // ── face_identities ────────────────────────────────────────────────────────
+
+  static const String createFaceIdentities = '''
+      create table if not exists face_identities(
+        id        integer primary key autoincrement,
+        name      text    not null,
+        embedding blob    not null,
+        unique (name) on conflict replace);
+      ''';
+
+  // ── file_faces ─────────────────────────────────────────────────────────────
+
+  static const String createFileFaces = '''
+      create table if not exists file_faces(
+        id          integer primary key autoincrement,
+        file_id     integer not null references files(id) on delete cascade,
+        face_index  integer not null,
+        embedding   blob    not null,
+        bbox_x      real    not null,
+        bbox_y      real    not null,
+        bbox_w      real    not null,
+        bbox_h      real    not null,
+        confidence  real    not null,
+        identity_id integer references face_identities(id) on delete set null,
+        unique (file_id, face_index) on conflict replace);
+      ''';
+
+  // ── file_face_scan_status ──────────────────────────────────────────────────
+
+  static const String createFileFaceScanStatus = '''
+      create table if not exists file_face_scan_status(
+        file_id    integer primary key references files(id) on delete cascade,
+        scanned_at integer not null);
+      ''';
+
   // ── helpers ────────────────────────────────────────────────────────────────
 
   /// Creates all tables and indices for schema version 1.
@@ -89,5 +124,12 @@ class AppSchema {
     await db.execute(createFilesIndex);
     await db.execute(createFolderSettingsIndex);
     await db.execute(createFavouritesIndex);
+  }
+
+  /// Creates face recognition tables for schema version 3.
+  static Future<void> createFaceTables(DatabaseExecutor db) async {
+    await db.execute(createFaceIdentities);
+    await db.execute(createFileFaces);
+    await db.execute(createFileFaceScanStatus);
   }
 }

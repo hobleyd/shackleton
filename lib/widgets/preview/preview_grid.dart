@@ -5,11 +5,13 @@ import '../../interfaces/tag_handler.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/map_settings.dart';
 import '../../models/tag.dart';
+import '../../providers/face_recognition_provider.dart';
 import '../../providers/map_pane.dart';
 import '../../providers/metadata.dart';
 import '../../providers/contents/grid_contents.dart';
 import '../../providers/contents/selected_grid_entities.dart';
 import '../entity_context_menu.dart';
+import '../face_recognition/face_search_panel.dart';
 import '../metadata/metadata_editor.dart';
 import 'grid_controller.dart';
 import 'photo_map.dart';
@@ -22,19 +24,37 @@ class PreviewGrid extends ConsumerStatefulWidget {
   ConsumerState<PreviewGrid> createState() => _PreviewGrid();
 }
 
-class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler{
+class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
   late List<FileOfInterest> entities;
   late GridController gridController;
+  bool _showFaceSearch = false;
 
   @override
   Widget build(BuildContext context) {
     MapSettings map = ref.watch(mapPaneProvider);
     entities = ref.watch(gridContentsProvider);
 
+    ref.listen<FaceSearchState>(faceSearchProvider, (prev, next) {
+      if (next.status == FaceSearchStatus.done && next.results.isNotEmpty) {
+        ref.read(gridContentsProvider.notifier).replaceAll(
+              next.results.map((r) => r.file).toSet(),
+            );
+      } else if (next.status == FaceSearchStatus.idle &&
+          prev != null &&
+          prev.status != FaceSearchStatus.idle) {
+        ref.invalidate(gridContentsProvider);
+      }
+    });
+
     return entities.isEmpty
         ? Padding(
             padding: const EdgeInsets.only(top: 50),
-            child: Text(entities.isNotEmpty ? 'Your selected files are not previewable (yet), sorry' : 'Select one or more files to preview!', textAlign: TextAlign.center,))
+            child: Text(
+              entities.isNotEmpty
+                  ? 'Your selected files are not previewable (yet), sorry'
+                  : 'Select one or more files to preview!',
+              textAlign: TextAlign.center,
+            ))
         : Row(children: [
             Expanded(
               child: EntityContextMenu(
@@ -54,7 +74,39 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler{
               SizedBox(width: map.width, child: const PhotoMap()),
             ],
             const VerticalDivider(),
-            SizedBox(width: 210, child: MetadataEditor(keyHandlerCallback: gridController, tagHandler: this)),
+            SizedBox(
+              width: 210,
+              child: Column(
+                children: [
+                  // Toggle between metadata and face search panels.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Tooltip(
+                        message: _showFaceSearch ? 'Show metadata' : 'Face search',
+                        child: IconButton(
+                          iconSize: 16,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            _showFaceSearch ? Icons.label : Icons.face_retouching_natural,
+                          ),
+                          onPressed: () => setState(() => _showFaceSearch = !_showFaceSearch),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: _showFaceSearch
+                        ? const FaceSearchPanel()
+                        : MetadataEditor(
+                            keyHandlerCallback: gridController,
+                            tagHandler: this,
+                          ),
+                  ),
+                ],
+              ),
+            ),
           ]);
   }
 
