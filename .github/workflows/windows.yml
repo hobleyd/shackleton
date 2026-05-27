@@ -41,6 +41,21 @@ jobs:
           curl -L -o build/windows/x64/runner/Release/sqlite3.dll \
             "https://github.com/tekartik/sqflite/raw/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll"
 
+      - name: Push version tag
+        uses: EndBug/latest-tag@latest
+        with:
+          tag-name: ${{ steps.version.outputs.version }}
+
+      - name: Create Windows installer
+        run: dart run windows.dart
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          name: 'shackleton-${{ steps.version.outputs.version }}'
+          files: 'build/windows/shackleton-${{ steps.version.outputs.version }}.exe'
+          tag_name: ${{ steps.version.outputs.version }}
+
       - name: Create dist structure for desktop_updater
         shell: bash
         run: |
