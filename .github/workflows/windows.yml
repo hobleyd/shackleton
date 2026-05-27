@@ -54,7 +54,7 @@ jobs:
         run: dart run desktop_updater:archive windows
 
       - name: Upload distribution artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-dist
           path: dist/${{ github.run_number }}/${{ steps.version.outputs.version }}+${{ github.run_number }}-windows/
