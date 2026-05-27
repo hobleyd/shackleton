@@ -30,6 +30,54 @@ jobs:
       - name: Prepare bundle assets
         run:
           cp assets/explorer.png build/linux/x64/release/bundle/shackleton.png
+      - name: Copy missing libs into bundle
+        run: |
+          BUNDLE_LIB=build/linux/x64/release/bundle/lib
+          copy_if_missing() {
+            local lib=$1
+            local found=$(find /usr/lib/x86_64-linux-gnu /usr/lib -name "$lib" 2>/dev/null | head -1)
+            if [ -n "$found" ]; then
+              echo "Copying $found"
+              cp "$found" "$BUNDLE_LIB/"
+            else
+              echo "WARNING: $lib not found on host"
+            fi
+          }
+          # Run ldd and copy everything flagged as not found
+          ldd build/linux/x64/release/bundle/shackleton \
+            | grep "not found" \
+            | awk '{print $1}' \
+            | while read lib; do copy_if_missing "$lib"; done
+          for solib in "$BUNDLE_LIB"/*.so*; do
+            ldd "$solib" 2>/dev/null \
+              | grep "not found" \
+              | awk '{print $1}' \
+              | while read lib; do copy_if_missing "$lib"; done
+          done
+      - name: Copy missing libs into bundle
+        run: |
+          BUNDLE_LIB=build/linux/x64/release/bundle/lib
+          copy_if_missing() {
+            local lib=$1
+            local found=$(find /usr/lib/x86_64-linux-gnu /usr/lib -name "$lib" 2>/dev/null | head -1)
+            if [ -n "$found" ]; then
+              echo "Copying $found"
+              cp "$found" "$BUNDLE_LIB/"
+            else
+              echo "WARNING: $lib not found on host"
+            fi
+          }
+          # Run ldd and copy everything flagged as not found
+          ldd build/linux/x64/release/bundle/shackleton \
+            | grep "not found" \
+            | awk '{print $1}' \
+            | while read lib; do copy_if_missing "$lib"; done
+          for solib in "$BUNDLE_LIB"/*.so*; do
+            ldd "$solib" 2>/dev/null \
+              | grep "not found" \
+              | awk '{print $1}' \
+              | while read lib; do copy_if_missing "$lib"; done
+          done
       - name: Install Flatpak tooling
         run: |
           sudo apt-get update
@@ -45,20 +93,68 @@ jobs:
           runtime: org.freedesktop.Platform
           runtime-version: '24.08'
           sdk: org.freedesktop.Sdk
-          command: shackleton
+          command: shackleton.sh
+          add-extensions:
+                org.freedesktop.Platform.ffmpeg-full:
+                  directory: lib/ffmpeg
+                  version: '24.08'
+                  add-ld-path: .
           finish-args:
             - --share=ipc
             - --socket=fallback-x11
             - --socket=wayland
             - --device=dri
             - --filesystem=home
+            - --env=LD_LIBRARY_PATH=/app/lib:/app/lib64
           modules:
+            - name: libplacebo
+              buildsystem: meson
+              config-opts:
+                - -Dvulkan=disabled
+                - -Dd3d11=disabled
+                - -Ddemos=false
+                - --prefix=/app
+              sources:
+                - type: git
+                  url: https://github.com/haasn/libplacebo.git
+                  tag: v6.338.2
+            - name: libass
+              buildsystem: autotools
+              sources:
+                - type: git
+                  url: https://github.com/libass/libass.git
+                  tag: 0.17.3
+            - name: mpv
+              buildsystem: meson
+              build-options:
+                env:
+                  PKG_CONFIG_PATH: /app/lib/pkgconfig:/app/lib64/pkgconfig
+              config-opts:
+                - -Dlibmpv=true
+                - -Dcplayer=false
+                - -Dtests=false
+                - -Dmanpage-build=disabled
+                - -Dcdda=disabled
+                - -Ddvdnav=disabled
+              sources:
+                - type: archive
+                  url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.41.0.tar.gz
+                  sha256: ee21092a5ee427353392360929dc64645c54479aefdb5babc5cfbb5fad626209
             - name: shackleton
               buildsystem: simple
               build-commands:
                 - install -Dm755 shackleton /app/bin/shackleton
-                - cp -r lib /app/lib
+                - |
+                  cat > shackleton.sh << 'SCRIPT'
+                  #!/bin/bash
+                  export LD_LIBRARY_PATH=/app/lib:$LD_LIBRARY_PATH
+                  exec /app/bin/shackleton "$@"
+                  SCRIPT
+                - install -Dm755 shackleton.sh /app/bin/shackleton.sh
+                - cp -r lib/* /app/lib
+                - chmod 755 /app/lib/*.so*
                 - cp -r data /app/data
+                - mkdir -p /app/lib/ffmpeg
                 - install -Dm644 au.com.sharpblue.shackleton.desktop /app/share/applications/au.com.sharpblue.shackleton.desktop
                 - install -Dm644 shackleton.png /app/share/icons/hicolor/512x512/apps/au.com.sharpblue.shackleton.png
               sources:
@@ -71,7 +167,7 @@ jobs:
           cat > au.com.sharpblue.shackleton.desktop <<'EOF'
           [Desktop Entry]
           Name=Shackleton
-          Exec=Shackleton
+          Exec=shackleton.sh
           Type=Application
           Categories=Office;Education;
           Icon=au.com.sharpblue.shackleton
