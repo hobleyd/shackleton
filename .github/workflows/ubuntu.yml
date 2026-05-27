@@ -177,7 +177,7 @@ jobs:
           flatpak-builder --force-clean --repo=repo build-dir au.com.sharpblue.shackleton.yaml
           flatpak build-bundle repo shackleton-${VERSION}-linux-x86_64.flatpak au.com.sharpblue.shackleton
       - name: Upload Linux Flatpak to Release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v3.0.0
         with:
           tag_name: ${{ env.VERSION }}
           files: shackleton-${{ env.VERSION }}-linux-x86_64.flatpak
