@@ -165,12 +165,19 @@ class NativeMetadataService implements IExifToolService {
     final iptcBytes = reader.getIptcBytes();
     if (iptcBytes != null) {
       final keywords = IptcReader.readKeywords(iptcBytes);
-      if (keywords.isNotEmpty) return keywords.map((k) => Tag(tag: k)).toList();
+      if (keywords.isNotEmpty) {
+        // Legacy exiftool writes stored all tags as one comma-separated keyword
+        // entry; expand each entry so both old and new files read correctly.
+        final tags = keywords.expand((k) => parseTagsFromString(k)).toList();
+        if (tags.isNotEmpty) return tags;
+      }
     }
     final xmpBytes = reader.getXmpBytes();
     if (xmpBytes != null) {
       final subjects = XmpReader.readSubjects(xmpBytes);
-      if (subjects.isNotEmpty) return subjects.map((s) => Tag(tag: s)).toList();
+      if (subjects.isNotEmpty) {
+        return subjects.expand((s) => parseTagsFromString(s)).toList();
+      }
     }
     return const [];
   }

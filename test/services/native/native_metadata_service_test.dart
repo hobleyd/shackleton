@@ -56,6 +56,37 @@ void main() {
         expect(result.tags.map((t) => t.tag), containsAll(['sunset', 'landscape']));
       });
 
+      test('splits legacy comma-separated IPTC keyword into individual tags', () async {
+        // Old exiftool writer stored all tags as one comma-separated IPTC entry.
+        final iptc = JpegBuilder.encodeIptcKeywords(['Annette, Bob, David, Diane']);
+        final path = await writeJpeg('legacy_iptc.jpg', JpegBuilder.withIptc(iptc));
+
+        final result = await service.readTagsAndLocation(path);
+        expect(result.tags.map((t) => t.tag),
+            containsAll(['Annette', 'Bob', 'David', 'Diane']));
+        expect(result.tags.length, equals(4));
+      });
+
+      test('splits legacy comma-separated XMP subject into individual tags', () async {
+        const xmp = '''<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <dc:subject>
+        <rdf:Bag>
+          <rdf:li>Annette, Bob, David, Diane</rdf:li>
+        </rdf:Bag>
+      </dc:subject>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>''';
+        final path = await writeJpeg('legacy_xmp.jpg', JpegBuilder.withXmp(xmp));
+
+        final result = await service.readTagsAndLocation(path);
+        expect(result.tags.map((t) => t.tag),
+            containsAll(['Annette', 'Bob', 'David', 'Diane']));
+        expect(result.tags.length, equals(4));
+      });
+
       test('prefers IPTC over XMP when both are present', () async {
         final iptc = JpegBuilder.encodeIptcKeywords(['iptc-keyword']);
         const xmp = '''<x:xmpmeta>
