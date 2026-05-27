@@ -30,7 +30,7 @@ jobs:
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: dart run flutter_launcher_icons
-      - run: flutter build macos --release --build-number ${{ github.run_number }}
+      - run: flutter build macos --release --no-tree-shake-icons --build-number ${{ github.run_number }}
 
       - name: Create dist structure for desktop_updater
         run: |
