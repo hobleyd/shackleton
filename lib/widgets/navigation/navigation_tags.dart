@@ -32,6 +32,7 @@ class NavigationTags extends ConsumerWidget {
                       child: Text(tags[index].tag,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall)),
+                  physics: const NeverScrollableScrollPhysics(),
                   scrollDirection: Axis.vertical,
                   shrinkWrap: true),
             ],
