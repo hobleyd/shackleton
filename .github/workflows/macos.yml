@@ -1,38 +1,116 @@
 name: shackleton-macos-ci
 
 on: [push, workflow_dispatch]
-      
+
+permissions:
+  contents: write
+
 jobs:
- build:
-   runs-on: macos-latest
-   steps:
-     - run: brew install yq
-     - uses: actions/checkout@v3
-     - name: Get the app version
-       id: get_version
-       run: |
-         echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
-     - name: "Push version tag from pubspec.yaml"
-       uses: EndBug/latest-tag@latest
-       with:
-         tag-name: ${{ env.VERSION }}
-     - uses: subosito/flutter-action@v2
-       with:
-         channel: 'stable'
-         architecture: x64
-         cache: true
-     - run: flutter config --enable-macos-desktop
-     - run: flutter create --platforms=macos .
-     - run: dart run build_runner build --delete-conflicting-outputs
-     - run: dart run flutter_launcher_icons
-     - run: flutter build macos --release --no-tree-shake-icons
-     - uses: lethja/create-dmg-action@v0.0.2
-       with:
-         name: 'shackleton'
-         srcdir: 'build/macos/Build/Products/Release/shackleton.app'
-     - name: Create Release
-       uses: softprops/action-gh-release@v0.1.15
-       with:
-         files: 'shackleton.dmg'
-         name: 'shackleton-${{ env.VERSION }}'
-         tag_name: ${{ env.VERSION }}
+  build:
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ github.run_number }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version info
+        id: version
+        run: |
+          VERSION_FULL=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          BUILD_NAME=${VERSION_FULL%%+*}
+          echo "version=$BUILD_NAME" >> $GITHUB_OUTPUT
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: false
+
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: dart run flutter_launcher_icons
+      - run: flutter build macos --release --build-number ${{ github.run_number }}
+
+      - name: Create dist structure for desktop_updater
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BUILD_NUMBER="${{ github.run_number }}"
+          mkdir -p "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos"
+          cp -r "build/macos/Build/Products/Release/shackleton.app" \
+            "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos/shackleton.app"
+
+      - name: Generate file hashes
+        run: dart run desktop_updater:archive macos
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dist
+          path: dist/${{ github.run_number }}/${{ steps.version.outputs.version }}+${{ github.run_number }}-macos/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download macOS distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-dist
+          path: deploy/releases/${{ needs.build.outputs.version }}+${{ needs.build.outputs.build_number }}-macos/
+
+      - name: Update app-archive.json
+        run: |
+          VERSION="${{ needs.build.outputs.version }}"
+          BUILD_NUMBER="${{ needs.build.outputs.build_number }}"
+          DATE=$(date +%Y-%m-%d)
+          URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-macos"
+
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${VERSION}$" | head -1)
+          if [ -n "$PREV_TAG" ]; then
+            RAW_COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"%s" --no-merges)
+          else
+            RAW_COMMITS=$(git log --pretty=format:"%s" --no-merges | head -30)
+          fi
+          if [ -n "$RAW_COMMITS" ]; then
+            CHANGES=$(echo "$RAW_COMMITS" | jq -R '{"message": .}' | jq -s '.')
+          else
+            CHANGES='[{"message": "Release '"$VERSION"'"}]'
+          fi
+
+          git fetch origin gh-pages 2>/dev/null || true
+          git show origin/gh-pages:app-archive.json > current-archive.json 2>/dev/null \
+            || echo '{"appName":"Shackleton","description":"Cross-platform desktop file explorer and photo library manager.","items":[]}' > current-archive.json
+
+          jq --arg version "$VERSION" \
+             --argjson short_version "$BUILD_NUMBER" \
+             --arg date "$DATE" \
+             --arg url "$URL" \
+             --argjson changes "$CHANGES" \
+             '.items = (
+               [.items[] | select((.platform == "macos" and .shortVersion == $short_version) | not)]
+               + [{
+                 "version": $version,
+                 "shortVersion": $short_version,
+                 "changes": $changes,
+                 "date": $date,
+                 "mandatory": false,
+                 "url": $url,
+                 "platform": "macos"
+               }]
+             )' current-archive.json > deploy/app-archive.json
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          keep_files: true

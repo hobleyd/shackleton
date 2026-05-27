@@ -13,6 +13,7 @@ import '../repositories/app_statistics_repository.dart';
 import '../repositories/file_tags_repository.dart';
 import 'shackleton_notifications.dart';
 import 'shackleton_statistics.dart';
+import 'shackleton_update.dart';
 
 class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
@@ -138,8 +139,14 @@ class ShackletonSettings extends ConsumerWidget {
                             ElevatedButton(
                               onPressed: () => _cleanOrphanedTags(ref),
                               child: Text('Clean Orphaned Tags', style: Theme.of(context).textTheme.labelSmall),
-                            ),                          ],
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: 10),
+                        Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
+                        const SizedBox(height: 10),
+                        Text('Updates', style: Theme.of(context).textTheme.labelSmall),
+                        const ShackletonUpdate(),
                       ],
                     ),
                   ),
