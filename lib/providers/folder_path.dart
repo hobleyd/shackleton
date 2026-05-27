@@ -26,17 +26,16 @@ class FolderPath extends _$FolderPath implements FileEventsCallback {
 
   void addFolder(Directory clickedPath, Directory newPath) {
     // Don't trigger a rebuild if the folder is already visible.
-    if (state.contains(newPath)) {
+    if (state.any((d) => d.path == newPath.path)) {
       return;
     }
 
     if (clickedPath.path == state.last.path) {
-      state = [ ...state, newPath];
+      state = [...state, newPath];
     } else {
-      state = [
-        ...state.sublist(0, state.indexOf(clickedPath) + 1),
-        newPath,
-      ];
+      final idx = state.indexWhere((d) => d.path == clickedPath.path);
+      if (idx == -1) return;
+      state = [...state.sublist(0, idx + 1), newPath];
     }
   }
 
