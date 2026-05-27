@@ -28,10 +28,12 @@ jobs:
           channel: 'stable'
           cache: false
 
+      - run: flutter config --enable-windows-desktop
+      - run: flutter create --platforms=windows .
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: dart run flutter_launcher_icons
-      - run: flutter build windows --release --build-number ${{ github.run_number }}
+      - run: flutter build windows --release --no-tree-shake-icons --build-number ${{ github.run_number }}
 
       - name: Copy sqlite3.dll
         shell: bash
