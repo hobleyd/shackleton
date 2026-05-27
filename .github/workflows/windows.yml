@@ -48,6 +48,8 @@ jobs:
 
       - name: Create Windows installer
         run: dart run windows.dart
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v0.1.15
