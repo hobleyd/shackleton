@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:desktop_updater/desktop_updater.dart';
 import 'package:desktop_updater/updater_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ShackletonUpdate extends StatefulWidget {
   const ShackletonUpdate({super.key});
@@ -13,12 +14,16 @@ class ShackletonUpdate extends StatefulWidget {
 
 class _ShackletonUpdateState extends State<ShackletonUpdate> {
   DesktopUpdaterController? _controller;
+  String _version = '';
 
   static const String _appArchiveUrl = 'https://hobleyd.github.io/shackleton/app-archive.json';
 
   @override
   void initState() {
     super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = info.version);
+    });
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       _controller = DesktopUpdaterController(
         appArchiveUrl: Uri.parse(_appArchiveUrl),
@@ -53,7 +58,7 @@ class _ShackletonUpdateState extends State<ShackletonUpdate> {
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Text(
-                'Shackleton is up to date.',
+                'Shackleton${_version.isNotEmpty ? ' [$_version]' : ''} is up to date.',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
             ),

@@ -145,7 +145,6 @@ class ShackletonSettings extends ConsumerWidget {
                         const SizedBox(height: 10),
                         Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 3),
                         const SizedBox(height: 10),
-                        Text('Updates', style: Theme.of(context).textTheme.labelSmall),
                         const ShackletonUpdate(),
                       ],
                     ),
