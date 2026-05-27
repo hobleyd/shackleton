@@ -38,14 +38,6 @@ class Metadata extends _$Metadata {
   bool contains(Tag tag) => state.contains(tag);
 
   Future<void> _load(FileOfInterest entity) async {
-    if (!hasExifTool) {
-      // Schedule asynchronously — calling notify synchronously during build
-      // would modify another provider while this one is still initializing.
-      Future(() => _notify.addNotification(
-          message: 'exiftool not installed, please refer to https://github.com/hobleyd/shackleton for installation instructions.'));
-      return;
-    }
-
     final metadata = await _loadUseCase.execute(entity);
     if (metadata != null && ref.mounted) state = metadata;
   }

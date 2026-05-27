@@ -15,11 +15,9 @@ class LoadMetadataUseCase {
         _tagsRepository = tagsRepository;
 
   /// Reads tags and GPS from [entity] and persists them to the tags DB.
-  /// Returns null when [entity] does not support metadata or exiftool is
-  /// unavailable.
+  /// Returns null when [entity] does not support metadata.
   Future<FileMetaData?> execute(FileOfInterest entity) async {
     if (!entity.isMetadataSupported) return null;
-    if (_exifService.findExifTool() == null) return null;
 
     final result = await _exifService.readTagsAndLocation(entity.path);
     final metadata = FileMetaData(entity: entity, tags: result.tags, gpsLocation: result.location);

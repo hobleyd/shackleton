@@ -45,18 +45,7 @@ void main() {
   FileOfInterest txt() => FileOfInterest(entity: txtFile);
 
   group('LoadMetadataUseCase', () {
-    test('returns null when exiftool is not installed', () async {
-      when(() => mockExif.findExifTool()).thenReturn(null);
-
-      final result = await useCase.execute(jpeg());
-
-      expect(result, isNull);
-      verifyNever(() => mockTags.writeTags(any()));
-    });
-
     test('returns null for unsupported file types', () async {
-      when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
-
       final result = await useCase.execute(txt());
 
       expect(result, isNull);
@@ -64,7 +53,6 @@ void main() {
     });
 
     test('reads tags and location then persists to repository', () async {
-      when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
       when(() => mockExif.readTagsAndLocation(any())).thenAnswer(
         (_) async => (tags: [Tag(tag: 'nature'), Tag(tag: 'travel')], location: null),
       );
@@ -78,7 +66,6 @@ void main() {
     });
 
     test('includes GPS location when exiftool returns coordinates', () async {
-      when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
       when(() => mockExif.readTagsAndLocation(any())).thenAnswer(
         (_) async => (tags: <Tag>[], location: const LatLng(27.47, 153.02) as LatLng?),
       );

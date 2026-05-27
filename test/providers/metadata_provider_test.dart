@@ -32,6 +32,8 @@ void main() {
 
     mockExif = MockExifToolService();
     when(() => mockExif.findExifTool()).thenReturn('/usr/bin/exiftool');
+    when(() => mockExif.readTagsAndLocation(any()))
+        .thenAnswer((_) async => (tags: <Tag>[], location: null));
     when(() => mockExif.parseTagsFromString(any())).thenAnswer(
       (inv) => (inv.positionalArguments.first as String)
           .split(',')
@@ -62,9 +64,6 @@ void main() {
   group('Metadata provider', () {
     test('hasExifTool returns true when service finds exiftool', () async {
       final entity = jpegEntity();
-      when(() => mockExif.readTagsAndLocation(any()))
-          .thenAnswer((_) async => (tags: <Tag>[], location: null));
-
       container.read(metadataProvider(entity));
       expect(container.read(metadataProvider(entity).notifier).hasExifTool, isTrue);
       await Future.delayed(const Duration(milliseconds: 50));
@@ -96,8 +95,6 @@ void main() {
 
     test('replaceTagsFromString updates state without writing to file', () async {
       final entity = jpegEntity();
-      when(() => mockExif.readTagsAndLocation(any()))
-          .thenAnswer((_) async => (tags: <Tag>[], location: null));
 
       // Initialise the provider state with a known entity so entity! is non-null.
       container.read(metadataProvider(entity));
