@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pro_image_editor/pro_image_editor.dart';
 
 import '../../application/use_cases/rotate_image_use_case.dart';
 import '../../models/file_of_interest.dart';
@@ -25,7 +26,7 @@ class ImagePreview extends ConsumerStatefulWidget {
 
 class _ImagePreview extends ConsumerState<ImagePreview> {
   final _rotateUseCase = RotateImageUseCase();
-  Uint8List? _rotatedBytes;
+  Uint8List? _editedBytes;
   bool _isRotatingImage = false;
 
   FileOfInterest get entityPreview => widget.entity;
@@ -49,6 +50,10 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
                     child: Text(entityPreview.name,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.labelSmall))),
+            _getIconButton(Icons.edit,
+                height: 16,
+                toolTip: 'Edit image...',
+                callback: () => _openEditor(context)),
             _getIconButton(Icons.rotate_right,
                 height: 16,
                 toolTip: 'Rotate Right...',
@@ -64,8 +69,8 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
   }
 
   Widget _buildImage(BuildContext context) {
-    if (_rotatedBytes != null) {
-      return Image.memory(_rotatedBytes!,
+    if (_editedBytes != null) {
+      return Image.memory(_editedBytes!,
           alignment: Alignment.center,
           fit: BoxFit.contain,
           width: previewWidth,
@@ -99,7 +104,28 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
 
   void _rotate(int degrees) async {
     setState(() => _isRotatingImage = true);
-    _rotatedBytes = await _rotateUseCase.execute(entityPreview, degrees);
+    _editedBytes = await _rotateUseCase.execute(entityPreview, degrees);
     if (mounted) setState(() => _isRotatingImage = false);
+  }
+
+  Future<void> _openEditor(BuildContext context) async {
+    final sourceBytes = _editedBytes ?? await (entityPreview.entity as File).readAsBytes();
+
+    if (!context.mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProImageEditor.memory(
+          sourceBytes,
+          callbacks: ProImageEditorCallbacks(
+            onImageEditingComplete: (Uint8List editedBytes) async {
+              await (entityPreview.entity as File).writeAsBytes(editedBytes);
+              if (mounted) setState(() => _editedBytes = editedBytes);
+              if (context.mounted) Navigator.of(context).pop();
+            },
+          ),
+        ),
+      ),
+    );
   }
 }
