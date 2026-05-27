@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shackleton/models/folder_ui_settings.dart';
 import 'package:shackleton/widgets/folders/folder_pane_controller.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../misc/app_intents.dart';
 import '../../misc/drag_drop.dart';
 import '../../models/file_of_interest.dart';
 import '../../repositories/folder_settings_repository.dart';
@@ -27,6 +29,7 @@ class FolderDropZone extends ConsumerStatefulWidget {
 
 class _FolderDropZone extends ConsumerState<FolderDropZone> {
   late FolderPaneController paneController;
+  final FocusNode _focusNode = FocusNode();
 
   bool isDropZone = false;
   bool showFolderButtons = false;
@@ -57,41 +60,68 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
             });
           },
           onPerformDrop: (event) => onPerformDrop(event, destination: FileOfInterest(entity: folderPath)),
-          child: MouseRegion(
-            onEnter: (_) {
-              paneController.hasFocus = true;
-              setState(() {
-                showFolderButtons = true;
-              });
+          child: Shortcuts(
+            shortcuts: {
+              const SingleActivator(LogicalKeyboardKey.arrowUp): const NavigateUpIntent(),
+              const SingleActivator(LogicalKeyboardKey.arrowUp, shift: true): const NavigateUpIntent(),
+              const SingleActivator(LogicalKeyboardKey.arrowDown): const NavigateDownIntent(),
+              const SingleActivator(LogicalKeyboardKey.arrowDown, shift: true): const NavigateDownIntent(),
+              const SingleActivator(LogicalKeyboardKey.backspace): const DeleteIntent(),
+              const SingleActivator(LogicalKeyboardKey.delete): const DeleteIntent(),
+              const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent(),
+              const SingleActivator(LogicalKeyboardKey.keyA, meta: true): const SelectAllIntent(),
+              const SingleActivator(LogicalKeyboardKey.keyA, control: true): const SelectAllIntent(),
+              const SingleActivator(LogicalKeyboardKey.keyN, meta: true): const NewEntityIntent(),
+              const SingleActivator(LogicalKeyboardKey.keyN, control: true): const NewEntityIntent(),
             },
-            onExit: (_) {
-              paneController.hasFocus = false;
-              setState(() {
-                showFolderButtons = false;
-              });
-            },
-              child: Container(
-                alignment: Alignment.topLeft,
-                decoration: isDropZone
-                    ? BoxDecoration(shape: BoxShape.rectangle, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.teal, width: 2,),)
-                    : null,
-                child: EntityContextMenu(
-                  folder: FileOfInterest(entity: folderPath),
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
-                    child: Column(
-                      children: [
-                        FolderColumnHeaders(path: folderPath, showDetailedView: folderSettings.detailedView),
-                        Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
-                        Expanded(
-                            child: FolderPane(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
-                        FolderSettingsIcons(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
-                      ],
+            child: Actions(
+              actions: {
+                NavigateUpIntent: CallbackAction<NavigateUpIntent>(onInvoke: (_) => paneController.up()),
+                NavigateDownIntent: CallbackAction<NavigateDownIntent>(onInvoke: (_) => paneController.down()),
+                DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (_) => paneController.delete()),
+                ExitIntent: CallbackAction<ExitIntent>(onInvoke: (_) => paneController.exit()),
+                SelectAllIntent: CallbackAction<SelectAllIntent>(onInvoke: (_) => paneController.selectAll()),
+                NewEntityIntent: CallbackAction<NewEntityIntent>(onInvoke: (_) => paneController.newEntity()),
+              },
+              child: MouseRegion(
+                onEnter: (_) {
+                  _focusNode.requestFocus();
+                  setState(() {
+                    showFolderButtons = true;
+                  });
+                },
+                onExit: (_) {
+                  setState(() {
+                    showFolderButtons = false;
+                  });
+                },
+                child: Focus(
+                  focusNode: _focusNode,
+                    child: Container(
+                      alignment: Alignment.topLeft,
+                      decoration: isDropZone
+                          ? BoxDecoration(shape: BoxShape.rectangle, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.teal, width: 2,),)
+                          : null,
+                      child: EntityContextMenu(
+                        folder: FileOfInterest(entity: folderPath),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 6, bottom: 6, right: 10),
+                          child: Column(
+                            children: [
+                              FolderColumnHeaders(path: folderPath, showDetailedView: folderSettings.detailedView),
+                              Container(color: const Color.fromRGBO(217, 217, 217, 100), height: 2, margin: const EdgeInsets.only(left: 8.0)),
+                              Expanded(
+                                  child: FolderPane(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView)),
+                              FolderSettingsIcons(path: folderPath, paneController: paneController, showHiddenFiles: folderSettings.showHiddenFiles, showDetailedView: folderSettings.detailedView),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
               ),
             ),
+          ),
         ),
       ),
       MouseRegion(
@@ -106,8 +136,6 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
                 width = width + details.delta.dx;
               });
 
-              // Resize the window if we are resizing the rightmost FolderList and it is butted up against the right hand side of the window,
-              // but only to increase the width; we don't want to resize the window smaller.
               if (mounted && folderSettings.width + details.delta.dx > folderSettings.width) {
                 double widgetPosition = _getWidgetPosition(context)!.right;
                 Size windowSize = await windowManager.getSize();
@@ -123,7 +151,13 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
     );
   }
 
-  @override @override
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     paneController = FolderPaneController(context: context, ref: ref, path: folderPath);

@@ -66,6 +66,5 @@ class EntityRow extends ConsumerWidget {
     FileOfInterest newEntity = entity.rename(filename);
     ref.read(selectedFolderContentsProvider.notifier).replace(newEntity);
 
-    paneController.isEditing = false;
   }
 }

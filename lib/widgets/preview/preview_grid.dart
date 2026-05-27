@@ -60,8 +60,6 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler{
 
   @override
   void dispose() {
-    gridController.deregister();
-
     super.dispose();
   }
 

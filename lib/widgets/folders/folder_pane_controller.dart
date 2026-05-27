@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../interfaces/keyboard_callback.dart';
-import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/folder_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
@@ -21,20 +21,17 @@ class FolderPaneController implements KeyboardCallback {
   final Directory path;
 
   late List<FileOfInterest> folderEntities;
-  late KeyboardHandler keyHandler;
   late ValueSetter<int> visibilityCallback;
 
   int _startSelectedItemIndex = -1;
   int _endSelectedItemIndex = -1;
   int _lastSelectedItemIndex = -1;
 
-  FolderPaneController({ required this.context, required this.ref, required this.path }) {
-    keyHandler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'FolderPaneController');
-    keyHandler.register();
-  }
+  FolderPaneController({ required this.context, required this.ref, required this.path });
 
-  set hasFocus(bool hasFocus) => keyHandler.hasFocus = hasFocus;
-  set isEditing(bool isEditing) => keyHandler.isEditing = isEditing;
+  bool get _isShiftPressed => HardwareKeyboard.instance.isShiftPressed;
+  bool get _isMultiSelectPressed =>
+      HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed;
 
   @override
   void delete() {
@@ -44,10 +41,6 @@ class FolderPaneController implements KeyboardCallback {
     fileEvents.deleteAll(selectedEntities.toSet());
   }
 
-  void deregister() {
-    keyHandler.deregister();
-  }
-
   @override
   void down() {
     List<FileOfInterest> entities = ref.read(folderContentsProvider(path.path));
@@ -55,7 +48,7 @@ class FolderPaneController implements KeyboardCallback {
     if (_lastSelectedItemIndex < entities.length - 1) {
       int lastIdx = _lastSelectedItemIndex + 1;
 
-      if (keyHandler.isBlockMultiSelectionPressed) {
+      if (_isShiftPressed) {
         if (lastIdx > _endSelectedItemIndex) {
           _endSelectedItemIndex = lastIdx;
         } else {
@@ -76,12 +69,9 @@ class FolderPaneController implements KeyboardCallback {
 
   @override
   void exit() {
-    if (keyHandler.isEditing) {
-      FileOfInterest? entity = ref.read(editingEntityProvider);
-      if (entity != null) {
-        ref.read(editingEntityProvider.notifier).setEditingEntity(entity, false);
-        keyHandler.isEditing = false;
-      }
+    FileOfInterest? entity = ref.read(editingEntityProvider);
+    if (entity != null) {
+      ref.read(editingEntityProvider.notifier).setEditingEntity(entity, false);
     }
   }
 
@@ -93,7 +83,6 @@ class FolderPaneController implements KeyboardCallback {
     FolderContents contents = ref.read(folderContentsProvider(path.path).notifier);
     FileOfInterest entity = FileOfInterest(entity: path.createTempSync('new-'), editing: true);
     contents.add(entity);
-    keyHandler.isEditing = true;
   }
 
   @override
@@ -110,7 +99,7 @@ class FolderPaneController implements KeyboardCallback {
     if (_lastSelectedItemIndex > 0) {
       int lastIdx = _lastSelectedItemIndex - 1;
 
-      if (keyHandler.isBlockMultiSelectionPressed) {
+      if (_isShiftPressed) {
         if (lastIdx < _startSelectedItemIndex) {
           _startSelectedItemIndex = lastIdx;
         } else {
@@ -134,18 +123,16 @@ class FolderPaneController implements KeyboardCallback {
     FileOfInterest entity = folderEntities[idx];
     _lastSelectedItemIndex = idx;
 
-    // Cancel editing in the PreviewGrid if we are making selections.
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
-    // Add the selected Directory into the visible folder list.
     if (entity.isDirectory) {
       ref.read(folderPathProvider.notifier).addFolder(path, entity.entity as Directory);
     }
 
     var selectedFolderContents = ref.read(selectedFolderContentsProvider.notifier);
-    if (keyHandler.isIndividualMultiSelectionPressed) {
+    if (_isMultiSelectPressed) {
       selectedFolderContents.contains(entity) ? selectedFolderContents.remove(entity) : selectedFolderContents.add(entity);
-    } else if (keyHandler.isBlockMultiSelectionPressed) {
+    } else if (_isShiftPressed) {
       if (_lastSelectedItemIndex != -1) {
         Set<FileOfInterest> newSelection = {};
         for (int i = _startSelectedItemIndex; i <= _endSelectedItemIndex; i++) {
@@ -159,7 +146,6 @@ class FolderPaneController implements KeyboardCallback {
       if (_lastSelectedItemIndex == idx) {
         if (currentTimestamp - lastTimestamp < 2000) {
             ref.read(editingEntityProvider.notifier).setEditingEntity(entity, true);
-            keyHandler.isEditing = true;
         } else {
           _startSelectedItemIndex = idx;
           _endSelectedItemIndex = idx;
@@ -185,7 +171,7 @@ class FolderPaneController implements KeyboardCallback {
   }
 
   void selectEntityByMouse(int idx) {
-    if (keyHandler.isBlockMultiSelectionPressed) {
+    if (_isShiftPressed) {
       if (idx < _startSelectedItemIndex) {
         _startSelectedItemIndex = idx;
       } else {

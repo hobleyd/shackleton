@@ -1,10 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../interfaces/keyboard_callback.dart';
-import '../../misc/keyboard_handler.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/grid_contents.dart';
 import '../../providers/contents/selected_grid_entities.dart';
@@ -15,7 +15,6 @@ class GridController implements KeyboardCallback {
   final BuildContext context;
   final WidgetRef ref;
 
-  late KeyboardHandler keyHandler;
   late ValueSetter<int> visibilityCallback;
 
   int gridColumns = 5;
@@ -23,16 +22,11 @@ class GridController implements KeyboardCallback {
   int _endSelectedItemIndex = -1;
   int _lastSelectedItemIndex = -1;
 
-  GridController({ required this.context, required this.ref, }) {
-    keyHandler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'PreviewGrid');
-    keyHandler.register();
-  }
+  GridController({ required this.context, required this.ref, });
 
-  set hasFocus(bool hasFocus) => keyHandler.hasFocus = hasFocus;
-
-  void deregister() {
-    keyHandler.deregister();
-  }
+  bool get _isShiftPressed => HardwareKeyboard.instance.isShiftPressed;
+  bool get _isMultiSelectPressed =>
+      HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed;
 
   @override
   void delete() {
@@ -47,7 +41,7 @@ class GridController implements KeyboardCallback {
     List<FileOfInterest> entities = ref.read(gridContentsProvider);
 
     int lastIdx = min(entities.length - 1, _lastSelectedItemIndex + gridColumns);
-    if (keyHandler.isBlockMultiSelectionPressed) {
+    if (_isShiftPressed) {
       if (lastIdx > _endSelectedItemIndex) {
         _endSelectedItemIndex = lastIdx;
       } else {
@@ -69,7 +63,7 @@ class GridController implements KeyboardCallback {
     if (_lastSelectedItemIndex > 0) {
       int lastIdx = _lastSelectedItemIndex - 1;
 
-      if (keyHandler.isBlockMultiSelectionPressed) {
+      if (_isShiftPressed) {
         if (lastIdx < _startSelectedItemIndex) {
           _startSelectedItemIndex = lastIdx;
         } else {
@@ -89,7 +83,7 @@ class GridController implements KeyboardCallback {
     if (_lastSelectedItemIndex < entities.length - 1) {
       int lastIdx = _lastSelectedItemIndex + 1;
 
-      if (keyHandler.isBlockMultiSelectionPressed) {
+      if (_isShiftPressed) {
         if (lastIdx > _endSelectedItemIndex) {
           _endSelectedItemIndex = lastIdx;
         } else {
@@ -120,13 +114,12 @@ class GridController implements KeyboardCallback {
     FileOfInterest entity = entities[idx];
     _lastSelectedItemIndex = idx;
 
-    // Cancel editing in the PreviewGrid if we are making selections.
     ref.read(metadataProvider(entity).notifier).setEditable(false);
 
     var entityNotifier = ref.read(selectedGridEntitiesProvider.notifier);
-    if (keyHandler.isIndividualMultiSelectionPressed) {
+    if (_isMultiSelectPressed) {
       entityNotifier.contains(entity) ? entityNotifier.remove(entity) : entityNotifier.add(entity);
-    } else if (keyHandler.isBlockMultiSelectionPressed) {
+    } else if (_isShiftPressed) {
       if (_lastSelectedItemIndex != -1) {
         Set<FileOfInterest> newSelection = {};
         for (int i = _startSelectedItemIndex; i <= _endSelectedItemIndex; i++) {
@@ -142,7 +135,7 @@ class GridController implements KeyboardCallback {
   }
 
   void selectEntityByMouse(int idx) {
-    if (keyHandler.isBlockMultiSelectionPressed) {
+    if (_isShiftPressed) {
       if (idx < _startSelectedItemIndex) {
         _startSelectedItemIndex = idx;
       } else {
@@ -157,7 +150,7 @@ class GridController implements KeyboardCallback {
   void up() {
     int lastIdx = max(0, _lastSelectedItemIndex - gridColumns);
 
-    if (keyHandler.isBlockMultiSelectionPressed) {
+    if (_isShiftPressed) {
       if (lastIdx < _startSelectedItemIndex) {
         _startSelectedItemIndex = lastIdx;
       } else {

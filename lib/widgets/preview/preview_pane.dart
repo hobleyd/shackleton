@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../interfaces/keyboard_callback.dart';
 import '../../interfaces/tag_handler.dart';
-import '../../misc/keyboard_handler.dart';
+import '../../misc/app_intents.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
 import '../../providers/contents/pane_contents.dart';
@@ -25,25 +26,19 @@ class PreviewPane extends ConsumerStatefulWidget {
 class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallback, TagHandler {
   late List<FileOfInterest> entities;
   late PageController _controller;
-  late KeyboardHandler handler;
+  final FocusNode _focusNode = FocusNode();
   int _lastSelectedItemIndex = -1;
 
   @override
   Widget build(BuildContext context) {
     entities = ref.watch(paneContentsProvider);
 
-    // First time through, we set the initial image to the one clicked on.
     if (_lastSelectedItemIndex == -1) {
       _lastSelectedItemIndex = entities.indexOf(widget.initialEntity);
       _controller = PageController(initialPage: _lastSelectedItemIndex);
     }
     if (_lastSelectedItemIndex == -1) {
-      // This means that the initialEntry widget isn't in the list - because we deleted the file;
-      // exit the build() in this case as it's a side effect of the Provider build from the file
-      // delete. TODO: is there a better way to deal with this?
       exit();
-
-      // Avoid a rebuild while we wait for the Context to pop.
       return const SizedBox.shrink();
     }
 
@@ -56,10 +51,29 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
         body: Row(children: [
           Expanded(
             child: EntityContextMenu(
-              child: MouseRegion(
-                onEnter: (_) => handler.hasFocus = true,
-                onExit: (_) => handler.hasFocus = false,
-                child: _getPageView(),
+              child: Shortcuts(
+                shortcuts: {
+                  const SingleActivator(LogicalKeyboardKey.arrowLeft): const NavigateLeftIntent(),
+                  const SingleActivator(LogicalKeyboardKey.arrowRight): const NavigateRightIntent(),
+                  const SingleActivator(LogicalKeyboardKey.backspace): const DeleteIntent(),
+                  const SingleActivator(LogicalKeyboardKey.delete): const DeleteIntent(),
+                  const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent(),
+                },
+                child: Actions(
+                  actions: {
+                    NavigateLeftIntent: CallbackAction<NavigateLeftIntent>(onInvoke: (_) => left()),
+                    NavigateRightIntent: CallbackAction<NavigateRightIntent>(onInvoke: (_) => right()),
+                    DeleteIntent: CallbackAction<DeleteIntent>(onInvoke: (_) => delete()),
+                    ExitIntent: CallbackAction<ExitIntent>(onInvoke: (_) => exit()),
+                  },
+                  child: MouseRegion(
+                    onEnter: (_) => _focusNode.requestFocus(),
+                    child: Focus(
+                      focusNode: _focusNode,
+                      child: _getPageView(),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -70,8 +84,7 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
 
   @override
   void dispose() {
-    handler.deregister();
-
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -80,12 +93,8 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
     super.initState();
 
     Future(() {
-      // Update the selected previewItem to show correct metadata
       ref.read(paneTagsProvider.notifier).replace(widget.initialEntity);
     });
-
-    handler = KeyboardHandler(ref: ref, keyboardCallback: this, name: 'PreviewPane');
-    handler.register();
   }
 
   Widget _getPageView() {
@@ -130,7 +139,6 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
     if (_lastSelectedItemIndex != -1) {
       var fileEvents = ref.read(fileEventsProvider.notifier);
 
-      // Get the entity, reset the selected entity to the previous one, or exit if it was the last one. Then delete the file.
       final FileOfInterest entity = entities[_lastSelectedItemIndex];
       if (_lastSelectedItemIndex >= entities.length-1) {
         _lastSelectedItemIndex--;
