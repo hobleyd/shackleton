@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download macOS distribution
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: macos-dist
           path: deploy/releases/${{ needs.build.outputs.version }}+${{ needs.build.outputs.build_number }}-macos/
