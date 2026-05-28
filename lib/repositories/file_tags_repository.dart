@@ -45,7 +45,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
     int tagCount = await _db.getCount('file_tags', where: 'tagId = ?', whereArgs: [tagId.toString()]);
 
     if (tagCount == 0) {
-      _db.delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
+      await _db.delete('tags', where: 'id = ?', whereArgs: [tagId.toString()]);
       return true;
     }
 
@@ -165,6 +165,27 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
 
   @override
   Future<void> writeTags(Entity entity) async {
+    // Fast path: skip the exclusive transaction when the DB already reflects
+    // the incoming tags exactly. Avoids lock pile-up when many files load
+    // concurrently (e.g. entering a folder with many images).
+    final incomingNames = entity.tags
+            ?.where((t) => t.tag.isNotEmpty)
+            .map((t) => t.tag)
+            .toSet() ??
+        <String>{};
+    final existingRows = await _db.rawQuery(
+      'SELECT t.tag FROM tags t '
+      'JOIN file_tags ft ON ft.tagId = t.id '
+      'JOIN files f ON f.id = ft.fileId '
+      'WHERE f.path = ?',
+      [entity.path],
+    );
+    final existingNames = existingRows.map((r) => r['tag'] as String).toSet();
+    if (incomingNames.length == existingNames.length &&
+        incomingNames.containsAll(existingNames)) {
+      return;
+    }
+
     bool changed = false;
 
     await _db.transaction((txn) async {

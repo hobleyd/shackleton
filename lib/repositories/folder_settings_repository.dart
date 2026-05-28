@@ -38,7 +38,7 @@ class FolderSettingsRepository extends _$FolderSettingsRepository implements IFo
 
   @override
   Future<void> updateSettings(FolderUISettings folderSettings) async {
-    _db.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await _db.insert(tableName, folderSettings.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
     state = AsyncValue.data(folderSettings);
   }
 

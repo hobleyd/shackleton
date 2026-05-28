@@ -228,12 +228,18 @@ class FaceSearch extends _$FaceSearch {
           final tags = List<Tag>.from(result.tags);
           if (!tags.any((t) => t.tag == name)) tags.add(newTag);
           await exif.writeTags(file.path, tags, location: result.location);
-          ref.invalidate(metadataProvider(file));
         } catch (_) {
-          await tagsRepo.addTagToFile(file.path, name);
+          // Exiftool write failed; DB-only path handles the update below.
         }
-      } else {
-        await tagsRepo.addTagToFile(file.path, name);
+      }
+
+      // Sync to DB sequentially (one per iteration — no concurrent transaction flood).
+      await tagsRepo.addTagToFile(file.path, name);
+
+      // Update the in-memory metadata state if the provider is already alive,
+      // avoiding a full reload (exiftool re-read + writeTags transaction) per file.
+      if (ref.exists(metadataProvider(file))) {
+        ref.read(metadataProvider(file).notifier).updateTagsFromString(name, updateFile: false);
       }
 
       if (ref.mounted) {

@@ -22,9 +22,9 @@ class AppStatisticsRepository extends _$AppStatisticsRepository implements IAppS
 
   @override
   void clear() async {
-    _db.delete('files');
-    _db.delete('tags');
-    _db.delete('file_tags');
+    await _db.delete('files');
+    await _db.delete('tags');
+    await _db.delete('file_tags');
 
     state = await AsyncValue.guard(() => _getDatabaseStatistics());
   }
