@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/grid_contents.dart';
+import '../../providers/contents/selected_folder_contents.dart';
 import '../../providers/contents/selected_grid_entities.dart';
 import '../../providers/face_recognition_provider.dart';
+import '../../repositories/app_settings_repository.dart';
 
 class FaceSearchPanel extends ConsumerStatefulWidget {
   const FaceSearchPanel({super.key});
@@ -16,6 +21,8 @@ class FaceSearchPanel extends ConsumerStatefulWidget {
 class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
   final _nameController = TextEditingController();
   double _threshold = 0.35;
+  // null means "use the first (most specific) option"
+  String? _selectedScopePath;
 
   @override
   void initState() {
@@ -34,10 +41,27 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     final faceState = ref.watch(faceSearchProvider);
     final selected = ref.watch(selectedGridEntitiesProvider);
     final gridFiles = ref.watch(gridContentsProvider);
+    final selectedFolders = ref.watch(selectedFolderContentsProvider);
+    final libraryPath = ref.watch(appSettingsRepositoryProvider).asData?.value.libraryPath;
 
     final referenceFile = selected.isNotEmpty ? selected.first : null;
     final isWorking = faceState.status == FaceSearchStatus.scanning ||
         faceState.status == FaceSearchStatus.downloadingModels;
+
+    final scopeOptions = libraryPath != null
+        ? _buildScopeOptions(_currentFolderPath(selectedFolders, gridFiles, libraryPath), libraryPath)
+        : <({String label, String path})>[];
+
+    // Reset selection when the folder changes and _selectedScopePath is no longer valid.
+    if (_selectedScopePath != null &&
+        scopeOptions.isNotEmpty &&
+        !scopeOptions.any((o) => o.path == _selectedScopePath)) {
+      _selectedScopePath = null;
+    }
+
+    final activeScopePath = scopeOptions.isNotEmpty
+        ? (_selectedScopePath ?? scopeOptions.first.path)
+        : libraryPath;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -104,14 +128,44 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
             onChanged: isWorking ? null : (v) => setState(() => _threshold = v),
           ),
 
+          // Search scope dropdown
+          if (scopeOptions.isNotEmpty) ...[
+            DropdownButtonFormField<String>(
+              initialValue: _selectedScopePath ?? scopeOptions.first.path,
+              isDense: true,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Search scope',
+                labelStyle: TextStyle(fontSize: 11),
+                isDense: true,
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              ),
+              style: const TextStyle(fontSize: 11, color: Colors.black),
+              items: scopeOptions
+                  .map((o) => DropdownMenuItem(
+                        value: o.path,
+                        child: Text(o.label,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11, color: Colors.black)),
+                      ))
+                  .toList(),
+              onChanged: isWorking
+                  ? null
+                  : (v) => setState(() => _selectedScopePath = v),
+            ),
+            const SizedBox(height: 8),
+          ],
+
           // Scan button
           FilledButton(
             onPressed: isWorking ||
                     referenceFile == null ||
                     !referenceFile.isImage ||
-                    _nameController.text.trim().isEmpty
+                    _nameController.text.trim().isEmpty ||
+                    activeScopePath == null
                 ? null
-                : () => _startSearch(referenceFile, gridFiles),
+                : () => _startSearch(referenceFile, gridFiles, activeScopePath),
             child: const Text('Find Matching Faces', style: TextStyle(fontSize: 12)),
           ),
           const SizedBox(height: 8),
@@ -178,13 +232,60 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     );
   }
 
-  void _startSearch(FileOfInterest referenceFile, List<FileOfInterest> libraryFiles) {
+  /// Returns the effective "current folder" for the scope dropdown.
+  String _currentFolderPath(
+      Set<FileOfInterest> selectedFolders, List<FileOfInterest> gridFiles, String libraryPath) {
+    final dirs = selectedFolders.where((f) => f.isDirectory).toList();
+    if (dirs.isNotEmpty) return dirs.first.path;
+    if (gridFiles.isNotEmpty) return p.dirname(gridFiles.first.path);
+    return libraryPath;
+  }
+
+  /// Walks from [currentPath] up to (and including) [libraryPath], producing
+  /// one entry per ancestor folder with its basename as the label.
+  List<({String label, String path})> _buildScopeOptions(String currentPath, String libraryPath) {
+    // Ensure we stay within the library tree.
+    if (!currentPath.startsWith(libraryPath)) return [(label: p.basename(libraryPath), path: libraryPath)];
+
+    final options = <({String label, String path})>[];
+    String cursor = currentPath;
+    while (true) {
+      options.add((label: p.basename(cursor), path: cursor));
+      if (cursor == libraryPath) break;
+      final parent = p.dirname(cursor);
+      if (parent == cursor) break; // filesystem root guard
+      cursor = parent;
+    }
+    return options;
+  }
+
+  void _startSearch(FileOfInterest referenceFile, List<FileOfInterest> gridFiles, String scopePath) {
+    // For the innermost scope (current folder), prefer the already-loaded gridFiles
+    // so we don't re-stat the disk unnecessarily.
+    final files = (scopePath == _currentFolderPath(
+            ref.read(selectedFolderContentsProvider),
+            gridFiles,
+            ref.read(appSettingsRepositoryProvider).asData?.value.libraryPath ?? scopePath))
+        ? gridFiles
+        : _collectImages(scopePath);
+
     ref.read(faceSearchProvider.notifier).search(
           referenceFile: referenceFile,
           personName: _nameController.text,
           threshold: _threshold,
-          libraryFiles: libraryFiles,
+          libraryFiles: files,
         );
+  }
+
+  List<FileOfInterest> _collectImages(String folderPath) {
+    final dir = Directory(folderPath);
+    if (!dir.existsSync()) return [];
+    return dir
+        .listSync(recursive: true, followLinks: false)
+        .whereType<File>()
+        .map((f) => FileOfInterest(entity: f))
+        .where((f) => f.isImage)
+        .toList();
   }
 }
 
