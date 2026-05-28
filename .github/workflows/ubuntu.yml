@@ -2,15 +2,18 @@ name: shackleton-linux-ci
 
 on: [push, workflow_dispatch]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Get App version
-        uses: mikefarah/yq@master
-        with:
-          cmd: echo "VERSION=$(yq .version pubspec.yaml)" >> $GITHUB_ENV
+        run: |
+          VERSION_FULL=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "VERSION=${VERSION_FULL%%+*}" >> $GITHUB_ENV
       - name: "Push version tag from pubspec.yaml"
         uses: EndBug/latest-tag@latest
         with:
