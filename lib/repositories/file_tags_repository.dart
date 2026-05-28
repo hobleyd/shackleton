@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shackleton/providers/notify.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database/app_database.dart';
 import '../domain/repositories/i_file_tags_repository.dart';
 import '../models/entity.dart';
+import '../models/file_metadata.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 
@@ -164,54 +167,123 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   }
 
   @override
+  Future<FileMetaData?> getMetadataForFile(
+      String path, FileOfInterest entity) async {
+    final fileRows = await _db.query('files',
+        columns: ['id', 'gps_lat', 'gps_lng'],
+        where: 'path = ?',
+        whereArgs: [path]);
+    if (fileRows.isEmpty) return null;
+
+    final fileId = fileRows.first['id'] as int;
+    final lat = fileRows.first['gps_lat'] as double?;
+    final lng = fileRows.first['gps_lng'] as double?;
+
+    final tagRows = await _db.rawQuery(
+      'SELECT t.id, t.tag FROM tags t '
+      'JOIN file_tags ft ON ft.tagId = t.id '
+      'WHERE ft.fileId = ?',
+      [fileId],
+    );
+    final tags = tagRows
+        .map((r) => Tag(id: r['id'] as int?, tag: r['tag'] as String))
+        .toList();
+    final gps = (lat != null && lng != null) ? LatLng(lat, lng) : null;
+
+    return FileMetaData(entity: entity, tags: tags, gpsLocation: gps);
+  }
+
+  @override
   Future<void> writeTags(Entity entity) async {
-    // Fast path: skip the exclusive transaction when the DB already reflects
-    // the incoming tags exactly. Avoids lock pile-up when many files load
-    // concurrently (e.g. entering a folder with many images).
+    // Always ensure the file row exists in the DB. This guarantees that
+    // getMetadataForFile will find it on the next visit, even for untagged
+    // files that would otherwise never enter the full transaction below.
+    double? existingGpsLat;
+    double? existingGpsLng;
+
+    if (entity.id == null) {
+      final rows = await _db.query('files',
+          columns: ['id', 'gps_lat', 'gps_lng'],
+          where: 'path = ?',
+          whereArgs: [entity.path]);
+      if (rows.isNotEmpty) {
+        entity.id = rows.first['id'] as int;
+        existingGpsLat = rows.first['gps_lat'] as double?;
+        existingGpsLng = rows.first['gps_lng'] as double?;
+      } else {
+        entity.id = await _db.insert('files', {'path': entity.path},
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+        if (entity.id == 0) {
+          // Concurrent insert won the race — re-fetch.
+          final r = await _db.query('files',
+              columns: ['id', 'gps_lat', 'gps_lng'],
+              where: 'path = ?',
+              whereArgs: [entity.path]);
+          entity.id = r.first['id'] as int;
+          existingGpsLat = r.first['gps_lat'] as double?;
+          existingGpsLng = r.first['gps_lng'] as double?;
+        }
+      }
+    }
+
+    // Fast path: skip the transaction when tags + GPS are already up to date.
     final incomingNames = (entity.tags as List<Tag>?)
             ?.where((t) => t.tag.isNotEmpty)
             .map((t) => t.tag)
             .toSet() ??
         <String>{};
-    final existingRows = await _db.rawQuery(
+    final existingTagRows = await _db.rawQuery(
       'SELECT t.tag FROM tags t '
       'JOIN file_tags ft ON ft.tagId = t.id '
-      'JOIN files f ON f.id = ft.fileId '
-      'WHERE f.path = ?',
-      [entity.path],
+      'WHERE ft.fileId = ?',
+      [entity.id],
     );
-    final existingNames = existingRows.map((r) => r['tag'] as String).toSet();
+    final existingNames =
+        existingTagRows.map((r) => r['tag'] as String).toSet();
+
+    final incomingGps = entity.metadata?.gpsLocation;
+    final gpsUnchanged = incomingGps == null
+        ? existingGpsLat == null
+        : existingGpsLat != null &&
+            (incomingGps.latitude - existingGpsLat).abs() < 1e-6 &&
+            (incomingGps.longitude - existingGpsLng!).abs() < 1e-6;
+
     if (incomingNames.length == existingNames.length &&
-        incomingNames.containsAll(existingNames)) {
+        incomingNames.containsAll(existingNames) &&
+        gpsUnchanged) {
       return;
     }
 
     bool changed = false;
 
     await _db.transaction((txn) async {
-      // 1. Ensure file record exists.
-      if (entity.id == null) {
-        final rows = await txn.query('files',
-            columns: ['id'], where: 'path = ?', whereArgs: [entity.path]);
-        entity.id = rows.isNotEmpty
-            ? rows.first['id'] as int
-            : await txn.insert('files', entity.toMap());
+      // Update GPS coordinates if they changed.
+      if (!gpsUnchanged) {
+        await txn.update(
+          'files',
+          {
+            'gps_lat': incomingGps?.latitude,
+            'gps_lng': incomingGps?.longitude,
+          },
+          where: 'id = ?',
+          whereArgs: [entity.id],
+        );
+        changed = true;
       }
 
-      // 2. Resolve/create tag records for incoming tags.
+      // Resolve/create tag records for incoming tags.
       final incomingTagIds = <int>{};
-      for (final tag in entity.tags) {
+      for (final tag in (entity.tags as List<Tag>? ?? <Tag>[])) {
         if (tag.tag.isEmpty) continue;
         if (tag.id == null) {
-          final existing = await txn
-              .query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+          final existing = await txn.query('tags',
+              columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
           tag.id = existing.isNotEmpty
               ? existing.first['id'] as int
               : await txn.insert('tags', tag.toMap());
-          // Race-condition guard.
           if (tag.id == 0) {
-            final refetch = await txn
-                .query('tags', columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
+            final refetch = await txn.query('tags',
+                columns: ['id'], where: 'tag = ?', whereArgs: [tag.tag]);
             tag.id = refetch.first['id'] as int;
           }
         }
@@ -219,13 +291,12 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
         changed = true;
       }
 
-      // 3. Get currently stored tag IDs for this entity.
+      // Get currently stored tag IDs for this entity.
       final storedRows = await txn.query('file_tags',
           columns: ['tagId'], where: 'fileId = ?', whereArgs: [entity.id]);
       final storedTagIds = storedRows.map((r) => r['tagId'] as int).toSet();
 
-      // 4. Remove junction records for tags no longer on the entity;
-      //    delete the tag row itself if no other file references it.
+      // Remove junction rows for tags no longer on the entity.
       for (final tagId in storedTagIds) {
         if (!incomingTagIds.contains(tagId)) {
           await txn.delete('file_tags',
@@ -240,8 +311,8 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
         }
       }
 
-      // 5. Insert new junction records.
-      for (final tag in entity.tags) {
+      // Insert new junction records.
+      for (final tag in (entity.tags as List<Tag>? ?? <Tag>[])) {
         if (tag.tag.isEmpty || tag.id == null) continue;
         final existing = await txn.query('file_tags',
             columns: ['tagId'],

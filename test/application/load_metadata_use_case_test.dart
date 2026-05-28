@@ -7,6 +7,7 @@ import 'package:shackleton/application/use_cases/load_metadata_use_case.dart';
 import 'package:shackleton/domain/repositories/i_file_tags_repository.dart';
 import 'package:shackleton/domain/services/i_exif_tool_service.dart';
 import 'package:shackleton/models/entity.dart';
+import 'package:shackleton/models/file_metadata.dart';
 import 'package:shackleton/models/file_of_interest.dart';
 import 'package:shackleton/models/tag.dart';
 
@@ -24,6 +25,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Entity(path: '/tmp/photo.jpg'));
+    registerFallbackValue(FileOfInterest(entity: File('/tmp/photo.jpg')));
   });
 
   setUp(() async {
@@ -35,6 +37,8 @@ void main() {
     mockTags = MockFileTagsRepository();
 
     when(() => mockTags.writeTags(any())).thenAnswer((_) async {});
+    when(() => mockTags.getMetadataForFile(any(), any()))
+        .thenAnswer((_) async => null);
 
     useCase = LoadMetadataUseCase(exifService: mockExif, tagsRepository: mockTags);
   });
@@ -50,6 +54,30 @@ void main() {
 
       expect(result, isNull);
       verifyNever(() => mockTags.writeTags(any()));
+    });
+
+    group('fetchFromDb', () {
+      test('returns null for unsupported file types', () async {
+        final result = await useCase.fetchFromDb(txt());
+        expect(result, isNull);
+        verifyNever(() => mockTags.getMetadataForFile(any(), any()));
+      });
+
+      test('returns null when DB has no record for the file', () async {
+        final result = await useCase.fetchFromDb(jpeg());
+        expect(result, isNull);
+      });
+
+      test('returns cached metadata when DB has a record', () async {
+        final cached = FileMetaData(
+            entity: jpeg(), tags: [Tag(tag: 'cached')]);
+        when(() => mockTags.getMetadataForFile(any(), any()))
+            .thenAnswer((_) async => cached);
+
+        final result = await useCase.fetchFromDb(jpeg());
+        expect(result, isNotNull);
+        expect(result!.tags.map((t) => t.tag), contains('cached'));
+      });
     });
 
     test('reads tags and location then persists to repository', () async {

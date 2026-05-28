@@ -5,6 +5,10 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// Version history:
 ///   1 — initial schema (files, tags, file_tags, folder_settings,
 ///                        app_settings, favourites)
+///   2 — split legacy comma-separated tags in tags table
+///   3 — face recognition tables (face_identities, file_faces,
+///                                 file_face_scan_status)
+///   4 — gps_lat / gps_lng columns on files (GPS cache)
 class AppSchema {
   AppSchema._();
 
@@ -12,8 +16,10 @@ class AppSchema {
 
   static const String createFiles = '''
       create table if not exists files(
-        id   integer primary key,
-        path text    not null,
+        id      integer primary key,
+        path    text    not null,
+        gps_lat real,
+        gps_lng real,
         unique (path) on conflict ignore);
       ''';
 
@@ -131,5 +137,11 @@ class AppSchema {
     await db.execute(createFaceIdentities);
     await db.execute(createFileFaces);
     await db.execute(createFileFaceScanStatus);
+  }
+
+  /// Adds GPS coordinate columns to the files table (schema version 4).
+  static Future<void> migrateV4AddGpsToFiles(DatabaseExecutor db) async {
+    await db.execute('ALTER TABLE files ADD COLUMN gps_lat REAL');
+    await db.execute('ALTER TABLE files ADD COLUMN gps_lng REAL');
   }
 }

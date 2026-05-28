@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
     return databaseFactoryFfi.openDatabase(
       await _getDatabasePath(),
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         onConfigure: (db) => _enableForeignKeys(db),
         onCreate: (db, version) => _createTables(db, 0, version),
         onUpgrade: (db, oldVersion, newVersion) =>
@@ -41,6 +41,9 @@ class AppDatabase extends _$AppDatabase {
     }
     if (oldVersion < 3) {
       await AppSchema.createFaceTables(db);
+    }
+    if (oldVersion < 4) {
+      await AppSchema.migrateV4AddGpsToFiles(db);
     }
   }
 

@@ -38,6 +38,13 @@ class Metadata extends _$Metadata {
   bool contains(Tag tag) => state.contains(tag);
 
   Future<void> _load(FileOfInterest entity) async {
+    // Phase 1: return cached DB data immediately — no JPEG parse needed.
+    final cached = await _loadUseCase.fetchFromDb(entity);
+    if (cached != null) {
+      if (ref.mounted) state = cached;
+      return;
+    }
+    // Phase 2: first visit — parse the file and persist to DB.
     final metadata = await _loadUseCase.execute(entity);
     if (metadata != null && ref.mounted) state = metadata;
   }

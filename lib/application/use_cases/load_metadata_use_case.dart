@@ -14,6 +14,13 @@ class LoadMetadataUseCase {
   })  : _exifService = exifService,
         _tagsRepository = tagsRepository;
 
+  /// Returns cached metadata directly from the DB without touching the file.
+  /// Returns null when [entity] does not support metadata or is not yet indexed.
+  Future<FileMetaData?> fetchFromDb(FileOfInterest entity) async {
+    if (!entity.isMetadataSupported) return null;
+    return _tagsRepository.getMetadataForFile(entity.path, entity);
+  }
+
   /// Reads tags and GPS from [entity] and persists them to the tags DB.
   /// Returns null when [entity] does not support metadata.
   Future<FileMetaData?> execute(FileOfInterest entity) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -12,6 +14,10 @@ import 'native/jpeg_segment_reader.dart';
 import 'native/jpeg_segment_writer.dart';
 import 'native/xmp_reader.dart';
 import 'native/xmp_writer.dart';
+
+/// Caps concurrent JPEG parses so opening a large folder doesn't saturate
+/// disk I/O or flood the event loop with synchronous parsing work.
+final _parseSemaphore = _Semaphore(8);
 
 /// Native Dart metadata service for JPEG files.
 ///
@@ -37,27 +43,27 @@ class NativeMetadataService implements IExifToolService {
 
   @override
   Future<({List<Tag> tags, LatLng? location})> readTagsAndLocation(
-      String path) async {
-    const empty = (tags: <Tag>[], location: null);
-    try {
-      final bytes = await File(path).readAsBytes();
-      final reader = JpegSegmentReader(bytes);
-      if (!reader.isValidJpeg) return empty;
+      String path) {
+    return _parseSemaphore.run(() async {
+      const empty = (tags: <Tag>[], location: null);
+      try {
+        final reader = await JpegSegmentReader.fromFile(path);
+        if (reader == null || !reader.isValidJpeg) return empty;
 
-      final tags = await _readTags(reader);
-      final location = await _readLocation(reader);
-      return (tags: tags, location: location);
-    } catch (_) {
-      return empty;
-    }
+        final tags = await _readTags(reader);
+        final location = await _readLocation(reader);
+        return (tags: tags, location: location);
+      } catch (_) {
+        return empty;
+      }
+    });
   }
 
   @override
   Future<Uint8List?> readThumbnail(String path) async {
     try {
-      final bytes = await File(path).readAsBytes();
-      final reader = JpegSegmentReader(bytes);
-      if (!reader.isValidJpeg) return null;
+      final reader = await JpegSegmentReader.fromFile(path);
+      if (reader == null || !reader.isValidJpeg) return null;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return null;
       return ExifReader.readThumbnail(exifBytes);
@@ -69,9 +75,8 @@ class NativeMetadataService implements IExifToolService {
   @override
   Future<DateTime?> readCreationDate(String path) async {
     try {
-      final bytes = await File(path).readAsBytes();
-      final reader = JpegSegmentReader(bytes);
-      if (!reader.isValidJpeg) return null;
+      final reader = await JpegSegmentReader.fromFile(path);
+      if (reader == null || !reader.isValidJpeg) return null;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return null;
       return ExifReader.readCreationDate(exifBytes);
@@ -83,9 +88,8 @@ class NativeMetadataService implements IExifToolService {
   @override
   Future<int> readOrientationQuarterTurns(String path) async {
     try {
-      final bytes = await File(path).readAsBytes();
-      final reader = JpegSegmentReader(bytes);
-      if (!reader.isValidJpeg) return 0;
+      final reader = await JpegSegmentReader.fromFile(path);
+      if (reader == null || !reader.isValidJpeg) return 0;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return 0;
       return ExifReader.readOrientationQuarterTurns(exifBytes);
@@ -186,5 +190,31 @@ class NativeMetadataService implements IExifToolService {
     final exifBytes = reader.getExifBytes();
     if (exifBytes == null) return null;
     return ExifReader.readGps(exifBytes);
+  }
+}
+
+class _Semaphore {
+  int _count;
+  final Queue<Completer<void>> _queue = Queue();
+
+  _Semaphore(int max) : _count = max;
+
+  Future<T> run<T>(Future<T> Function() fn) async {
+    if (_count > 0) {
+      _count--;
+    } else {
+      final c = Completer<void>();
+      _queue.add(c);
+      await c.future;
+    }
+    try {
+      return await fn();
+    } finally {
+      if (_queue.isNotEmpty) {
+        _queue.removeFirst().complete();
+      } else {
+        _count++;
+      }
+    }
   }
 }

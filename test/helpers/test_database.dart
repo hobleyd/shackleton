@@ -12,12 +12,13 @@ class InMemoryAppDatabase extends AppDatabase {
     return databaseFactoryFfi.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 4,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON;');
         },
         onCreate: (db, version) async {
           await AppSchema.createAll(db);
+          await AppSchema.createFaceTables(db);
         },
       ),
     );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 /// Parses the APP segment headers of a JPEG file without decoding image data.
@@ -25,6 +26,70 @@ class JpegSegmentReader {
   final Uint8List _bytes;
 
   JpegSegmentReader(this._bytes);
+
+  /// Reads only the metadata portion of a JPEG file (APP segments before
+  /// SOS), without loading the full image data into memory.
+  ///
+  /// Stops reading at the first SOS (0xDA) or EOI (0xD9) marker, so a
+  /// typical 5 MB photo contributes only its first ~50–200 KB of headers.
+  ///
+  /// Returns null if the file cannot be read or is not a valid JPEG.
+  static Future<JpegSegmentReader?> fromFile(String path) async {
+    RandomAccessFile? raf;
+    try {
+      raf = await File(path).open();
+      final out = BytesBuilder();
+
+      Future<Uint8List?> readExact(int count) async {
+        final buf = Uint8List(count);
+        int offset = 0;
+        while (offset < count) {
+          final chunk = await raf!.read(count - offset);
+          if (chunk.isEmpty) return null;
+          buf.setAll(offset, chunk);
+          offset += chunk.length;
+        }
+        return buf;
+      }
+
+      // Validate SOI (0xFF 0xD8)
+      final soi = await readExact(2);
+      if (soi == null || soi[0] != _ff || soi[1] != _soiMarker) return null;
+      out.add(soi);
+
+      while (true) {
+        final markerBytes = await readExact(2);
+        if (markerBytes == null || markerBytes[0] != _ff) break;
+        out.add(markerBytes);
+
+        final m = markerBytes[1];
+        if (m == _sosMarker || m == _eoiMarker) break;
+
+        // Standalone markers (RST0–RST7 0xD0–0xD7, TEM 0x01) have no length.
+        if (m == 0x01 || (m >= 0xD0 && m <= 0xD9)) continue;
+
+        final lenBytes = await readExact(2);
+        if (lenBytes == null) break;
+        out.add(lenBytes);
+
+        final segLen = (lenBytes[0] << 8) | lenBytes[1];
+        if (segLen < 2) break;
+
+        final dataLen = segLen - 2;
+        if (dataLen > 0) {
+          final data = await readExact(dataLen);
+          if (data == null) break;
+          out.add(data);
+        }
+      }
+
+      return JpegSegmentReader(out.toBytes());
+    } catch (_) {
+      return null;
+    } finally {
+      await raf?.close();
+    }
+  }
 
   bool get isValidJpeg =>
       _bytes.length >= 2 && _bytes[0] == _ff && _bytes[1] == _soiMarker;
@@ -104,7 +169,9 @@ class JpegSegmentReader {
     while (pos + 8 <= data.length) {
       // "8BIM"
       if (data[pos] != 0x38 || data[pos + 1] != 0x42 ||
-          data[pos + 2] != 0x49 || data[pos + 3] != 0x4D) break;
+          data[pos + 2] != 0x49 || data[pos + 3] != 0x4D) {
+        break;
+      }
       final resourceId = (data[pos + 4] << 8) | data[pos + 5];
       pos += 6;
       if (pos >= data.length) break;
