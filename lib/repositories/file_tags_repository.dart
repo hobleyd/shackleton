@@ -168,7 +168,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
     // Fast path: skip the exclusive transaction when the DB already reflects
     // the incoming tags exactly. Avoids lock pile-up when many files load
     // concurrently (e.g. entering a folder with many images).
-    final incomingNames = entity.tags
+    final incomingNames = (entity.tags as List<Tag>?)
             ?.where((t) => t.tag.isNotEmpty)
             .map((t) => t.tag)
             .toSet() ??
