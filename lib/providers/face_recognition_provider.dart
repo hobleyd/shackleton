@@ -15,7 +15,7 @@ import '../repositories/file_tags_repository.dart';
 
 part 'face_recognition_provider.g.dart';
 
-enum FaceSearchStatus { idle, downloadingModels, scanning, done, error }
+enum FaceSearchStatus { idle, downloadingModels, scanning, tagging, done, error }
 
 class FaceSearchState {
   final FaceSearchStatus status;
@@ -207,9 +207,21 @@ class FaceSearch extends _$FaceSearch {
     final exif = ref.read(exifToolServiceProvider);
     final tagsRepo = ref.read(fileTagsRepositoryProvider.notifier);
     final newTag = Tag(tag: name);
+    final total = state.results.length;
 
-    for (final match in state.results) {
+    if (ref.mounted) {
+      state = state.copyWith(
+        status: FaceSearchStatus.tagging,
+        message: 'Tagging photos…',
+        progress: 0.0,
+      );
+    }
+
+    for (var i = 0; i < total; i++) {
+      if (!ref.mounted) return;
+      final match = state.results[i];
       final file = match.file;
+
       if (exif.findExifTool() != null && file.isMetadataSupported) {
         try {
           final result = await exif.readTagsAndLocation(file.path);
@@ -223,12 +235,21 @@ class FaceSearch extends _$FaceSearch {
       } else {
         await tagsRepo.addTagToFile(file.path, name);
       }
+
+      if (ref.mounted) {
+        state = state.copyWith(
+          progress: (i + 1) / total,
+          message: 'Tagged ${i + 1} of $total…',
+        );
+      }
     }
 
     if (ref.mounted) {
       state = state.copyWith(
+        status: FaceSearchStatus.done,
         results: [],
-        message: 'All photos tagged as "$name"',
+        message: '$total photo${total == 1 ? '' : 's'} tagged as "$name"',
+        progress: 1.0,
       );
     }
   }

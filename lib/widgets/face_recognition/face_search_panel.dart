@@ -46,7 +46,8 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
 
     final referenceFile = selected.isNotEmpty ? selected.first : null;
     final isWorking = faceState.status == FaceSearchStatus.scanning ||
-        faceState.status == FaceSearchStatus.downloadingModels;
+        faceState.status == FaceSearchStatus.downloadingModels ||
+        faceState.status == FaceSearchStatus.tagging;
 
     final scopeOptions = libraryPath != null
         ? _buildScopeOptions(_currentFolderPath(selectedFolders, gridFiles, libraryPath), libraryPath)
