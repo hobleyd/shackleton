@@ -149,10 +149,12 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
   }
 
   void _previewEntities(FileOfInterest tappedEntity) {
-    if (!ref.read(selectedGridEntitiesProvider).contains(tappedEntity)) {
-      var entityNotifier = ref.read(selectedGridEntitiesProvider.notifier);
-      entityNotifier.removeAll();
-      entityNotifier.add(tappedEntity);
+    final selected = ref.read(selectedGridEntitiesProvider);
+    if (selected.length > 1 && selected.contains(tappedEntity)) {
+      // Multi-selection: navigate only the selected items (keep selection as-is).
+    } else {
+      // Single item or outside selection: clear so the pane navigates all grid items.
+      ref.read(selectedGridEntitiesProvider.notifier).removeAll();
     }
 
     Navigator.push(context, MaterialPageRoute(builder: (context) => PreviewPane(initialEntity: tappedEntity,)));
