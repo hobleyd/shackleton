@@ -1,15 +1,41 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 
+import '../../domain/services/i_face_recognition_service.dart';
 import '../../models/file_of_interest.dart';
 import '../../providers/contents/grid_contents.dart';
 import '../../providers/contents/selected_folder_contents.dart';
 import '../../providers/contents/selected_grid_entities.dart';
 import '../../providers/face_recognition_provider.dart';
 import '../../repositories/app_settings_repository.dart';
+
+// Top-level function required by compute().
+Future<Uint8List?> _cropFaceBytes(List<dynamic> args) async {
+  final path = args[0] as String;
+  final bx = (args[1] as double).toInt();
+  final by = (args[2] as double).toInt();
+  final bw = (args[3] as double).toInt();
+  final bh = (args[4] as double).toInt();
+
+  final bytes = await File(path).readAsBytes();
+  final src = img.decodeImage(bytes);
+  if (src == null) return null;
+
+  // 30% padding so the crop feels like a portrait rather than a tight box.
+  final pad = (bw * 0.30).round();
+  final x = (bx - pad).clamp(0, src.width - 1);
+  final y = (by - pad).clamp(0, src.height - 1);
+  final w = (bw + 2 * pad).clamp(1, src.width - x);
+  final h = (bh + 2 * pad).clamp(1, src.height - y);
+
+  final cropped = img.copyCrop(src, x: x, y: y, width: w, height: h);
+  return Uint8List.fromList(img.encodeJpg(cropped, quality: 80));
+}
 
 class FaceSearchPanel extends ConsumerStatefulWidget {
   const FaceSearchPanel({super.key});
@@ -19,21 +45,34 @@ class FaceSearchPanel extends ConsumerStatefulWidget {
 }
 
 class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
-  final _nameController = TextEditingController();
+  final List<TextEditingController> _nameControllers = [];
+  List<bool> _faceVisible = [];
   double _threshold = 0.35;
-  // null means "use the first (most specific) option"
   String? _selectedScopePath;
 
-  @override
-  void initState() {
-    super.initState();
-    _nameController.addListener(() => setState(() {}));
-  }
+  int _controllerCount = 0;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    for (final c in _nameControllers) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void _syncControllers(int faceCount) {
+    if (faceCount == _controllerCount) return;
+    for (final c in _nameControllers) {
+      c.dispose();
+    }
+    _nameControllers.clear();
+    _faceVisible = List.filled(faceCount, true);
+    for (var i = 0; i < faceCount; i++) {
+      final c = TextEditingController();
+      c.addListener(() => setState(() {}));
+      _nameControllers.add(c);
+    }
+    _controllerCount = faceCount;
   }
 
   @override
@@ -47,13 +86,18 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     final referenceFile = selected.isNotEmpty ? selected.first : null;
     final isWorking = faceState.status == FaceSearchStatus.scanning ||
         faceState.status == FaceSearchStatus.downloadingModels ||
+        faceState.status == FaceSearchStatus.detecting ||
         faceState.status == FaceSearchStatus.tagging;
+
+    // Sync name controllers to the current detected face count.
+    final detectedFaces = faceState.referenceFaces;
+    final faceCount = detectedFaces?.length ?? 0;
+    _syncControllers(faceCount);
 
     final scopeOptions = libraryPath != null
         ? _buildScopeOptions(_currentFolderPath(selectedFolders, gridFiles, libraryPath), libraryPath)
         : <({String label, String path})>[];
 
-    // Reset selection when the folder changes and _selectedScopePath is no longer valid.
     if (_selectedScopePath != null &&
         scopeOptions.isNotEmpty &&
         !scopeOptions.any((o) => o.path == _selectedScopePath)) {
@@ -63,6 +107,26 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     final activeScopePath = scopeOptions.isNotEmpty
         ? (_selectedScopePath ?? scopeOptions.first.path)
         : libraryPath;
+
+    // The reference photo shown in state may differ from the currently selected
+    // file. Faces are only valid for the file they were detected from.
+    final facesAreForCurrentFile =
+        detectedFaces != null && faceState.referencePath == referenceFile?.path;
+
+    final canDetect = !isWorking && referenceFile != null && referenceFile.isImage;
+
+    final namedFaces = facesAreForCurrentFile
+        ? [
+            for (var i = 0; i < detectedFaces.length; i++)
+              if (_faceVisible[i] && _nameControllers[i].text.trim().isNotEmpty)
+                (face: detectedFaces[i], name: _nameControllers[i].text.trim()),
+          ]
+        : <({FaceDetection face, String name})>[];
+
+    final canSearch = !isWorking &&
+        facesAreForCurrentFile &&
+        namedFaces.isNotEmpty &&
+        activeScopePath != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -95,20 +159,73 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
           _ReferencePhotoTile(file: referenceFile),
           const SizedBox(height: 8),
 
-          // Person name input
-          TextField(
-            controller: _nameController,
-            enabled: !isWorking,
-            style: const TextStyle(fontSize: 12),
-            decoration: const InputDecoration(
-              labelText: 'Person name',
-              labelStyle: TextStyle(fontSize: 11),
-              isDense: true,
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          // Detect button — always shown; changes label when re-detecting.
+          OutlinedButton.icon(
+            onPressed: canDetect
+                ? () => ref.read(faceSearchProvider.notifier).detectReferenceFaces(referenceFile)
+                : null,
+            icon: const Icon(Icons.face_retouching_natural, size: 14),
+            label: Text(
+              detectedFaces != null ? 'Re-detect Faces' : 'Detect Faces',
+              style: const TextStyle(fontSize: 12),
             ),
           ),
           const SizedBox(height: 8),
+
+          // Progress / status for detect and scan phases
+          if (isWorking) ...[
+            LinearProgressIndicator(value: faceState.progress > 0 ? faceState.progress : null),
+            const SizedBox(height: 4),
+            Text(
+              faceState.message,
+              style: const TextStyle(fontSize: 10),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+          ] else if (faceState.status == FaceSearchStatus.error) ...[
+            Text(
+              faceState.errorMessage ?? 'Unknown error',
+              style: const TextStyle(fontSize: 10, color: Colors.red),
+            ),
+            const SizedBox(height: 4),
+          ] else if (faceState.status == FaceSearchStatus.done && faceState.results.isEmpty) ...[
+            Text(
+              faceState.message,
+              style: const TextStyle(fontSize: 10),
+            ),
+            const SizedBox(height: 4),
+          ] else if (faceState.status == FaceSearchStatus.idle && faceState.message.isNotEmpty) ...[
+            Text(
+              faceState.message,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+          ],
+
+          // Detected face cards — scrollable so large group photos don't overflow.
+          if (facesAreForCurrentFile) ...[
+            const Divider(),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: detectedFaces.length,
+                separatorBuilder: (context, i) => const SizedBox(height: 6),
+                itemBuilder: (context, i) {
+                  if (!_faceVisible[i]) return const SizedBox.shrink();
+                  return _FaceCard(
+                    index: i,
+                    imagePath: faceState.referencePath!,
+                    face: detectedFaces[i],
+                    nameController: _nameControllers[i],
+                    enabled: !isWorking,
+                    onDismiss: () => setState(() => _faceVisible[i] = false),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
 
           // Similarity threshold
           Row(
@@ -146,53 +263,31 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
               items: scopeOptions
                   .map((o) => DropdownMenuItem(
                         value: o.path,
-                        child: Text(o.label,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, color: Colors.black)),
+                        child: Text(
+                          o.label,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: Colors.black),
+                        ),
                       ))
                   .toList(),
-              onChanged: isWorking
-                  ? null
-                  : (v) => setState(() => _selectedScopePath = v),
+              onChanged: isWorking ? null : (v) => setState(() => _selectedScopePath = v),
             ),
             const SizedBox(height: 8),
           ],
 
-          // Scan button
+          // Search button
           FilledButton(
-            onPressed: isWorking ||
-                    referenceFile == null ||
-                    !referenceFile.isImage ||
-                    _nameController.text.trim().isEmpty ||
-                    activeScopePath == null
-                ? null
-                : () => _startSearch(referenceFile, gridFiles, activeScopePath),
-            child: const Text('Find Matching Faces', style: TextStyle(fontSize: 12)),
+            onPressed: canSearch
+                ? () => _startSearch(namedFaces, gridFiles, activeScopePath)
+                : null,
+            child: Text(
+              namedFaces.length > 1
+                  ? 'Find ${namedFaces.length} People'
+                  : 'Find Matching Faces',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
           const SizedBox(height: 8),
-
-          // Progress / status
-          if (isWorking) ...[
-            LinearProgressIndicator(value: faceState.progress > 0 ? faceState.progress : null),
-            const SizedBox(height: 4),
-            Text(
-              faceState.message,
-              style: const TextStyle(fontSize: 10),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ] else if (faceState.status == FaceSearchStatus.error) ...[
-            Text(
-              faceState.errorMessage ?? 'Unknown error',
-              style: const TextStyle(fontSize: 10, color: Colors.red),
-            ),
-          ] else if (faceState.status == FaceSearchStatus.done) ...[
-            Text(
-              faceState.message,
-              style: const TextStyle(fontSize: 10),
-            ),
-          ],
-
-          const SizedBox(height: 4),
 
           // Results
           if (faceState.results.isNotEmpty) ...[
@@ -208,16 +303,18 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
                 TextButton(
                   onPressed: isWorking
                       ? null
-                      : () => ref
-                          .read(faceSearchProvider.notifier)
-                          .tagAll(_nameController.text),
-                  child: Text(
-                    'Tag all as "${_nameController.text}"',
-                    style: const TextStyle(fontSize: 10),
-                  ),
+                      : () => ref.read(faceSearchProvider.notifier).tagAll(),
+                  child: const Text('Tag all', style: TextStyle(fontSize: 10)),
                 ),
               ],
             ),
+            if (faceState.status == FaceSearchStatus.done) ...[
+              Text(
+                faceState.message,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+            ],
             Expanded(
               child: ListView.builder(
                 itemCount: faceState.results.length,
@@ -233,7 +330,6 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     );
   }
 
-  /// Returns the effective "current folder" for the scope dropdown.
   String _currentFolderPath(
       Set<FileOfInterest> selectedFolders, List<FileOfInterest> gridFiles, String libraryPath) {
     final dirs = selectedFolders.where((f) => f.isDirectory).toList();
@@ -242,37 +338,38 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
     return libraryPath;
   }
 
-  /// Walks from [currentPath] up to (and including) [libraryPath], producing
-  /// one entry per ancestor folder with its basename as the label.
   List<({String label, String path})> _buildScopeOptions(String currentPath, String libraryPath) {
-    // Ensure we stay within the library tree.
-    if (!currentPath.startsWith(libraryPath)) return [(label: p.basename(libraryPath), path: libraryPath)];
-
+    if (!currentPath.startsWith(libraryPath)) {
+      return [(label: p.basename(libraryPath), path: libraryPath)];
+    }
     final options = <({String label, String path})>[];
     String cursor = currentPath;
     while (true) {
       options.add((label: p.basename(cursor), path: cursor));
       if (cursor == libraryPath) break;
       final parent = p.dirname(cursor);
-      if (parent == cursor) break; // filesystem root guard
+      if (parent == cursor) break;
       cursor = parent;
     }
     return options;
   }
 
-  void _startSearch(FileOfInterest referenceFile, List<FileOfInterest> gridFiles, String scopePath) {
-    // For the innermost scope (current folder), prefer the already-loaded gridFiles
-    // so we don't re-stat the disk unnecessarily.
-    final files = (scopePath == _currentFolderPath(
-            ref.read(selectedFolderContentsProvider),
-            gridFiles,
-            ref.read(appSettingsRepositoryProvider).asData?.value.libraryPath ?? scopePath))
+  void _startSearch(
+    List<({FaceDetection face, String name})> namedFaces,
+    List<FileOfInterest> gridFiles,
+    String scopePath,
+  ) {
+    final files = (scopePath ==
+            _currentFolderPath(
+              ref.read(selectedFolderContentsProvider),
+              gridFiles,
+              ref.read(appSettingsRepositoryProvider).asData?.value.libraryPath ?? scopePath,
+            ))
         ? gridFiles
         : _collectImages(scopePath);
 
     ref.read(faceSearchProvider.notifier).search(
-          referenceFile: referenceFile,
-          personName: _nameController.text,
+          namedFaces: namedFaces,
           threshold: _threshold,
           libraryFiles: files,
         );
@@ -312,7 +409,7 @@ class _ReferencePhotoTile extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            file != null && file!.isImage ? Icons.face : Icons.image_not_supported,
+            file != null && file!.isImage ? Icons.photo : Icons.image_not_supported,
             size: 14,
           ),
           const SizedBox(width: 6),
@@ -329,8 +426,117 @@ class _ReferencePhotoTile extends StatelessWidget {
   }
 }
 
+class _FaceCard extends StatefulWidget {
+  final int index;
+  final String imagePath;
+  final FaceDetection face;
+  final TextEditingController nameController;
+  final bool enabled;
+  final VoidCallback onDismiss;
+
+  const _FaceCard({
+    required this.index,
+    required this.imagePath,
+    required this.face,
+    required this.nameController,
+    required this.enabled,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_FaceCard> createState() => _FaceCardState();
+}
+
+class _FaceCardState extends State<_FaceCard> {
+  late Future<Uint8List?> _thumbFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _thumbFuture = compute(_cropFaceBytes, [
+      widget.imagePath,
+      widget.face.bboxX,
+      widget.face.bboxY,
+      widget.face.bboxW,
+      widget.face.bboxH,
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Face thumbnail
+        SizedBox(
+          width: 56,
+          height: 56,
+          child: FutureBuilder<Uint8List?>(
+            future: _thumbFuture,
+            builder: (ctx, snap) {
+              if (snap.connectionState != ConnectionState.done) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+              if (snap.data == null) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Icon(Icons.face, size: 28, color: Colors.grey[500]),
+                );
+              }
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.memory(snap.data!, fit: BoxFit.cover),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Name field
+        Expanded(
+          child: TextField(
+            controller: widget.nameController,
+            enabled: widget.enabled,
+            style: const TextStyle(fontSize: 12),
+            decoration: InputDecoration(
+              labelText: 'Person ${widget.index + 1}',
+              labelStyle: const TextStyle(fontSize: 11),
+              isDense: true,
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            ),
+          ),
+        ),
+        // Dismiss button
+        IconButton(
+          iconSize: 14,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+          icon: const Icon(Icons.close),
+          tooltip: 'Remove from search',
+          onPressed: widget.enabled ? widget.onDismiss : null,
+        ),
+      ],
+    );
+  }
+}
+
 class _MatchTile extends StatelessWidget {
-  final ({FileOfInterest file, double similarity}) match;
+  final ({FileOfInterest file, double similarity, String personName}) match;
 
   const _MatchTile({required this.match});
 
@@ -346,6 +552,12 @@ class _MatchTile extends StatelessWidget {
               style: const TextStyle(fontSize: 10),
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            match.personName,
+            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.primary),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(width: 4),
           Text(

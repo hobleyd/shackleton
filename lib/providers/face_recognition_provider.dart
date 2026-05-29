@@ -15,15 +15,16 @@ import '../repositories/file_tags_repository.dart';
 
 part 'face_recognition_provider.g.dart';
 
-enum FaceSearchStatus { idle, downloadingModels, scanning, tagging, done, error }
+enum FaceSearchStatus { idle, downloadingModels, detecting, scanning, tagging, done, error }
 
 class FaceSearchState {
   final FaceSearchStatus status;
   final String message;
   final double progress;
-  final List<({FileOfInterest file, double similarity})> results;
+  final List<({FileOfInterest file, double similarity, String personName})> results;
   final String? errorMessage;
-  final FaceIdentity? identity;
+  final List<FaceDetection>? referenceFaces;
+  final String? referencePath;
 
   const FaceSearchState({
     this.status = FaceSearchStatus.idle,
@@ -31,16 +32,18 @@ class FaceSearchState {
     this.progress = 0.0,
     this.results = const [],
     this.errorMessage,
-    this.identity,
+    this.referenceFaces,
+    this.referencePath,
   });
 
   FaceSearchState copyWith({
     FaceSearchStatus? status,
     String? message,
     double? progress,
-    List<({FileOfInterest file, double similarity})>? results,
+    List<({FileOfInterest file, double similarity, String personName})>? results,
     String? errorMessage,
-    FaceIdentity? identity,
+    List<FaceDetection>? referenceFaces,
+    String? referencePath,
   }) =>
       FaceSearchState(
         status: status ?? this.status,
@@ -48,7 +51,8 @@ class FaceSearchState {
         progress: progress ?? this.progress,
         results: results ?? this.results,
         errorMessage: errorMessage ?? this.errorMessage,
-        identity: identity ?? this.identity,
+        referenceFaces: referenceFaces ?? this.referenceFaces,
+        referencePath: referencePath ?? this.referencePath,
       );
 }
 
@@ -95,15 +99,68 @@ class FaceSearch extends _$FaceSearch {
     }
   }
 
+  /// Detects all faces in [file] and stores them in state for the user to name.
+  Future<void> detectReferenceFaces(FileOfInterest file) async {
+    state = state.copyWith(
+      status: FaceSearchStatus.detecting,
+      message: 'Checking models…',
+      progress: 0.0,
+    );
+
+    if (!await _faceService.modelsAvailable) {
+      await downloadModels();
+      if (!ref.mounted || state.status == FaceSearchStatus.error) return;
+      if (ref.mounted) {
+        state = state.copyWith(
+          status: FaceSearchStatus.detecting,
+          message: 'Detecting faces…',
+        );
+      }
+    }
+
+    try {
+      if (ref.mounted) {
+        state = state.copyWith(message: 'Detecting faces…');
+      }
+      final faces = await _faceService.detectFaces(file.path);
+      // Sort left-to-right by bbox x so face numbering matches visual order.
+      faces.sort((a, b) => a.bboxX.compareTo(b.bboxX));
+
+      if (ref.mounted) {
+        if (faces.isEmpty) {
+          state = FaceSearchState(
+            status: FaceSearchStatus.error,
+            errorMessage: 'No faces detected in this photo.',
+            referencePath: file.path,
+          );
+        } else {
+          state = FaceSearchState(
+            status: FaceSearchStatus.idle,
+            message: '${faces.length} face${faces.length == 1 ? '' : 's'} detected',
+            referenceFaces: faces,
+            referencePath: file.path,
+          );
+        }
+      }
+    } catch (e) {
+      if (ref.mounted) {
+        state = FaceSearchState(
+          status: FaceSearchStatus.error,
+          errorMessage: 'Detection failed: $e',
+          referencePath: file.path,
+        );
+      }
+    }
+  }
+
+  /// Scans the library once and finds matches for all [namedFaces].
   Future<void> search({
-    required FileOfInterest referenceFile,
-    required String personName,
+    required List<({FaceDetection face, String name})> namedFaces,
     required double threshold,
     required List<FileOfInterest> libraryFiles,
   }) async {
-    if (personName.trim().isEmpty) return;
+    if (namedFaces.isEmpty) return;
 
-    // Give immediate visual feedback before any async work.
     state = state.copyWith(
       status: FaceSearchStatus.scanning,
       message: 'Checking models…',
@@ -113,43 +170,22 @@ class FaceSearch extends _$FaceSearch {
 
     final facesRepo = ref.read(facesRepositoryProvider.notifier);
 
-    // 1. Ensure models are present.
     if (!await _faceService.modelsAvailable) {
       await downloadModels();
       if (!ref.mounted || state.status == FaceSearchStatus.error) return;
     }
 
-    if (ref.mounted) {
-      state = state.copyWith(
-        message: 'Detecting face in reference photo…',
-      );
-    }
-
     try {
-      // 2. Detect faces in reference photo and pick the most confident one.
-      final referenceFaces = await _faceService.detectFaces(referenceFile.path);
-      if (referenceFaces.isEmpty) {
-        if (ref.mounted) {
-          state = state.copyWith(
-            status: FaceSearchStatus.error,
-            errorMessage: 'No face detected in the reference photo.',
-          );
-        }
-        return;
-      }
-      referenceFaces.sort((a, b) => b.confidence.compareTo(a.confidence));
-      final refEmbedding = referenceFaces.first.embedding;
-
-      // 3. Upsert the identity using the reference embedding.
-      final identity = await facesRepo.upsertIdentity(personName.trim(), refEmbedding);
-      if (ref.mounted) {
-        state = state.copyWith(
-          message: 'Scanning library for faces…',
-          identity: identity,
-        );
+      // Upsert all named identities up-front.
+      if (ref.mounted) state = state.copyWith(message: 'Saving identities…');
+      final withIdentity = <({FaceDetection face, String name, FaceIdentity identity})>[];
+      for (final nf in namedFaces) {
+        final identity = await facesRepo.upsertIdentity(nf.name.trim(), nf.face.embedding);
+        withIdentity.add((face: nf.face, name: nf.name.trim(), identity: identity));
       }
 
-      // 4. Scan unscanned library files.
+      // Scan library once — skips already-scanned files.
+      if (ref.mounted) state = state.copyWith(message: 'Scanning library for faces…');
       final scanUseCase = ScanFacesUseCase(
         faceService: _faceService,
         facesRepo: facesRepo,
@@ -159,30 +195,36 @@ class FaceSearch extends _$FaceSearch {
         onProgress: (p, file) {
           if (ref.mounted) {
             state = state.copyWith(
-              progress: p * 0.9, // reserve last 10% for DB query
+              progress: p * 0.9,
               message: file.isEmpty ? 'Querying database…' : 'Scanning: ${_basename(file)}',
             );
           }
         },
       );
 
-      // 5. Query for matching files not yet tagged with this person.
-      if (ref.mounted) {
-        state = state.copyWith(message: 'Finding matches…', progress: 0.92);
+      // Query matches per person and merge results.
+      if (ref.mounted) state = state.copyWith(message: 'Finding matches…', progress: 0.92);
+      final allMatches = <({FileOfInterest file, double similarity, String personName})>[];
+      for (final id in withIdentity) {
+        final matches = await facesRepo.findFilesMatchingIdentity(
+          id.identity,
+          threshold,
+          excludeTagName: id.name,
+        );
+        for (final m in matches) {
+          allMatches.add((file: m.file, similarity: m.similarity, personName: id.name));
+        }
       }
-      final matches = await facesRepo.findFilesMatchingIdentity(
-        identity,
-        threshold,
-        excludeTagName: personName.trim(),
-      );
+
+      // Sort by similarity descending.
+      allMatches.sort((a, b) => b.similarity.compareTo(a.similarity));
 
       if (ref.mounted) {
         state = state.copyWith(
           status: FaceSearchStatus.done,
-          message: '${matches.length} photo${matches.length == 1 ? '' : 's'} found',
+          message: '${allMatches.length} photo${allMatches.length == 1 ? '' : 's'} found',
           progress: 1.0,
-          results: matches,
-          identity: identity,
+          results: allMatches,
         );
       }
     } catch (e) {
@@ -195,19 +237,14 @@ class FaceSearch extends _$FaceSearch {
     }
   }
 
-  /// Tags all result files with [personName] and removes them from results.
-  ///
-  /// Writes via exiftool so the file's IPTC tags are updated; the metadata
-  /// provider reload (triggered by invalidation) then syncs those tags back to
-  /// the DB via LoadMetadataUseCase. Falls back to DB-only when exiftool is
-  /// absent or the file doesn't support IPTC metadata.
-  Future<void> tagAll(String personName) async {
-    final name = personName.trim();
-    if (name.isEmpty) return;
+  /// Tags every result file with its matched person's name.
+  Future<void> tagAll() async {
+    final results = state.results;
+    if (results.isEmpty) return;
+
     final exif = ref.read(exifToolServiceProvider);
     final tagsRepo = ref.read(fileTagsRepositoryProvider.notifier);
-    final newTag = Tag(tag: name);
-    final total = state.results.length;
+    final total = results.length;
 
     if (ref.mounted) {
       state = state.copyWith(
@@ -219,8 +256,10 @@ class FaceSearch extends _$FaceSearch {
 
     for (var i = 0; i < total; i++) {
       if (!ref.mounted) return;
-      final match = state.results[i];
+      final match = results[i];
       final file = match.file;
+      final name = match.personName;
+      final newTag = Tag(tag: name);
 
       if (exif.findExifTool() != null && file.isMetadataSupported) {
         try {
@@ -229,15 +268,12 @@ class FaceSearch extends _$FaceSearch {
           if (!tags.any((t) => t.tag == name)) tags.add(newTag);
           await exif.writeTags(file.path, tags, location: result.location);
         } catch (_) {
-          // Exiftool write failed; DB-only path handles the update below.
+          // DB-only path below handles the update.
         }
       }
 
-      // Sync to DB sequentially (one per iteration — no concurrent transaction flood).
       await tagsRepo.addTagToFile(file.path, name);
 
-      // Update the in-memory metadata state if the provider is already alive,
-      // avoiding a full reload (exiftool re-read + writeTags transaction) per file.
       if (ref.exists(metadataProvider(file))) {
         ref.read(metadataProvider(file).notifier).updateTagsFromString(name, updateFile: false);
       }
@@ -254,7 +290,7 @@ class FaceSearch extends _$FaceSearch {
       state = state.copyWith(
         status: FaceSearchStatus.done,
         results: [],
-        message: '$total photo${total == 1 ? '' : 's'} tagged as "$name"',
+        message: '$total photo${total == 1 ? '' : 's'} tagged',
         progress: 1.0,
       );
     }
