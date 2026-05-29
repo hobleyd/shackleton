@@ -128,7 +128,7 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
         namedFaces.isNotEmpty &&
         activeScopePath != null;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -202,28 +202,21 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
             const SizedBox(height: 4),
           ],
 
-          // Detected face cards — scrollable so large group photos don't overflow.
+          // Detected face cards — expand to full height; outer scroll handles overflow.
           if (facesAreForCurrentFile) ...[
             const Divider(),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 220),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: detectedFaces.length,
-                separatorBuilder: (context, i) => const SizedBox(height: 6),
-                itemBuilder: (context, i) {
-                  if (!_faceVisible[i]) return const SizedBox.shrink();
-                  return _FaceCard(
-                    index: i,
-                    imagePath: faceState.referencePath!,
-                    face: detectedFaces[i],
-                    nameController: _nameControllers[i],
-                    enabled: !isWorking,
-                    onDismiss: () => setState(() => _faceVisible[i] = false),
-                  );
-                },
-              ),
-            ),
+            for (var i = 0; i < detectedFaces.length; i++)
+              if (_faceVisible[i]) ...[
+                _FaceCard(
+                  index: i,
+                  imagePath: faceState.referencePath!,
+                  face: detectedFaces[i],
+                  nameController: _nameControllers[i],
+                  enabled: !isWorking,
+                  onDismiss: () => setState(() => _faceVisible[i] = false),
+                ),
+                const SizedBox(height: 6),
+              ],
             const SizedBox(height: 4),
           ],
 
@@ -315,14 +308,14 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
               ),
               const SizedBox(height: 4),
             ],
-            Expanded(
-              child: ListView.builder(
-                itemCount: faceState.results.length,
-                itemBuilder: (context, i) {
-                  final match = faceState.results[i];
-                  return _MatchTile(match: match);
-                },
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: faceState.results.length,
+              itemBuilder: (context, i) {
+                final match = faceState.results[i];
+                return _MatchTile(match: match);
+              },
             ),
           ],
         ],
