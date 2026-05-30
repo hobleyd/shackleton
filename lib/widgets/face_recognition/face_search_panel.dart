@@ -208,6 +208,7 @@ class _FaceSearchPanelState extends ConsumerState<FaceSearchPanel> {
             for (var i = 0; i < detectedFaces.length; i++)
               if (_faceVisible[i]) ...[
                 _FaceCard(
+                  key: ValueKey(i),
                   index: i,
                   imagePath: faceState.referencePath!,
                   face: detectedFaces[i],
@@ -428,6 +429,7 @@ class _FaceCard extends StatefulWidget {
   final VoidCallback onDismiss;
 
   const _FaceCard({
+    super.key,
     required this.index,
     required this.imagePath,
     required this.face,
