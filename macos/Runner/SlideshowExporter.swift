@@ -323,11 +323,18 @@ private struct SlideshowRenderer {
                     writeGroup.leave()
                     return
                 }
-                let entry = plan[planIdx]; planIdx += 1
-                if let buf = renderSpec(entry.spec, canvas: canvas) {
-                    adaptor.append(buf, withPresentationTime: entry.pts)
+                // Peek without advancing — renderSpec can take time (CI transitions),
+                // and isReadyForMoreMediaData may flip to NO before we can append.
+                let entry = plan[planIdx]
+                guard let buf = renderSpec(entry.spec, canvas: canvas) else {
+                    planIdx += 1  // skip unrenderable frame
+                    continue
                 }
-                // Emit progress when a still frame is submitted.
+                // Re-check after rendering; if the encoder is full now, return and
+                // let requestMediaDataWhenReady re-invoke us for this same frame.
+                guard videoInput.isReadyForMoreMediaData else { return }
+                planIdx += 1
+                adaptor.append(buf, withPresentationTime: entry.pts)
                 if case .still(let idx, _) = entry.spec {
                     SlideshowProgressHandler.emit(current: idx + 1, total: cgImages.count)
                 }
