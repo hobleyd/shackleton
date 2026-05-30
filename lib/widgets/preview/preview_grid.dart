@@ -13,9 +13,12 @@ import '../../providers/contents/selected_grid_entities.dart';
 import '../entity_context_menu.dart';
 import '../face_recognition/face_search_panel.dart';
 import '../metadata/metadata_editor.dart';
+import '../slideshow/slideshow_panel.dart';
 import 'grid_controller.dart';
 import 'photo_map.dart';
 import 'shackleton_grid_view.dart';
+
+enum _RightPanel { metadata, faceSearch, slideshow }
 
 class PreviewGrid extends ConsumerStatefulWidget {
   const PreviewGrid({super.key});
@@ -27,7 +30,7 @@ class PreviewGrid extends ConsumerStatefulWidget {
 class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
   late List<FileOfInterest> entities;
   late GridController gridController;
-  bool _showFaceSearch = false;
+  _RightPanel _rightPanel = _RightPanel.metadata;
 
   @override
   Widget build(BuildContext context) {
@@ -78,31 +81,56 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
               width: 210,
               child: Column(
                 children: [
-                  // Toggle between metadata and face search panels.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Tooltip(
-                        message: _showFaceSearch ? 'Show metadata' : 'Face search',
+                        message: 'Face search',
                         child: IconButton(
                           iconSize: 16,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            _showFaceSearch ? Icons.label : Icons.face_retouching_natural,
+                            Icons.face_retouching_natural,
+                            color: _rightPanel == _RightPanel.faceSearch
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
                           ),
-                          onPressed: () => setState(() => _showFaceSearch = !_showFaceSearch),
+                          onPressed: () => setState(() => _rightPanel =
+                              _rightPanel == _RightPanel.faceSearch
+                                  ? _RightPanel.metadata
+                                  : _RightPanel.faceSearch),
+                        ),
+                      ),
+                      Tooltip(
+                        message: 'Create slideshow',
+                        child: IconButton(
+                          iconSize: 16,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          icon: Icon(
+                            Icons.slideshow,
+                            color: _rightPanel == _RightPanel.slideshow
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                          onPressed: () => setState(() => _rightPanel =
+                              _rightPanel == _RightPanel.slideshow
+                                  ? _RightPanel.metadata
+                                  : _RightPanel.slideshow),
                         ),
                       ),
                     ],
                   ),
                   Expanded(
-                    child: _showFaceSearch
-                        ? const FaceSearchPanel()
-                        : MetadataEditor(
-                            keyHandlerCallback: gridController,
-                            tagHandler: this,
-                          ),
+                    child: switch (_rightPanel) {
+                      _RightPanel.faceSearch => const FaceSearchPanel(),
+                      _RightPanel.slideshow => const SlideshowPanel(),
+                      _RightPanel.metadata => MetadataEditor(
+                          keyHandlerCallback: gridController,
+                          tagHandler: this,
+                        ),
+                    },
                   ),
                 ],
               ),
