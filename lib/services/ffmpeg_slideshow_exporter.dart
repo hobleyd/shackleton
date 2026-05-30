@@ -5,7 +5,6 @@ import 'package:process_run/process_run.dart';
 
 import '../domain/services/i_slideshow_exporter.dart';
 
-const _fadeDuration = 0.5; // seconds of cross-fade transition
 const _fps = 30;
 
 // Maps each SlideshowTransition to its FFmpeg xfade transition name.
@@ -59,6 +58,7 @@ class FfmpegSlideshowExporter implements ISlideshowExporter {
     required String? audioPath,
     required String outputPath,
     required int frameDelaySeconds,
+    required double transitionDurationSeconds,
     required Set<SlideshowTransition> transitions,
     required SlideshowQuality quality,
     void Function(int current, int total)? onProgress,
@@ -74,7 +74,7 @@ class FfmpegSlideshowExporter implements ISlideshowExporter {
     try {
       final useTransitions = transitions.isNotEmpty && imagePaths.length > 1;
       final args = useTransitions
-          ? _xfadeArgs(imagePaths, audioPath, outputPath, frameDelaySeconds, transitions, quality)
+          ? _xfadeArgs(imagePaths, audioPath, outputPath, frameDelaySeconds, transitionDurationSeconds, transitions, quality)
           : await _concatArgs(imagePaths, audioPath, outputPath, frameDelaySeconds, tmpDir, quality);
 
       final result = await Process.run(_ffmpegBin!, args);
@@ -129,11 +129,14 @@ class FfmpegSlideshowExporter implements ISlideshowExporter {
     String? audioPath,
     String outputPath,
     int frameDelaySec,
+    double transitionDurationSec,
     Set<SlideshowTransition> transitions,
     SlideshowQuality quality,
   ) {
     final N = imagePaths.length;
     final F = frameDelaySec.toDouble();
+    // Clamp so the transition never exceeds the per-image hold time.
+    final D = transitionDurationSec.clamp(0.1, F - 0.1);
     final rng = Random();
     final transitionList = transitions.toList();
 
@@ -142,7 +145,7 @@ class FfmpegSlideshowExporter implements ISlideshowExporter {
     // Individual looped image inputs; give non-last images extra time for the
     // transition overlap.
     for (int i = 0; i < N; i++) {
-      final t = i < N - 1 ? (F + _fadeDuration) : F;
+      final t = i < N - 1 ? (F + D) : F;
       args.addAll(['-loop', '1', '-t', '$t', '-i', imagePaths[i]]);
     }
     if (audioPath != null) args.addAll(['-i', audioPath]);
@@ -157,11 +160,11 @@ class FfmpegSlideshowExporter implements ISlideshowExporter {
     String prev = 'v0';
     double accOffset = 0;
     for (int i = 1; i < N; i++) {
-      accOffset = accOffset + F - (i > 1 ? _fadeDuration : 0);
+      accOffset = accOffset + F - (i > 1 ? D : 0);
       final label = i < N - 1 ? 't$i' : 'vout';
       final transName = _ffmpegNames[transitionList[rng.nextInt(transitionList.length)]]!;
       filter.write('[$prev][v$i]xfade=transition=$transName'
-          ':duration=$_fadeDuration'
+          ':duration=${D.toStringAsFixed(3)}'
           ':offset=${accOffset.toStringAsFixed(3)}[$label];');
       prev = label;
       if (i == 1) accOffset = F;

@@ -26,15 +26,17 @@ abstract class ISlideshowExporter {
   /// [imagePaths]        — ordered image file paths.
   /// [audioPath]         — optional audio track; null = silent video.
   /// [outputPath]        — destination .mp4 file path.
-  /// [frameDelaySeconds] — how long each image is shown (full opacity).
-  /// [transitions]       — set of enabled transition styles; empty = hard cut.
-  ///                       One is chosen at random for each image pair.
-  /// [onProgress]        — called with (current, total) as each image is added.
+  /// [frameDelaySeconds]      — how long each image is shown (full opacity).
+  /// [transitionDurationSeconds] — duration of each cross-transition in seconds.
+  /// [transitions]           — set of enabled transition styles; empty = hard cut.
+  ///                           One is chosen at random for each image pair.
+  /// [onProgress]            — called with (current, total) as each image is added.
   Future<void> export({
     required List<String> imagePaths,
     required String? audioPath,
     required String outputPath,
     required int frameDelaySeconds,
+    required double transitionDurationSeconds,
     required Set<SlideshowTransition> transitions,
     required SlideshowQuality quality,
     void Function(int current, int total)? onProgress,

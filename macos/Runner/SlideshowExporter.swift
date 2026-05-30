@@ -57,21 +57,23 @@ class SlideshowExporter {
                                     details: nil))
                 return
             }
-            let audioPath    = args["audioPath"]    as? String
-            let transitions  = (args["transitions"] as? [String]) ?? []
-            let outputWidth  = (args["outputWidth"]  as? Int) ?? 1280
-            let outputHeight = (args["outputHeight"] as? Int) ?? 720
+            let audioPath               = args["audioPath"]               as? String
+            let transitionDurationSec   = args["transitionDurationSeconds"] as? Double ?? 1.0
+            let transitions             = (args["transitions"] as? [String]) ?? []
+            let outputWidth             = (args["outputWidth"]  as? Int) ?? 1280
+            let outputHeight            = (args["outputHeight"] as? Int) ?? 720
 
             Task {
                 do {
                     try await SlideshowRenderer.run(
-                        imagePaths:        imagePaths,
-                        audioPath:         audioPath,
-                        outputPath:        outputPath,
-                        frameDelaySeconds: frameDelaySec,
-                        transitions:       transitions,
-                        outputWidth:       outputWidth,
-                        outputHeight:      outputHeight)
+                        imagePaths:              imagePaths,
+                        audioPath:               audioPath,
+                        outputPath:              outputPath,
+                        frameDelaySeconds:       frameDelaySec,
+                        transitionDurationSec:   transitionDurationSec,
+                        transitions:             transitions,
+                        outputWidth:             outputWidth,
+                        outputHeight:            outputHeight)
                     result(nil)
                 } catch {
                     result(FlutterError(code: "EXPORT_FAILED",
@@ -96,7 +98,6 @@ private enum FrameSpec {
 
 private struct SlideshowRenderer {
     static let fps: Int32 = 30
-    static let fadeSec    = 0.5
 
     // One CIContext shared across every frame — creating it per-frame is very expensive.
     private static let ciCtx = CIContext(options: [.useSoftwareRenderer: false])
@@ -147,14 +148,18 @@ private struct SlideshowRenderer {
     // Returns an ordered list of (frame descriptor, presentation timestamp) pairs.
     // Each descriptor is cheap — just references to CGImages or CIImages.
     private static func buildFramePlan(
-        images:            [CGImage],
-        ciStills:          [CIImage],
-        canvas:            CGSize,
-        frameDelaySeconds: Int,
-        transitions:       [String]
+        images:               [CGImage],
+        ciStills:             [CIImage],
+        canvas:               CGSize,
+        frameDelaySeconds:    Int,
+        transitionDurationSec: Double,
+        transitions:          [String]
     ) -> [(spec: FrameSpec, pts: CMTime)] {
         let framesPerImage   = Int(fps) * frameDelaySeconds
-        let transitionFrames = transitions.isEmpty ? 0 : Int(Double(fps) * fadeSec)
+        // Clamp so the transition never consumes the entire hold time.
+        let clampedTransSec  = transitions.isEmpty ? 0.0
+            : max(0.1, min(transitionDurationSec, Double(frameDelaySeconds) - 0.1))
+        let transitionFrames = transitions.isEmpty ? 0 : Int(Double(fps) * clampedTransSec)
         let frameDuration    = CMTime(value: 1, timescale: CMTimeScale(fps))
         var plan: [(FrameSpec, CMTime)] = []
         var now  = CMTime.zero
@@ -208,13 +213,14 @@ private struct SlideshowRenderer {
     // -------------------------------------------------------------------------
 
     static func run(
-        imagePaths:        [String],
-        audioPath:         String?,
-        outputPath:        String,
-        frameDelaySeconds: Int,
-        transitions:       [String],
-        outputWidth:       Int,
-        outputHeight:      Int
+        imagePaths:            [String],
+        audioPath:             String?,
+        outputPath:            String,
+        frameDelaySeconds:     Int,
+        transitionDurationSec: Double,
+        transitions:           [String],
+        outputWidth:           Int,
+        outputHeight:          Int
     ) async throws {
 
         // 1. Load images: thumbnail-decode at target size using JPEG DCT subsampling.
@@ -236,11 +242,12 @@ private struct SlideshowRenderer {
 
         // 3. Build lightweight frame plan (CGImage/CIImage refs + timestamps).
         let plan = buildFramePlan(
-            images:            cgImages,
-            ciStills:          ciStills,
-            canvas:            canvas,
-            frameDelaySeconds: frameDelaySeconds,
-            transitions:       transitions)
+            images:               cgImages,
+            ciStills:             ciStills,
+            canvas:               canvas,
+            frameDelaySeconds:    frameDelaySeconds,
+            transitionDurationSec: transitionDurationSec,
+            transitions:          transitions)
         let vidDuration = plan.last.map {
             CMTimeAdd($0.pts, CMTime(value: 1, timescale: CMTimeScale(fps)))
         } ?? .zero

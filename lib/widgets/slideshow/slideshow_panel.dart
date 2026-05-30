@@ -61,9 +61,10 @@ class SlideshowPanel extends ConsumerStatefulWidget {
 }
 
 class _SlideshowPanelState extends ConsumerState<SlideshowPanel> {
-  _PanelState _state          = _PanelState.idle;
-  int _imageCount             = 0; // 0 = all available
-  int _frameDelaySec          = 3;
+  _PanelState _state             = _PanelState.idle;
+  int _imageCount                = 0; // 0 = all available
+  int _frameDelaySec             = 5;
+  double _transitionDurationSec  = 1.0;
   final Set<SlideshowTransition> _transitions = {SlideshowTransition.fade};
   SlideshowQuality _quality   = SlideshowQuality.medium;
   int _progressCurrent        = 0;
@@ -273,7 +274,7 @@ class _SlideshowPanelState extends ConsumerState<SlideshowPanel> {
         ),
         const SizedBox(height: 2),
 
-        // ── Duration ──
+        // ── Duration / image ──
         Row(children: [
           const Text('Duration / image', style: TextStyle(fontSize: 10)),
           const Spacer(),
@@ -282,7 +283,29 @@ class _SlideshowPanelState extends ConsumerState<SlideshowPanel> {
         Slider(
           value: _frameDelaySec.toDouble(),
           min: 1, max: 10, divisions: 9,
-          onChanged: (v) => setState(() => _frameDelaySec = v.round()),
+          onChanged: (v) => setState(() {
+            _frameDelaySec = v.round();
+            // Keep transition duration below image duration.
+            final maxTrans = (_frameDelaySec - 0.5).clamp(0.5, 3.0);
+            if (_transitionDurationSec > maxTrans) _transitionDurationSec = maxTrans;
+          }),
+        ),
+        const SizedBox(height: 2),
+
+        // ── Transition duration ──
+        Row(children: [
+          const Text('Transition duration', style: TextStyle(fontSize: 10)),
+          const Spacer(),
+          Text('${_transitionDurationSec.toStringAsFixed(1)}s',
+              style: const TextStyle(fontSize: 10)),
+        ]),
+        Slider(
+          value: _transitionDurationSec,
+          min: 0.5,
+          max: (_frameDelaySec - 0.5).clamp(0.5, 3.0),
+          divisions: ((_frameDelaySec - 0.5).clamp(0.5, 3.0) / 0.5 - 1).round(),
+          onChanged: (v) => setState(() =>
+              _transitionDurationSec = (v * 2).round() / 2),
         ),
         const SizedBox(height: 2),
 
@@ -549,12 +572,13 @@ Write-Output $f.FileName
         throw SlideshowExportException(exporter.unavailableReason);
       }
       await exporter.export(
-        imagePaths:        images.map<String>((f) => f.path).toList(),
-        audioPath:         resolvedAudio,
-        outputPath:        output,
-        frameDelaySeconds: _frameDelaySec,
-        transitions:       transitions,
-        quality:           _quality,
+        imagePaths:               images.map<String>((f) => f.path).toList(),
+        audioPath:                resolvedAudio,
+        outputPath:               output,
+        frameDelaySeconds:        _frameDelaySec,
+        transitionDurationSeconds: _transitionDurationSec,
+        transitions:              transitions,
+        quality:                  _quality,
         onProgress: (current, total) {
           if (mounted) {
             setState(() {
