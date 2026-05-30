@@ -1,5 +1,5 @@
-/// Generates synthesized WAV versions of five public-domain classical pieces
-/// and writes them to assets/music/.
+/// Generates synthesized MP3 versions of classical pieces and writes them
+/// to assets/music/.  Requires `lame` on PATH (brew install lame).
 ///
 /// Run from the project root:
 ///   dart run tool/generate_music.dart
@@ -17,25 +17,48 @@ const _bitDepth   = 16;
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
-void main() {
+void main() async {
+  // Verify lame is available before doing any work.
+  final lameCheck = await Process.run('which', ['lame']);
+  if (lameCheck.exitCode != 0) {
+    stderr.writeln('ERROR: lame not found on PATH.  Install it with:');
+    stderr.writeln('  brew install lame');
+    exit(1);
+  }
+
   final outDir = Directory('assets/music');
   outDir.createSync(recursive: true);
 
   final pieces = [
     _Piece('canon_in_d',             _canonInD,            76,  'Pachelbel – Canon in D'),
-    _Piece('air_on_the_g_string',   _airOnTheGString,     52,  'Bach – Air on the G String'),
-    _Piece('moonlight_sonata',      _moonlightSonata,     54,  'Beethoven – Moonlight Sonata'),
-    _Piece('clair_de_lune',         _clairDeLune,         66,  'Debussy – Clair de Lune'),
-    _Piece('nocturne',              _chopinNocturne,      60,  'Chopin – Nocturne Op.9 No.2'),
-    _Piece('ride_of_the_valkyries', _rideOfTheValkyries, 120,  'Wagner – Ride of the Valkyries'),
+    _Piece('air_on_the_g_string',    _airOnTheGString,     52,  'Bach – Air on the G String'),
+    _Piece('moonlight_sonata',       _moonlightSonata,     54,  'Beethoven – Moonlight Sonata'),
+    _Piece('clair_de_lune',          _clairDeLune,         66,  'Debussy – Clair de Lune'),
+    _Piece('nocturne',               _chopinNocturne,      60,  'Chopin – Nocturne Op.9 No.2'),
+    _Piece('ride_of_the_valkyries',  _rideOfTheValkyries, 120,  'Wagner – Ride of the Valkyries'),
   ];
 
   for (final piece in pieces) {
-    final path = '${outDir.path}/${piece.filename}.wav';
-    final bytes = _render(piece);
-    File(path).writeAsBytesSync(bytes);
-    print('✓ ${piece.description}  →  $path  '
-          '(${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB)');
+    final wavBytes = _render(piece);
+    final mp3Path  = '${outDir.path}/${piece.filename}.mp3';
+    await _encodeToMp3(wavBytes, mp3Path);
+    final kb = File(mp3Path).lengthSync() ~/ 1024;
+    print('✓ ${piece.description}  →  $mp3Path  (${kb} KB)');
+  }
+}
+
+/// Pipes raw WAV bytes into lame and writes the result to [mp3Path].
+Future<void> _encodeToMp3(Uint8List wavBytes, String mp3Path) async {
+  // lame reads WAV from stdin (-) and writes MP3 to the given output path.
+  // -b 128 = 128 kbps CBR; --silent suppresses the progress meter.
+  final proc = await Process.start('lame', [
+    '--silent', '-b', '128', '-', mp3Path,
+  ]);
+  proc.stdin.add(wavBytes);
+  await proc.stdin.close();
+  final exitCode = await proc.exitCode;
+  if (exitCode != 0) {
+    throw Exception('lame exited with code $exitCode for $mp3Path');
   }
 }
 
