@@ -282,16 +282,29 @@ private struct SlideshowRenderer {
         if let ap = audioPath, FileManager.default.fileExists(atPath: ap) {
             let asset = AVURLAsset(url: URL(fileURLWithPath: ap))
             if let track = asset.tracks(withMediaType: .audio).first {
-                let formatHint = track.formatDescriptions.first as! CMFormatDescription?
-                let aIn = AVAssetWriterInput(mediaType: .audio,
-                                             outputSettings: nil,
-                                             sourceFormatHint: formatHint)
+                // Encode to AAC — MP3 passthrough is not supported in the MP4 container.
+                let aIn = AVAssetWriterInput(
+                    mediaType: .audio,
+                    outputSettings: [
+                        AVFormatIDKey:         kAudioFormatMPEG4AAC,
+                        AVSampleRateKey:       44100,
+                        AVNumberOfChannelsKey: 2,
+                        AVEncoderBitRateKey:   128_000,
+                    ],
+                    sourceFormatHint: nil)
                 aIn.expectsMediaDataInRealTime = false
                 writer.add(aIn)
                 audioWriterInput = aIn
 
+                // Decode compressed audio (MP3/WAV/etc.) to linear PCM for the AAC encoder.
                 let reader = try AVAssetReader(asset: asset)
-                let aOut   = AVAssetReaderTrackOutput(track: track, outputSettings: nil)
+                let aOut   = AVAssetReaderTrackOutput(track: track, outputSettings: [
+                    AVFormatIDKey:               kAudioFormatLinearPCM,
+                    AVLinearPCMBitDepthKey:      16,
+                    AVLinearPCMIsFloatKey:       false,
+                    AVLinearPCMIsBigEndianKey:   false,
+                    AVLinearPCMIsNonInterleaved: false,
+                ])
                 reader.add(aOut)
                 reader.startReading()
                 while let sample = aOut.copyNextSampleBuffer() {
