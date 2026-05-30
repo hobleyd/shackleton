@@ -55,6 +55,9 @@ class _PreviewPane extends ConsumerState<PreviewPane> implements KeyboardCallbac
                 shortcuts: {
                   const SingleActivator(LogicalKeyboardKey.arrowLeft): const NavigateLeftIntent(),
                   const SingleActivator(LogicalKeyboardKey.arrowRight): const NavigateRightIntent(),
+                  // Space is intercepted here so PageView's Scrollable handler never sees it,
+                  // preventing the duplicate KeyDownEvent assertion on macOS desktop.
+                  const SingleActivator(LogicalKeyboardKey.space): const NavigateRightIntent(),
                   const SingleActivator(LogicalKeyboardKey.backspace): const DeleteIntent(),
                   const SingleActivator(LogicalKeyboardKey.delete): const DeleteIntent(),
                   const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent(),
