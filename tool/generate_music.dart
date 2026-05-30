@@ -22,11 +22,12 @@ void main() {
   outDir.createSync(recursive: true);
 
   final pieces = [
-    _Piece('canon_in_d',          _canonInD,          76,  'Pachelbel – Canon in D'),
-    _Piece('air_on_the_g_string', _airOnTheGString,   52,  'Bach – Air on the G String'),
-    _Piece('moonlight_sonata',    _moonlightSonata,   54,  'Beethoven – Moonlight Sonata'),
-    _Piece('clair_de_lune',       _clairDeLune,       66,  'Debussy – Clair de Lune'),
-    _Piece('nocturne',            _chopinNocturne,    60,  'Chopin – Nocturne Op.9 No.2'),
+    _Piece('canon_in_d',             _canonInD,            76,  'Pachelbel – Canon in D'),
+    _Piece('air_on_the_g_string',   _airOnTheGString,     52,  'Bach – Air on the G String'),
+    _Piece('moonlight_sonata',      _moonlightSonata,     54,  'Beethoven – Moonlight Sonata'),
+    _Piece('clair_de_lune',         _clairDeLune,         66,  'Debussy – Clair de Lune'),
+    _Piece('nocturne',              _chopinNocturne,      60,  'Chopin – Nocturne Op.9 No.2'),
+    _Piece('ride_of_the_valkyries', _rideOfTheValkyries, 120,  'Wagner – Ride of the Valkyries'),
   ];
 
   for (final piece in pieces) {
@@ -55,6 +56,7 @@ const cs3 = 49; const e3  = 52; const gs3 = 56; const cs6 = 85;
 const d3  = 50; const a3  = 57; const b3  = 59; const fs3 = 54;
 const g3  = 55; const g6  = 91; const fs6 = 90; const ef6 = 87;
 const d6  = 86; const c6  = 84; const bf3 = 58; const as3 = 58;
+const bf2 = 46; const a2  = 45;
 
 /// Pachelbel – Canon in D (D major, two-voice texture)
 /// Main soprano line, 4 bars × 8 eighth-notes, then varied repeat.
@@ -208,6 +210,63 @@ const _chopinNocturne = [
   (ef5, 4.0),
 ];
 
+/// Wagner – Ride of the Valkyries (D minor, 9/8 feel at 120 BPM)
+/// Famous horn/string call — the iconic galloping motif.
+/// Each beat = quarter-note; eighth-note = 0.333 beats in the 9/8 triplet grid.
+const _rideOfTheValkyries = [
+  // ── Phrase 1: da-da-DUM, descend to tonic ─────────────────────────────────
+  (d4, 0.333), (a4, 0.333),                     // da-da (pickup)
+  (d5, 1.333),                                   // DUM (dotted quarter)
+  (0, 0.333),
+  (a4, 0.333), (g4, 0.333), (f4, 0.667),        // descending line
+  (d4, 1.333),                                   // landing
+  (0, 0.667),
+  // ── Phrase 2: da-da-DUM, rise to A ────────────────────────────────────────
+  (f4, 0.333), (a4, 0.333),                      // da-da (pickup)
+  (a4, 1.333),                                   // DUM
+  (0, 0.333),
+  (a4, 0.333), (c5, 0.333), (bf4, 0.667),       // inner voice
+  (a4, 1.333),
+  (0, 0.667),
+  // ── Phrase 3: middle arch, rise then fall ─────────────────────────────────
+  (g4, 0.333), (a4, 0.333),
+  (bf4, 1.333),
+  (0, 0.333),
+  (a4, 0.333), (g4, 0.333), (f4, 0.667),
+  (e4, 1.333),
+  (0, 0.667),
+  // ── Phrase 4: reprise of da-da-DUM, half cadence ──────────────────────────
+  (d4, 0.333), (a4, 0.333),
+  (d5, 1.333),
+  (0, 0.333),
+  (c5, 0.333), (bf4, 0.333), (a4, 0.667),
+  (g4, 1.333),
+  (0, 0.667),
+  // ── Phrase 5: second statement, upper register ─────────────────────────────
+  (d4, 0.333), (a4, 0.333),
+  (d5, 1.333),
+  (0, 0.333),
+  (e5, 0.333), (f5, 0.333), (g5, 0.667),        // soaring ascent
+  (f5, 1.333),
+  (0, 0.333),
+  (e5, 0.333), (d5, 0.333), (c5, 0.667),
+  (bf4, 1.333),
+  (0, 0.667),
+  // ── Phrase 6: climax ──────────────────────────────────────────────────────
+  (a4, 0.333), (bf4, 0.333),
+  (c5, 1.333),
+  (0, 0.333),
+  (d5, 0.333), (e5, 0.333), (f5, 0.667),
+  (g5, 2.0),                                     // high point
+  (0, 0.333),
+  (f5, 0.333), (e5, 0.333),
+  (d5, 2.0),
+  // ── Resolution ────────────────────────────────────────────────────────────
+  (a4, 0.333), (f4, 0.333),
+  (d4, 3.0),
+  (0, 1.0),
+];
+
 // Computed constant to replace null coalescing usage
 const df5 = 73; // D♭5 = C#5 enharmonic
 
@@ -256,6 +315,7 @@ Uint8List _render(_Piece piece) {
     if (pass > 20) break; // safety
   }
 
+  _applyReverb(buffer, totalSamples);
   return _encodeWav(buffer, totalSamples);
 }
 
@@ -263,44 +323,118 @@ double _midiToHz(int midi) => 440.0 * pow(2.0, (midi - 69) / 12.0);
 
 void _addNote(Float64List buffer, int startSample, double freq,
               double durationSec, double velocity) {
-  const attack  = 0.018;
-  const decay   = 0.18;
-  const sustain = 0.62;
-  const release = 0.45;
+  // Bowed-string ADSR: slower attack, long sustain, bow-off release
+  const attack  = 0.05;
+  const decay   = 0.10;
+  const sustain = 0.75;
+  const release = 0.65;
 
   final totalSamples = min(
     (durationSec * _sampleRate).round() + (release * _sampleRate).round(),
     buffer.length - startSample,
   );
 
+  // String section: three slightly detuned voices (ensemble width)
+  const detunings  = [-0.0018, 0.0, 0.0018];
+  const voiceGains = [0.65,    1.0, 0.65  ];
+
+  // Vibrato parameters: characteristic of orchestral strings
+  const vibratoRate  = 5.8;   // Hz — typical string vibrato
+  const vibratoDepth = 0.018; // ±1.8 % frequency ≈ ±0.3 semitone
+  const vibratoDelay = 0.15;  // seconds before vibrato begins
+  const vibratoRamp  = 0.12;  // seconds to reach full depth
+
   for (int i = 0; i < totalSamples; i++) {
     final t = i / _sampleRate;
 
+    // ADSR envelope — handles all note lengths correctly
+    final relStart = max(attack + decay, durationSec - release);
     double env;
     if (t < attack) {
       env = t / attack;
     } else if (t < attack + decay) {
       env = 1.0 - (1.0 - sustain) * (t - attack) / decay;
-    } else if (t < durationSec - release) {
+    } else if (t < relStart) {
       env = sustain;
     } else if (t < durationSec) {
-      env = sustain * (1.0 - (t - (durationSec - release)) / release);
+      env = sustain * (durationSec - t) / (durationSec - relStart);
     } else {
-      // Release tail after note ends
-      final releaseT = t - durationSec;
-      env = sustain * max(0.0, 1.0 - releaseT / release) * 0.3;
+      env = sustain * max(0.0, 1.0 - (t - durationSec) / release) * 0.35;
     }
 
-    // Piano-like multi-harmonic synthesis
-    final phase = 2 * pi * freq * t;
-    double sample = sin(phase)              // fundamental
-                  + 0.50 * sin(2 * phase)  // octave
-                  + 0.28 * sin(3 * phase)  // fifth above octave
-                  + 0.14 * sin(4 * phase)  // two octaves
-                  + 0.07 * sin(5 * phase)  // major third above 2 octaves
-                  + 0.03 * sin(6 * phase); // minor seventh above 2 octaves
+    // Vibrato amount ramps in after the bow settles
+    final vibratoAmt = t > vibratoDelay
+        ? min(1.0, (t - vibratoDelay) / vibratoRamp) * vibratoDepth
+        : 0.0;
 
-    buffer[startSample + i] += sample * env * velocity * 0.18;
+    double sample = 0.0;
+    for (int v = 0; v < 3; v++) {
+      final vf = freq * (1.0 + detunings[v]);
+
+      // Phase via ∫2π·f·(1 + amt·sin(2π·rate·t)) dt — accurate pitch vibrato
+      final phase = 2 * pi * vf * t
+          - (vf * vibratoAmt / vibratoRate) * cos(2 * pi * vibratoRate * t);
+
+      // Bowed-string harmonic series (sawtooth 1/n — richer than piano)
+      final s = sin(phase)
+              + 0.500 * sin(2 * phase)
+              + 0.333 * sin(3 * phase)
+              + 0.250 * sin(4 * phase)
+              + 0.200 * sin(5 * phase)
+              + 0.167 * sin(6 * phase)
+              + 0.143 * sin(7 * phase);
+
+      sample += s * voiceGains[v];
+    }
+
+    buffer[startSample + i] += sample * env * velocity * 0.065;
+  }
+}
+
+// Schroeder reverb — Freeverb-style parallel comb filters + all-pass diffusers.
+// Models ~1.8 s RT60 concert-hall reverb; 35 % wet mix.
+void _applyReverb(Float64List buffer, int sampleCount) {
+  // Eight parallel feedback comb filters (prime-ish delays, 25–37 ms at 44100 Hz)
+  const combDelays = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617];
+  const combGain   = 0.84; // controls reverb time
+
+  final wet = Float64List(sampleCount);
+
+  for (final delay in combDelays) {
+    final comb = Float64List(delay);
+    int pos = 0;
+    for (int i = 0; i < sampleCount; i++) {
+      final out = comb[pos];
+      comb[pos] = buffer[i] + out * combGain;
+      pos = (pos + 1) % delay;
+      wet[i] += out;
+    }
+  }
+
+  // Normalise comb sum
+  for (int i = 0; i < sampleCount; i++) {
+    wet[i] /= combDelays.length.toDouble();
+  }
+
+  // Two series all-pass diffusers (5 ms and 12.6 ms)
+  void allPass(int delayLen) {
+    const g = 0.5;
+    final buf = Float64List(delayLen);
+    int pos = 0;
+    for (int i = 0; i < sampleCount; i++) {
+      final delayed = buf[pos];
+      buf[pos] = wet[i] + delayed * g;
+      pos = (pos + 1) % delayLen;
+      wet[i] = delayed - wet[i] * g;
+    }
+  }
+
+  allPass(225); // ~5.1 ms
+  allPass(556); // ~12.6 ms
+
+  // Blend dry + wet
+  for (int i = 0; i < sampleCount; i++) {
+    buffer[i] = buffer[i] * 0.65 + wet[i] * 0.35;
   }
 }
 

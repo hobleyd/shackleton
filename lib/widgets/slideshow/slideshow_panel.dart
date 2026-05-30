@@ -29,11 +29,12 @@ class _ClassicalTrack {
 }
 
 const _classicalCatalogue = [
-  _ClassicalTrack('Canon in D',          'Pachelbel',  'canon_in_d.wav'),
-  _ClassicalTrack('Air on the G String', 'Bach',       'air_on_the_g_string.wav'),
-  _ClassicalTrack('Moonlight Sonata',    'Beethoven',  'moonlight_sonata.wav'),
-  _ClassicalTrack('Clair de Lune',       'Debussy',    'clair_de_lune.wav'),
-  _ClassicalTrack('Nocturne Op.9 No.2',  'Chopin',     'nocturne.wav'),
+  _ClassicalTrack('Canon in D',              'Pachelbel',  'canon_in_d.wav'),
+  _ClassicalTrack('Air on the G String',     'Bach',       'air_on_the_g_string.wav'),
+  _ClassicalTrack('Moonlight Sonata',        'Beethoven',  'moonlight_sonata.wav'),
+  _ClassicalTrack('Clair de Lune',           'Debussy',    'clair_de_lune.wav'),
+  _ClassicalTrack('Nocturne Op.9 No.2',      'Chopin',     'nocturne.wav'),
+  _ClassicalTrack('Ride of the Valkyries',   'Wagner',     'ride_of_the_valkyries.wav'),
 ];
 
 /// Extracts a bundled asset to a temp WAV file and returns the file path.
