@@ -88,10 +88,17 @@ class NavigationSpace extends ConsumerWidget {
               if (warmState.isVisible) ...[
                 Tooltip(
                   message: 'Caching faces: ${warmState.completed} of ${warmState.total}',
-                  child: const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Caching...', style: Theme.of(context).textTheme.labelSmall),
+                      const SizedBox(height: 4),
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
