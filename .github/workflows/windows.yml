@@ -52,7 +52,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v3.0.0
         with:
           name: 'shackleton-${{ steps.version.outputs.version }}'
           files: 'build/windows/shackleton-${{ steps.version.outputs.version }}.exe'
