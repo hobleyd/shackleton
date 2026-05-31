@@ -7,6 +7,7 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import '../../misc/utils.dart';
 import '../../models/shackleton_disk.dart';
 import '../../providers/disk_size_details.dart';
+import '../../providers/face_cache_warmer.dart';
 import '../../providers/folder_path.dart';
 
 class NavigationSpace extends ConsumerWidget {
@@ -25,6 +26,7 @@ class NavigationSpace extends ConsumerWidget {
         },
         data: (List<ShackletonDisk> disks) {
           var folderPaths = ref.watch(folderPathProvider);
+          var warmState = ref.watch(faceCacheWarmerProvider);
 
           ShackletonDisk? disk = _getDisk(disks, folderPaths.last);
           return disk == null
@@ -83,6 +85,17 @@ class NavigationSpace extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (warmState.isVisible) ...[
+                Tooltip(
+                  message: 'Caching faces: ${warmState.completed} of ${warmState.total}',
+                  child: const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
             ],
           );
         },
