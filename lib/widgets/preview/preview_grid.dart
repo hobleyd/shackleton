@@ -85,16 +85,17 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Tooltip(
-                        message: 'Face search',
+                        message: _rightPanel == _RightPanel.faceSearch
+                            ? 'Back to metadata'
+                            : 'Face search',
                         child: IconButton(
                           iconSize: 16,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            Icons.face_retouching_natural,
-                            color: _rightPanel == _RightPanel.faceSearch
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
+                            _rightPanel == _RightPanel.faceSearch
+                                ? Icons.edit_note
+                                : Icons.face_retouching_natural,
                           ),
                           onPressed: () => setState(() => _rightPanel =
                               _rightPanel == _RightPanel.faceSearch
@@ -103,16 +104,17 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
                         ),
                       ),
                       Tooltip(
-                        message: 'Create slideshow',
+                        message: _rightPanel == _RightPanel.slideshow
+                            ? 'Back to metadata'
+                            : 'Create slideshow',
                         child: IconButton(
                           iconSize: 16,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(),
                           icon: Icon(
-                            Icons.slideshow,
-                            color: _rightPanel == _RightPanel.slideshow
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
+                            _rightPanel == _RightPanel.slideshow
+                                ? Icons.edit_note
+                                : Icons.slideshow,
                           ),
                           onPressed: () => setState(() => _rightPanel =
                               _rightPanel == _RightPanel.slideshow
