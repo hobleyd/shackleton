@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intersperse/intersperse.dart';
 
 import '../../models/file_of_interest.dart';
 import '../../models/file_metadata.dart';
@@ -98,14 +97,12 @@ class _EntityPreview extends ConsumerState<EntityPreview> {
   Widget _getMetadataText() {
     if (!metadata.hasTags) {
       return Text('', style: Theme.of(context).textTheme.bodySmall,);
-    } else {
-      List<String> tags = intersperse(', ', metadata.tags.map((e) => e.tag)).toList();
-      String tagsString = '';
-      for (var t in tags) {
-        tagsString += t;
-      }
-      return Text(tagsString, maxLines: 2, style: Theme.of(context).textTheme.bodySmall,);
     }
+    return Text(
+      metadata.tags.map((e) => e.tag).join(', '),
+      maxLines: 2,
+      style: Theme.of(context).textTheme.bodySmall,
+    );
   }
 
   Widget _getPreview(bool isSelected) {

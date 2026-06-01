@@ -5,13 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../interfaces/keyboard_callback.dart';
 import '../../interfaces/tag_handler.dart';
-import '../../models/file_metadata.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
-import '../../providers/metadata.dart';
 import '../../providers/contents/grid_tags.dart';
 import '../../providers/contents/grid_contents.dart';
 import '../../providers/contents/pane_tags.dart';
+import '../../repositories/file_tags_repository.dart';
 import 'metadata_location.dart';
 
 class MetadataEditor extends ConsumerStatefulWidget {
@@ -49,6 +48,7 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> {
           Expanded(
               child: tags.isNotEmpty
                   ? ListView.builder(
+                      padding: const EdgeInsets.only(right: 10),
                       itemCount: tags.length,
                       itemBuilder: (context, index) {
                         return Container(
@@ -148,20 +148,21 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> {
     };
   }
 
-  void _filterByTag(WidgetRef ref, Tag tag) {
-    Set<FileOfInterest> filteredEntities = {};
+  Future<void> _filterByTag(WidgetRef ref, Tag tag) async {
+    final repo = ref.read(fileTagsRepositoryProvider.notifier);
 
-    List<FileOfInterest> gridEntries = ref.watch(gridContentsProvider);
-    for (var e in gridEntries) {
-      FileMetaData meta = ref.watch(metadataProvider(e));
-      if (meta.contains(tag)) {
-        filteredEntities.add(e);
-      }
-    }
+    // Prefetch all metadata for this tag in one JOIN query so EntityPreview
+    // widgets don't each fire individual DB queries when the grid renders.
+    await repo.prefetchMetadataForTag(tag);
 
-    if (!const DeepCollectionEquality.unordered().equals(gridEntries, filteredEntities)) {
-      var selectedList = ref.read(gridContentsProvider.notifier);
-      selectedList.replaceAll(filteredEntities);
+    final taggedFiles = await repo.getFilesForTag(tag);
+    final taggedPaths = {for (final f in taggedFiles) f.path};
+
+    final gridEntries = ref.read(gridContentsProvider);
+    final filtered = gridEntries.where((e) => taggedPaths.contains(e.path)).toSet();
+
+    if (!const DeepCollectionEquality.unordered().equals(gridEntries, filtered)) {
+      ref.read(gridContentsProvider.notifier).replaceAll(filtered);
     }
   }
 

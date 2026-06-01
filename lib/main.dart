@@ -16,6 +16,10 @@ void main() async {
 
   Logger.level = Level.error;
 
+  // Desktop photo library: thumbnails are ~1.5 MB each at grid resolution.
+  // 256 MB ≈ 170 thumbnails ≈ 8+ screenfuls before any eviction.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 256 * 1024 * 1024;
+
   // TODO: Should we care about optimising portrait images which could be made marginally smaller?
   // debugInvertOversizedImages = true;
 

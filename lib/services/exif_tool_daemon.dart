@@ -16,7 +16,11 @@ class ExifToolDaemon {
   Process? _process;
   StreamSubscription<List<int>>? _stdoutSub;
   StreamSubscription<String>? _stderrSub;
-  final List<int> _buf = [];
+  // BytesBuilder stores each incoming chunk as a Uint8List reference without
+  // copying, avoiding the ~8× overhead of List<int> on 64-bit VMs.
+  final _buf = BytesBuilder(copy: false);
+  // Separate ring-buffer for {ready} detection — kept small so scanning is O(1).
+  var _tail = <int>[];
   Completer<Uint8List>? _pending;
 
   // Serialisation: each execute captures the previous lock and installs its own.
@@ -44,7 +48,8 @@ class ExifToolDaemon {
       try {
         await _ensureStarted();
         _pending = Completer<Uint8List>();
-        _buf.clear();
+        _buf.takeBytes(); // discard any leftover bytes and reset
+        _tail = [];
         for (final arg in args) {
           _process!.stdin.writeln(arg);
         }
@@ -79,21 +84,23 @@ class ExifToolDaemon {
   }
 
   void _onBytes(List<int> chunk) {
-    _buf.addAll(chunk);
+    _buf.add(chunk);
+    _tail.addAll(chunk);
+    // Keep only the last 30 bytes for {ready} detection.
+    if (_tail.length > 30) _tail = _tail.sublist(_tail.length - 30);
+
     if (_pending == null || _pending!.isCompleted) return;
 
-    // The {ready} marker is pure ASCII so we can safely scan the tail of the
-    // buffer without decoding potentially large binary payloads.  Searching
-    // only the last 30 bytes is sufficient because {ready} is always the last
-    // thing exiftool writes for a given command.
-    final searchFrom = _buf.length > 30 ? _buf.length - 30 : 0;
-    final tail = String.fromCharCodes(_buf, searchFrom);
+    // The {ready} marker is pure ASCII so we can safely scan just the tail
+    // without decoding potentially large binary payloads.
+    final tail = String.fromCharCodes(_tail);
     final match = RegExp(r'\{ready\w*\}\s*').firstMatch(tail);
     if (match != null) {
-      final responseEnd = searchFrom + match.start;
-      final response = Uint8List.fromList(_buf.sublist(0, responseEnd));
-      _buf.clear();
-      _pending!.complete(response);
+      // Compute where in the full response the {ready} marker starts.
+      final trimAt = _buf.length - _tail.length + match.start;
+      final all = _buf.takeBytes(); // assembles chunks into one Uint8List and resets
+      _tail = [];
+      _pending!.complete(Uint8List.sublistView(all, 0, trimAt));
     }
   }
 

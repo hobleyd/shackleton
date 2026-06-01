@@ -84,8 +84,7 @@ class GridContents extends _$GridContents implements FileEventsCallback {
   }
 
   void replaceAll(Set<FileOfInterest> entities) {
-    state = List.from(entities);
-    state.sort();
+    state = List.from(entities)..sort();
   }
 
   int size() {

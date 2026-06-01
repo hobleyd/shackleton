@@ -85,6 +85,7 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
 
                 return GridView.builder(
                   controller: scrollController,
+                  cacheExtent: 2000,
                   itemCount: entities.length,
                   itemBuilder: (context, idx) {
                     keys[idx] = GlobalKey<DragItemWidgetState>();
@@ -117,7 +118,7 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
                                 child: EntityPreview(
                                   entity: entities[idx],
                                   displayMetadata: true,
-                                  previewWidth: (MediaQuery.of(context).size.width - 210 - map.width),
+                                  previewWidth: (MediaQuery.of(context).size.width - 210 - map.width) / gridController.gridColumns,
                                 ),
                             ),
                         ),

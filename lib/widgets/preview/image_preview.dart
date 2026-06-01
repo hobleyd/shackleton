@@ -60,6 +60,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.entity != widget.entity) {
       _transformController.value = Matrix4.identity();
+      _editedBytes = null;
     }
   }
 
@@ -141,6 +142,13 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
   }
 
   Widget _buildImage(BuildContext context) {
+    Widget placeholder(BuildContext ctx, Widget child, int? frame, bool sync) {
+      if (sync || frame != null) return child;
+      return const SizedBox.expand(
+        child: ColoredBox(color: Color(0xFFE0E0E0)),
+      );
+    }
+
     final image = _editedBytes != null
         ? Image.memory(_editedBytes!,
             alignment: Alignment.center,
@@ -151,7 +159,8 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
             alignment: Alignment.center,
             fit: BoxFit.contain,
             width: previewWidth,
-            cacheWidth: _cacheWidth(context));
+            cacheWidth: _cacheWidth(context),
+            frameBuilder: widget.enableZoomPan ? null : placeholder);
 
     if (!widget.enableZoomPan) return image;
 
@@ -189,6 +198,7 @@ class _ImagePreview extends ConsumerState<ImagePreview> {
   void _rotate(int degrees) async {
     setState(() => _isRotatingImage = true);
     _editedBytes = await _rotateUseCase.execute(entityPreview, degrees);
+    PaintingBinding.instance.imageCache.evict(FileImage(entityPreview.entity as File));
     if (mounted) setState(() => _isRotatingImage = false);
   }
 

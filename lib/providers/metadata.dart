@@ -23,7 +23,10 @@ class Metadata extends _$Metadata {
 
   @override
   FileMetaData build(FileOfInterest entity) {
-    ref.keepAlive();
+    // keepAlive() is NOT called here — providers for off-screen items can be
+    // auto-disposed. keepAlive() is called lazily once data is in hand so
+    // that providers with loaded state are cached, while providers that never
+    // got to load (scrolled away quickly) are cleaned up automatically.
     _exif = ref.read(exifToolServiceProvider);
     final tags = ref.read(fileTagsRepositoryProvider.notifier);
     _notify = ref.read(notifyProvider.notifier);
@@ -41,10 +44,19 @@ class Metadata extends _$Metadata {
     // Phase 1: return cached DB data immediately — no JPEG parse needed.
     final cached = await _loadUseCase.fetchFromDb(entity);
     if (cached != null) {
-      if (ref.mounted) state = cached;
+      if (ref.mounted) {
+        ref.keepAlive();
+        state = cached;
+      }
       return;
     }
-    // Phase 2: first visit — parse the file and persist to DB.
+    // Phase 2: first visit — parse the file via exiftool and persist to DB.
+    // Gate on ref.mounted: if the item has scrolled out of the cache extent
+    // the provider will have been auto-disposed, making it pointless (and
+    // harmful) to queue another serialised daemon call. This keeps the daemon
+    // queue bounded to currently-visible items instead of every item ever seen.
+    if (!ref.mounted) return;
+    ref.keepAlive();
     final metadata = await _loadUseCase.execute(entity);
     if (metadata != null && ref.mounted) state = metadata;
   }

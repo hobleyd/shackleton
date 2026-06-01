@@ -254,6 +254,8 @@ class FaceSearch extends _$FaceSearch {
       );
     }
 
+    var lastProgressUpdate = DateTime.now();
+
     for (var i = 0; i < total; i++) {
       if (!ref.mounted) return;
       final match = results[i];
@@ -278,11 +280,14 @@ class FaceSearch extends _$FaceSearch {
         ref.read(metadataProvider(file).notifier).updateTagsFromString(name, updateFile: false);
       }
 
-      if (ref.mounted) {
+      final now = DateTime.now();
+      if (ref.mounted && (i == total - 1 || now.difference(lastProgressUpdate).inMilliseconds >= 150)) {
+        lastProgressUpdate = now;
         state = state.copyWith(
           progress: (i + 1) / total,
           message: 'Tagged ${i + 1} of $total…',
         );
+        await Future.delayed(Duration.zero);
       }
     }
 
