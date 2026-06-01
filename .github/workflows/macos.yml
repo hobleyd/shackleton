@@ -43,7 +43,7 @@ jobs:
           srcdir: 'build/macos/Build/Products/Release/shackleton.app'
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v0.1.15
+        uses: softprops/action-gh-release@v3.0.0
         with:
           files: 'shackleton.dmg'
           name: 'shackleton-${{ steps.version.outputs.version }}'
