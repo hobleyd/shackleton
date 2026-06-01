@@ -111,6 +111,19 @@ class FacesRepository extends _$FacesRepository implements IFacesRepository {
     return rows.isNotEmpty;
   }
 
+  @override
+  Future<Set<String>> getScannedPathsFromSet(List<String> paths) async {
+    if (paths.isEmpty) return {};
+    final placeholders = List.filled(paths.length, '?').join(',');
+    final rows = await _db.rawQuery(
+      'select f.path from files f '
+      'join file_face_scan_status ffss on ffss.file_id = f.id '
+      'where f.path in ($placeholders)',
+      paths,
+    );
+    return {for (final r in rows) r['path'] as String};
+  }
+
   // ── Similarity search ──────────────────────────────────────────────────────
 
   @override
@@ -119,33 +132,42 @@ class FacesRepository extends _$FacesRepository implements IFacesRepository {
     double threshold, {
     String? excludeTagName,
   }) async {
-    // Load all embeddings from the DB in one query.
-    final rows = await _db.rawQuery(
-      'select f.path, ff.embedding '
-      'from file_faces ff '
-      'join files f on f.id = ff.file_id',
-      [],
-    );
+    // Process embeddings in batches to avoid loading the entire DB into memory.
+    const batchSize = 500;
+    var offset = 0;
 
     final matched = <({FileOfInterest file, double similarity})>[];
     final seen = <String>{};
 
-    for (final row in rows) {
-      final filePath = row['path'] as String;
-      if (!File(filePath).existsSync()) continue;
-      if (seen.contains(filePath)) continue; // only need one matching face per file
+    while (true) {
+      final rows = await _db.rawQuery(
+        'select f.path, ff.embedding '
+        'from file_faces ff '
+        'join files f on f.id = ff.file_id '
+        'limit ? offset ?',
+        [batchSize, offset],
+      );
 
-      final embeddingBytes = row['embedding'] as Uint8List;
-      final faceEmbedding = Float32List.sublistView(embeddingBytes);
-      final sim = _faceService.cosineSimilarity(identity.embedding, faceEmbedding);
+      for (final row in rows) {
+        final filePath = row['path'] as String;
+        if (!File(filePath).existsSync()) continue;
+        if (seen.contains(filePath)) continue; // only need one matching face per file
 
-      if (sim >= threshold) {
-        seen.add(filePath);
-        matched.add((
-          file: FileOfInterest(entity: File(filePath)),
-          similarity: sim,
-        ));
+        final embeddingBytes = row['embedding'] as Uint8List;
+        final faceEmbedding = Float32List.sublistView(embeddingBytes);
+        final sim = _faceService.cosineSimilarity(identity.embedding, faceEmbedding);
+
+        if (sim >= threshold) {
+          seen.add(filePath);
+          matched.add((
+            file: FileOfInterest(entity: File(filePath)),
+            similarity: sim,
+          ));
+        }
       }
+
+      if (rows.length < batchSize) break;
+      offset += batchSize;
     }
 
     // Filter out files already tagged with the person's name.

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:latlong2/latlong.dart';
@@ -17,6 +18,23 @@ part 'file_tags_repository.g.dart';
 @riverpod
 class FileTagsRepository extends _$FileTagsRepository implements IFileTagsRepository {
   late final AppDatabase _db;
+
+  // Look-ahead cache populated by prefetchMetadataForTag; entries are consumed
+  // (removed) on first use so stale data never accumulates.
+  final _metadataCache = <String, FileMetaData>{};
+
+  // Debounce tag-list state updates: many writes in quick succession (e.g.
+  // Phase-2 metadata flush for a large tag) each mark the list dirty but we
+  // only re-query and notify listeners once, 500 ms after the last write.
+  Timer? _tagListDebounce;
+
+  void _scheduleTagListRefresh() {
+    _tagListDebounce?.cancel();
+    _tagListDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final tags = await getTags();
+      if (ref.mounted) state = AsyncData(tags);
+    });
+  }
 
   @override
   Future<List<Tag>> build() {
@@ -85,22 +103,97 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   @override
   Future<List<FileOfInterest>> getFilesForTag(Tag tag) async {
     final rows = await _db.rawQuery(
-      'select * from files where id in '
+      'select path from files where id in '
       '(select fileId from file_tags, tags '
       'where tags.id = file_tags.tagId and tags.tag = ?)',
       [tag.tag],
     );
-    return [
-      for (final row in rows)
-        if (File(row['path'] as String).existsSync())
-          FileOfInterest(entity: File(row['path'] as String)),
-    ];
+    // Existence check removed — synchronous File.existsSync() for thousands
+    // of results blocks the main thread. Missing files render as broken
+    // previews, which is acceptable.
+    return [for (final row in rows) FileOfInterest(entity: File(row['path'] as String))];
+  }
+
+  @override
+  Future<void> prefetchMetadataForTag(Tag tag) async {
+    // One JOIN fetches every file that has this tag plus all of each file's
+    // tags in a single round-trip, replacing N×2 individual DB queries.
+    final rows = await _db.rawQuery(
+      'SELECT f.id, f.path, f.gps_lat, f.gps_lng, t.id AS tag_id, t.tag '
+      'FROM files f '
+      'INNER JOIN file_tags ft_f ON ft_f.fileId = f.id '
+      'INNER JOIN tags tag_f ON tag_f.id = ft_f.tagId AND tag_f.tag = ? '
+      'LEFT JOIN file_tags ft ON ft.fileId = f.id '
+      'LEFT JOIN tags t ON t.id = ft.tagId',
+      [tag.tag],
+    );
+
+    _metadataCache.clear();
+
+    // One row per (file × tag); group by path in a single pass.
+    final ids = <String, int>{};
+    final gps = <String, LatLng?>{};
+    final tagsByPath = <String, List<Tag>>{};
+
+    for (final row in rows) {
+      final path = row['path'] as String;
+      if (!ids.containsKey(path)) {
+        ids[path] = row['id'] as int;
+        final lat = row['gps_lat'] as double?;
+        final lng = row['gps_lng'] as double?;
+        gps[path] = (lat != null && lng != null) ? LatLng(lat, lng) : null;
+        tagsByPath[path] = [];
+      }
+      final tagId = row['tag_id'] as int?;
+      final tagStr = row['tag'] as String?;
+      if (tagId != null && tagStr != null) {
+        tagsByPath[path]!.add(Tag(id: tagId, tag: tagStr));
+      }
+    }
+
+    for (final path in ids.keys) {
+      _metadataCache[path] = FileMetaData(
+        entity: FileOfInterest(entity: File(path)),
+        tags: tagsByPath[path] ?? [],
+        gpsLocation: gps[path],
+      );
+    }
   }
 
   @override
   Future<List<Tag>> getTags() async {
     List<Map<String, dynamic>> results = await _db.query('tags', columns: ['id', 'tag'], orderBy: 'tag');
     return results.map((row) => Tag.fromMap(row)).toList();
+  }
+
+  @override
+  Future<List<Tag>> getTagsForPaths(List<String> paths) async {
+    if (paths.isEmpty) return [];
+
+    const batchSize = 500;
+    final seenIds = <int>{};
+    final tags = <Tag>[];
+
+    for (var i = 0; i < paths.length; i += batchSize) {
+      final batch = paths.sublist(i, (i + batchSize).clamp(0, paths.length));
+      final placeholders = List.filled(batch.length, '?').join(',');
+      final rows = await _db.rawQuery(
+        'SELECT DISTINCT t.id, t.tag FROM tags t '
+        'JOIN file_tags ft ON ft.tagId = t.id '
+        'JOIN files f ON f.id = ft.fileId '
+        'WHERE f.path IN ($placeholders)',
+        batch,
+      );
+      for (final row in rows) {
+        final id = row['id'] as int;
+        if (seenIds.add(id)) {
+          tags.add(Tag(id: id, tag: row['tag'] as String));
+        }
+      }
+    }
+
+    tags.sort();
+    return tags;
   }
 
   Future<Set<int>> getTagIdsForEntity(Entity entity) async {
@@ -133,8 +226,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
     }
 
     if (refreshState) {
-      final tags = await getTags();
-      if (ref.mounted) state = AsyncData(tags);
+      _scheduleTagListRefresh();
     }
   }
 
@@ -162,13 +254,15 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
       }
     });
 
-    final tags = await getTags();
-    if (ref.mounted) state = AsyncData(tags);
+    _scheduleTagListRefresh();
   }
 
   @override
   Future<FileMetaData?> getMetadataForFile(
       String path, FileOfInterest entity) async {
+    final prefetched = _metadataCache.remove(path);
+    if (prefetched != null) return prefetched;
+
     final fileRows = await _db.query('files',
         columns: ['id', 'gps_lat', 'gps_lng'],
         where: 'path = ?',
@@ -311,22 +405,17 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
         }
       }
 
-      // Insert new junction records.
-      for (final tag in (entity.tags as List<Tag>? ?? <Tag>[])) {
-        if (tag.tag.isEmpty || tag.id == null) continue;
-        final existing = await txn.query('file_tags',
-            columns: ['tagId'],
-            where: 'tagId = ? and fileId = ?',
-            whereArgs: [tag.id, entity.id]);
-        if (existing.isEmpty) {
-          await txn.insert('file_tags', {'tagId': tag.id, 'fileId': entity.id});
+      // Insert junction rows for tags not already linked — storedTagIds already
+      // contains the current state, so no extra query needed.
+      for (final tagId in incomingTagIds) {
+        if (!storedTagIds.contains(tagId)) {
+          await txn.insert('file_tags', {'tagId': tagId, 'fileId': entity.id});
         }
       }
     });
 
     if (changed) {
-      final tags = await getTags();
-      if (ref.mounted) state = AsyncData(tags);
+      _scheduleTagListRefresh();
     }
   }
 }

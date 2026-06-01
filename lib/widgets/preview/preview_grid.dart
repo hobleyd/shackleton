@@ -44,7 +44,10 @@ class _PreviewGrid extends ConsumerState<PreviewGrid> implements TagHandler {
             );
       } else if (next.status == FaceSearchStatus.idle &&
           prev != null &&
-          prev.status != FaceSearchStatus.idle) {
+          prev.status == FaceSearchStatus.done) {
+        // Only restore the grid when the user resets after a completed search
+        // (done → idle). Transitioning from detecting/scanning → idle should
+        // not disturb the current grid contents.
         ref.invalidate(gridContentsProvider);
       }
     });

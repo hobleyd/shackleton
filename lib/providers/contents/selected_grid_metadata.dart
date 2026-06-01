@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shackleton/providers/contents/grid_contents.dart';
 
 import '../../models/file_metadata.dart';
 import '../../models/file_of_interest.dart';
@@ -13,9 +12,9 @@ class SelectedGridMetadata extends _$SelectedGridMetadata {
   @override
   List<FileMetaData> build() {
     List<FileOfInterest> selectedEntities = ref.watch(selectedGridEntitiesProvider);
-    List<FileOfInterest> gridEntities = ref.watch(gridContentsProvider);
+    if (selectedEntities.isEmpty) return [];
 
-    return _getMetaData(selectedEntities.isNotEmpty ? selectedEntities : gridEntities);
+    return _getMetaData(selectedEntities);
   }
 
   List<FileMetaData> _getMetaData(List<FileOfInterest> entities) {

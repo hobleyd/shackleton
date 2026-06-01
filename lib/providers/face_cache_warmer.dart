@@ -76,21 +76,47 @@ class FaceCacheWarmer extends _$FaceCacheWarmer {
     _runQueue(version);
   }
 
+  static const _batchSize = 500;
+
   Future<void> _enqueueUnscanned(String rootPath, int version) async {
     final dir = Directory(rootPath);
     if (!dir.existsSync()) return;
+
+    // Stream the filesystem and check each batch of 500 paths against the DB.
+    // This keeps each DB query small (≤ 500 rows returned) rather than pulling
+    // hundreds of thousands of scanned paths back in one blocking call.
+    final batch = <String>[];
+
+    Future<void> flushBatch() async {
+      if (batch.isEmpty || _version != version || !ref.mounted) return;
+      final scanned = await _facesRepo.getScannedPathsFromSet(List.of(batch));
+      for (final path in batch) {
+        if (!scanned.contains(path)) {
+          _queue.add(FileOfInterest(entity: File(path)));
+          _total++;
+        }
+      }
+      batch.clear();
+    }
+
     try {
       await for (final entity in dir.list(recursive: true, followLinks: false)) {
         if (_version != version) return;
         if (entity is File) {
           final foi = FileOfInterest(entity: entity);
-          if (foi.isImage && !await _facesRepo.hasBeenScanned(foi.path)) {
-            if (_version != version) return;
-            _addToQueue(foi);
+          if (foi.isImage) {
+            batch.add(entity.path);
+            if (batch.length >= _batchSize) await flushBatch();
           }
         }
       }
     } catch (_) {}
+
+    await flushBatch();
+
+    if (ref.mounted && _total > 0) {
+      state = FaceCacheWarmState(completed: _completed, total: _total);
+    }
   }
 
   void _addToQueue(FileOfInterest foi) {

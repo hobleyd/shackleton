@@ -45,6 +45,12 @@ class AppSchema {
         foreign key(tagId)  references tags(id));
       ''';
 
+  static const String createFileTagsFileIndex =
+      'create index if not exists file_tags_file_idx on file_tags(fileId);';
+
+  static const String createFileTagsTagIndex =
+      'create index if not exists file_tags_tag_idx on file_tags(tagId);';
+
   // ── folder_settings ────────────────────────────────────────────────────────
 
   static const String createFolderSettings = '''
@@ -130,6 +136,13 @@ class AppSchema {
     await db.execute(createFilesIndex);
     await db.execute(createFolderSettingsIndex);
     await db.execute(createFavouritesIndex);
+    await db.execute(createFileTagsFileIndex);
+    await db.execute(createFileTagsTagIndex);
+  }
+
+  static Future<void> migrateV5AddFileTagsIndices(DatabaseExecutor db) async {
+    await db.execute(createFileTagsFileIndex);
+    await db.execute(createFileTagsTagIndex);
   }
 
   /// Creates face recognition tables for schema version 3.

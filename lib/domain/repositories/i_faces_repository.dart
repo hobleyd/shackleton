@@ -12,6 +12,7 @@ abstract class IFacesRepository {
   Future<void> storeFaces(String path, List<FaceDetection> detections);
   Future<void> markScanned(String path);
   Future<bool> hasBeenScanned(String path);
+  Future<Set<String>> getScannedPathsFromSet(List<String> paths);
 
   Future<List<({FileOfInterest file, double similarity})>> findFilesMatchingIdentity(
     FaceIdentity identity,
