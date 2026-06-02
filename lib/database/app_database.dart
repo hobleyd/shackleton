@@ -34,7 +34,12 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _createTables(Database db, int oldVersion, int newVersion) async {
     await _enableForeignKeys(db);
     if (oldVersion < 1) {
+      // Fresh install: createAll already contains the latest schema (including
+      // GPS columns and indices), so just add face tables and return — no
+      // migration steps needed.
       await AppSchema.createAll(db);
+      await AppSchema.createFaceTables(db);
+      return;
     }
     if (oldVersion < 2) {
       await AppDatabase.migrateV2SplitCommaTagsInDb(db);
