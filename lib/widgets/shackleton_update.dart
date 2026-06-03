@@ -3,7 +3,29 @@ import 'dart:io';
 import 'package:desktop_updater/desktop_updater.dart';
 import 'package:desktop_updater/updater_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
+// Subclass so UpdateCard's `notifier?.restartApp()` dispatches to our
+// override, where we can surface errors that the base class drops.
+class _ShackletonUpdaterController extends DesktopUpdaterController {
+  _ShackletonUpdaterController({required super.appArchiveUrl});
+
+  String? restartError;
+
+  static const _channel = MethodChannel('desktop_updater');
+
+  @override
+  void restartApp() {
+    restartError = null;
+    _channel.invokeMethod<void>('restartApp').catchError((dynamic e) {
+      restartError = e is PlatformException
+          ? (e.message ?? 'Restart failed')
+          : 'Restart failed: $e';
+      notifyListeners();
+    });
+  }
+}
 
 class ShackletonUpdate extends StatefulWidget {
   const ShackletonUpdate({super.key});
@@ -13,7 +35,7 @@ class ShackletonUpdate extends StatefulWidget {
 }
 
 class _ShackletonUpdateState extends State<ShackletonUpdate> {
-  DesktopUpdaterController? _controller;
+  _ShackletonUpdaterController? _controller;
   String _version = '';
 
   static const String _appArchiveUrl = 'https://hobleyd.github.io/shackleton/app-archive.json';
@@ -25,7 +47,7 @@ class _ShackletonUpdateState extends State<ShackletonUpdate> {
       if (mounted) setState(() => _version = info.version);
     });
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      _controller = DesktopUpdaterController(
+      _controller = _ShackletonUpdaterController(
         appArchiveUrl: Uri.parse(_appArchiveUrl),
       );
     }
@@ -46,6 +68,17 @@ class _ShackletonUpdateState extends State<ShackletonUpdate> {
     return ListenableBuilder(
       listenable: _controller!,
       builder: (context, _) {
+        final error = _controller!.restartError;
+        if (error != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Restart failed: $error')),
+              );
+              _controller!.restartError = null;
+            }
+          });
+        }
         if (_controller!.needUpdate) {
           return DesktopUpdateDirectCard(
             controller: _controller!,

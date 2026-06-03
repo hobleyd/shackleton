@@ -10,8 +10,11 @@ class DesktopUpdaterPatch {
         channel.setMethodCallHandler { (call, result) in
             switch call.method {
             case "restartApp":
-                restartApp()
-                result(nil)
+                if let error = restartApp() {
+                    result(FlutterError(code: "RESTART_FAILED", message: error, details: nil))
+                } else {
+                    result(nil)
+                }
             case "getPlatformVersion":
                 result("macOS " + ProcessInfo.processInfo.operatingSystemVersionString)
             case "getExecutablePath":
@@ -25,66 +28,57 @@ class DesktopUpdaterPatch {
         }
     }
 
-    private static func restartApp() {
-        let executablePath = Bundle.main.executablePath!
-        let contentsPath = Bundle.main.bundlePath + "/Contents"
+    // Returns nil on success, or an error message string on failure.
+    //
+    // We use a detached shell script rather than copying files inline, because:
+    // - replaceItem/rename on paths that go through framework symlinks
+    //   (e.g. Versions/Current/) can fail while the app bundle is live.
+    // - cp -rf handles symlink-traversal naturally on macOS.
+    // The script runs after the app exits (reparented to init), copies the
+    // update folder over Contents/, cleans up, then relaunches via 'open'.
+    private static func restartApp() -> String? {
+        let bundlePath = Bundle.main.bundlePath
+        let contentsPath = bundlePath + "/Contents"
         let updateFolder = contentsPath + "/update"
 
+        let script = """
+        #!/bin/sh
+        sleep 1
+        if [ -d "\(updateFolder)" ]; then
+            cp -rf "\(updateFolder)/." "\(contentsPath)/"
+            rm -rf "\(updateFolder)"
+        fi
+        open "\(bundlePath)"
+        """
+
+        let tmpScript: String
         do {
-            try copyAndReplaceFiles(from: updateFolder, to: contentsPath)
+            let tmpDir = try FileManager.default.url(
+                for: .itemReplacementDirectory,
+                in: .userDomainMask,
+                appropriateFor: URL(fileURLWithPath: bundlePath),
+                create: true
+            )
+            let scriptURL = tmpDir.appendingPathComponent("shackleton_update.sh")
+            tmpScript = scriptURL.path
+            try script.write(toFile: tmpScript, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tmpScript)
         } catch {
-            print("DesktopUpdaterPatch: error copying update files: \(error)")
-            return
+            return "failed to write update script: \(error)"
         }
 
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = [tmpScript]
+
         do {
-            try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: executablePath)
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: executablePath)
-            process.arguments = []
             try process.run()
         } catch {
-            print("DesktopUpdaterPatch: error relaunching app: \(error)")
-            return
+            return "failed to launch update script: \(error)"
         }
 
         NSApplication.shared.terminate(nil)
+        return nil
     }
 
-    private static func copyAndReplaceFiles(from sourcePath: String, to destinationPath: String) throws {
-        let fileManager = FileManager.default
-        guard let enumerator = fileManager.enumerator(atPath: sourcePath) else { return }
-
-        while let element = enumerator.nextObject() as? String {
-            let src = (sourcePath as NSString).appendingPathComponent(element)
-            let dst = (destinationPath as NSString).appendingPathComponent(element)
-
-            var isDir: ObjCBool = false
-            guard fileManager.fileExists(atPath: src, isDirectory: &isDir) else { continue }
-
-            if isDir.boolValue {
-                if !fileManager.fileExists(atPath: dst) {
-                    try fileManager.createDirectory(atPath: dst, withIntermediateDirectories: true, attributes: nil)
-                }
-            } else {
-                let attrs = try fileManager.attributesOfItem(atPath: src)
-                if attrs[.type] as? FileAttributeType == .typeSymbolicLink {
-                    if fileManager.fileExists(atPath: dst) {
-                        try fileManager.removeItem(atPath: dst)
-                    }
-                    let target = try fileManager.destinationOfSymbolicLink(atPath: src)
-                    try fileManager.createSymbolicLink(atPath: dst, withDestinationPath: target)
-                } else {
-                    if fileManager.fileExists(atPath: dst) {
-                        try fileManager.replaceItem(at: URL(fileURLWithPath: dst),
-                                                    withItemAt: URL(fileURLWithPath: src),
-                                                    backupItemName: nil, options: [],
-                                                    resultingItemURL: nil)
-                    } else {
-                        try fileManager.copyItem(atPath: src, toPath: dst)
-                    }
-                }
-            }
-        }
-    }
 }

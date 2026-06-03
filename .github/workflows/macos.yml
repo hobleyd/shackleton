@@ -54,7 +54,7 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BUILD_NUMBER="${{ github.run_number }}"
           mkdir -p "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos"
-          cp -r "build/macos/Build/Products/Release/shackleton.app" \
+          ditto "build/macos/Build/Products/Release/shackleton.app" \
             "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos/shackleton.app"
 
       - name: Generate file hashes
