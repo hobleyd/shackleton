@@ -8,6 +8,7 @@ import '../models/face_identity.dart';
 import '../models/file_of_interest.dart';
 import '../models/tag.dart';
 import '../providers/exif_tool_service_provider.dart';
+import '../providers/face_cache_warmer.dart';
 import '../providers/face_recognition_service_provider.dart';
 import '../providers/metadata.dart';
 import '../repositories/faces_repository.dart';
@@ -88,6 +89,9 @@ class FaceSearch extends _$FaceSearch {
           message: 'Models ready',
           progress: 1.0,
         );
+        // Kick the background warmer — it exits early on fresh install when
+        // models aren't present, and nothing it watches changes on download.
+        ref.invalidate(faceCacheWarmerProvider);
       }
     } catch (e) {
       if (ref.mounted) {
