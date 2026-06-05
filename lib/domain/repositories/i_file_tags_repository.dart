@@ -20,6 +20,10 @@ abstract class IFileTagsRepository {
   /// already indexed in the DB, or null if the file has never been seen.
   Future<FileMetaData?> getMetadataForFile(String path, FileOfInterest entity);
 
+  /// Given a batch of [paths], returns the subset that already have a row in
+  /// the files table (i.e. have been through at least one metadata read).
+  Future<Set<String>> getIndexedPathsFromSet(List<String> paths);
+
   Future<void> writeTags(Entity entity);
   Future<void> addTagToFile(String filePath, String tagName);
   Future<void> removeTagsForEntity(Entity entity, {bool deleteEntity = true});

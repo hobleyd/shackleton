@@ -120,4 +120,4 @@ Cross-widget file-system change notifications flow through callback interfaces i
 
 ## Code generation notes
 
-Any file that has `part 'foo.freezed.dart'` or `part 'foo.g.dart'` requires `build_runner`. After pulling changes that touch models or providers, run `build_runner build` before trying to compile. The generated files are committed to the repo.
+Any file that has `part 'foo.freezed.dart'` or `part 'foo.g.dart'` requires `build_runner`. After pulling changes that touch models or providers, run `build_runner build` before trying to compile. Generated files (`.g.dart`, `.freezed.dart`) are **not** committed — they are listed in `.gitignore` and must be regenerated locally after a checkout.

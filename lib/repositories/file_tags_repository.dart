@@ -258,6 +258,17 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   }
 
   @override
+  Future<Set<String>> getIndexedPathsFromSet(List<String> paths) async {
+    if (paths.isEmpty) return {};
+    final placeholders = List.filled(paths.length, '?').join(',');
+    final rows = await _db.rawQuery(
+      'SELECT path FROM files WHERE path IN ($placeholders)',
+      paths,
+    );
+    return {for (final r in rows) r['path'] as String};
+  }
+
+  @override
   Future<FileMetaData?> getMetadataForFile(
       String path, FileOfInterest entity) async {
     final prefetched = _metadataCache.remove(path);

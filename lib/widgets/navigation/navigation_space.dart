@@ -9,6 +9,7 @@ import '../../models/shackleton_disk.dart';
 import '../../providers/disk_size_details.dart';
 import '../../providers/face_cache_warmer.dart';
 import '../../providers/folder_path.dart';
+import '../../providers/metadata_cache_warmer.dart';
 
 class NavigationSpace extends ConsumerWidget {
   const NavigationSpace({super.key,});
@@ -27,6 +28,7 @@ class NavigationSpace extends ConsumerWidget {
         data: (List<ShackletonDisk> disks) {
           var folderPaths = ref.watch(folderPathProvider);
           var warmState = ref.watch(faceCacheWarmerProvider);
+          var metaWarmState = ref.watch(metadataCacheWarmerProvider);
 
           ShackletonDisk? disk = _getDisk(disks, folderPaths.last);
           return disk == null
@@ -85,6 +87,24 @@ class NavigationSpace extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (metaWarmState.isVisible) ...[
+                Tooltip(
+                  message: 'Caching metadata: ${metaWarmState.completed} of ${metaWarmState.total}',
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Metadata...', style: Theme.of(context).textTheme.labelSmall),
+                      const SizedBox(height: 4),
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               if (warmState.isVisible) ...[
                 Tooltip(
                   message: 'Caching faces: ${warmState.completed} of ${warmState.total}',
