@@ -90,11 +90,11 @@ class ExifToolService implements IExifToolService {
       List<Tag> tags = [];
       if (rawSubject is List) {
         tags = rawSubject
-            .map((s) => Tag(tag: s.toString().trim()))
+            .map((s) => Tag(tag: _htmlDecode(s.toString().trim())))
             .where((t) => t.tag.isNotEmpty)
             .toList();
       } else if (rawSubject is String && rawSubject.isNotEmpty) {
-        tags = parseTagsFromString(rawSubject);
+        tags = parseTagsFromString(_htmlDecode(rawSubject));
       }
 
       LatLng? location;
@@ -253,6 +253,14 @@ class ExifToolService implements IExifToolService {
     return tags.map((t) => t.tag).join(', ');
   }
 }
+
+// ExifTool HTML-encodes certain characters in JSON output (e.g. ' → &#39;).
+String _htmlDecode(String s) => s
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'");
 
 /// Caps concurrent one-shot exiftool processes to avoid spawning too many at once.
 class _Semaphore {
