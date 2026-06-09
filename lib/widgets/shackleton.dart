@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart' hide Notification;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
@@ -51,6 +52,7 @@ class _Shackleton extends ConsumerState<Shackleton> {
           IconButton(icon: const Icon(Icons.import_export), tooltip: 'Import images from folder...', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImportFolder()))),
           IconButton(icon: const Icon(Icons.sync), tooltip: 'Cache metadata...', onPressed: () => _cacheMetadata(ref)),
           IconButton(icon: const Icon(Icons.map), tooltip: 'Show on Map', onPressed: () => _showMap(ref, map.visible)),
+          IconButton(icon: const Icon(Icons.open_in_new), tooltip: 'New window', onPressed: _openNewWindow),
           IconButton(icon: const Icon(Icons.settings), tooltip: 'Settings', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShackletonSettings()))),
         ],
       ),
@@ -123,6 +125,10 @@ class _Shackleton extends ConsumerState<Shackleton> {
           }
         }
       });
+  }
+
+  void _openNewWindow() async {
+    await WindowController.create(const WindowConfiguration(arguments: 'window'));
   }
 
   void _cacheMetadata(WidgetRef ref) async {

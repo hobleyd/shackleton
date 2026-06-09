@@ -123,8 +123,6 @@ class FolderPaneController implements KeyboardCallback {
     FileOfInterest entity = folderEntities[idx];
     _lastSelectedItemIndex = idx;
 
-    ref.read(metadataProvider(entity).notifier).setEditable(false);
-
     if (entity.isDirectory) {
       ref.read(folderPathProvider.notifier).addFolder(path, entity.entity as Directory);
     }
@@ -159,6 +157,11 @@ class FolderPaneController implements KeyboardCallback {
 
       ref.read(editingTimestampProvider(entity).notifier).setLastClickTimestamp(currentTimestamp);
     }
+
+    // Must come last: metadataProvider is auto-disposed when unwatched, so reading
+    // it before any watched-provider state change triggers a dispose→refresh scheduler
+    // upgrade that fires a Riverpod assertion (flutter_riverpod 3.3.2-dev.2 bug).
+    ref.read(metadataProvider(entity).notifier).setEditable(false);
   }
 
   void selectEntityByEntity(FileOfInterest entity) {

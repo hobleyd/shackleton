@@ -1,7 +1,7 @@
 name: shackleton
 description: A File System Explorer.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-version: 1.13.0+1
+version: 1.14.0+1
 
 environment:
   sdk: '>=3.8.0'
@@ -53,6 +53,7 @@ dependencies:
   synchronized: ^3.2.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1
+  desktop_multi_window: ^0.3.0
   desktop_updater: ^1.4.0
   package_info_plus: ^9.0.0
   pro_image_editor: ^12.4.4

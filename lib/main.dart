@@ -1,3 +1,4 @@
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
@@ -9,9 +10,10 @@ import 'providers/shackleton_theme.dart';
 import 'repositories/app_settings_repository.dart';
 import 'widgets/shackleton_prime.dart';
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+  await WindowController.fromCurrentEngine();
   MediaKit.ensureInitialized();
 
   Logger.level = Level.error;
@@ -20,8 +22,13 @@ void main() async {
   // 256 MB ≈ 170 thumbnails ≈ 8+ screenfuls before any eviction.
   PaintingBinding.instance.imageCache.maximumSizeBytes = 256 * 1024 * 1024;
 
-  // TODO: Should we care about optimising portrait images which could be made marginally smaller?
-  // debugInvertOversizedImages = true;
+  // desktop_multi_window passes ["multi_window", windowId, arguments] as args to sub-windows.
+  if (args.isNotEmpty && args[0] == 'multi_window') {
+    windowManager.waitUntilReadyToShow(null, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   runApp(ProviderScope(
       observers: [ProviderLogger()],
