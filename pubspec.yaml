@@ -54,7 +54,7 @@ dependencies:
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1
   desktop_multi_window: ^0.3.0
-  desktop_updater: ^1.4.0
+  desktop_updater: ^2.1.4
   package_info_plus: ^9.0.0
   pro_image_editor: ^12.4.4
   version: ^3.0.2
