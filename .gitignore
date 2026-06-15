@@ -50,6 +50,5 @@ app.*.map.json
 /android/app/release
 
 # Desktop build folders
-linux/
 windows/
 
