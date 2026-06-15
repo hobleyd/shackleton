@@ -34613,6 +34613,841 @@
       "mandatory": false,
       "url": "https://hobleyd.github.io/shackleton/releases/1.14.0+200-macos",
       "platform": "macos"
+    },
+    {
+      "version": "1.14.0",
+      "shortVersion": 202,
+      "changes": [
+        {
+          "message": "feat: add Flatpak packaging using flatpak-flutter"
+        },
+        {
+          "message": "fix: bump macOS deployment target to 11.0 for pro-image-editor compatibility"
+        },
+        {
+          "message": "add the licence to the repo"
+        },
+        {
+          "message": "feat: add new-window button using desktop_multi_window"
+        },
+        {
+          "message": "fix: remove stale exiftool guard from tag write path"
+        },
+        {
+          "message": "fix: decode HTML entities in tag values from exiftool JSON output"
+        },
+        {
+          "message": "chore: bump version to 1.12.0"
+        },
+        {
+          "message": "feat: background metadata cache warmer on startup"
+        },
+        {
+          "message": "fix: restart face cache warmer after model download on fresh install"
+        },
+        {
+          "message": "fix: repair macOS self-update restart mechanism"
+        },
+        {
+          "message": "fix: skip migration steps on fresh database install to avoid duplicate column error"
+        },
+        {
+          "message": "performance improvements"
+        },
+        {
+          "message": "fix: resolve progressive DB lock and grid clearing bugs during tag browsing"
+        },
+        {
+          "message": "chore(deps): Bump softprops/action-gh-release from 0.1.15 to 3.0.0"
+        },
+        {
+          "message": "feat: add Caching... label above face cache progress indicator"
+        },
+        {
+          "message": "feat: background face cache warmer with progress indicator"
+        },
+        {
+          "message": "feat: swap panel icons to edit_note when active to indicate back-to-metadata"
+        },
+        {
+          "message": "feat: add configurable transition duration to slideshow creation"
+        },
+        {
+          "message": "fix: decode MP3 to PCM then re-encode as AAC for slideshow audio"
+        },
+        {
+          "message": "fix: intercept Space key in preview pane to prevent duplicate KeyDownEvent"
+        },
+        {
+          "message": "feat: convert music assets from WAV to MP3 (83% size reduction)"
+        },
+        {
+          "message": "fix: re-check isReadyForMoreMediaData before appending pixel buffer"
+        },
+        {
+          "message": "feat: orchestral string synthesis and add Ride of the Valkyries"
+        },
+        {
+          "message": "fix: face dismiss X always removing bottom card"
+        },
+        {
+          "message": "feat: slideshow export with music, transitions, quality selector, and progress"
+        },
+        {
+          "message": "feat: zoom and pan in preview pane with Ctrl+scroll and left-drag"
+        },
+        {
+          "message": "fix: single scrollbar for face search panel"
+        },
+        {
+          "message": "feat: multi-person face detection and search from a single reference photo"
+        },
+        {
+          "message": "fix actions"
+        },
+        {
+          "message": "ci: align Linux release version with macOS/Windows by stripping build suffix"
+        },
+        {
+          "message": "performance improvements with big folders"
+        },
+        {
+          "message": "perf: DB-first metadata loading, GPS cache, JPEG segment streaming, semaphore"
+        },
+        {
+          "message": "fix: cast entity.tags to List<Tag> in writeTags fast-path"
+        },
+        {
+          "message": "fix: eliminate sqflite lock warnings from concurrent metadata loads"
+        },
+        {
+          "message": "feat: navigate all grid photos when double-clicking a single photo"
+        },
+        {
+          "message": "feat: show progress bar while tagging face search results"
+        },
+        {
+          "message": "version bump with facial recognition added"
+        },
+        {
+          "message": "perf: move face inference to a long-lived worker isolate"
+        },
+        {
+          "message": "feat: add face recognition with on-device ONNX inference and tag-all support"
+        },
+        {
+          "message": "feat: add pro_image_editor for in-preview image editing"
+        },
+        {
+          "message": "fix: add build number to version so desktop_updater can parse it as integer"
+        },
+        {
+          "message": "fix: patch desktop_updater restartApp so update is actually applied on restart"
+        },
+        {
+          "message": "feat: show app version in update status label, remove redundant Updates heading"
+        },
+        {
+          "message": "version upgrade after keyboard handling refactor"
+        },
+        {
+          "message": "fix: folder list no longer collapses when selecting a subfolder"
+        },
+        {
+          "message": "refactor: replace KeyboardHandler with Shortcuts/Actions/Focus"
+        },
+        {
+          "message": "fix: allow scroll events to pass through NavigationTags ListView to parent"
+        },
+        {
+          "message": "fix: DB migration v2 splits legacy comma-separated tags in tags table"
+        },
+        {
+          "message": "fix: split legacy comma-separated IPTC/XMP keywords on read"
+        },
+        {
+          "message": "fix: pass VERSION env var to windows.dart installer step"
+        },
+        {
+          "message": "chore: bump actions/checkout from v3/v4 to v6 across all workflows"
+        },
+        {
+          "message": "fix: restore DMG and EXE GitHub Release uploads to CI workflows"
+        },
+        {
+          "message": "Bump softprops/action-gh-release from 0.1.15 to 3.0.0"
+        },
+        {
+          "message": "Bump peaceiris/actions-gh-pages from 3 to 4"
+        },
+        {
+          "message": "Bump actions/download-artifact from 4 to 8"
+        },
+        {
+          "message": "Bump actions/upload-artifact from 4 to 7"
+        },
+        {
+          "message": "fix: restore flutter create and --no-tree-shake-icons for Windows CI build"
+        },
+        {
+          "message": "fix: restore --no-tree-shake-icons for macOS CI build"
+        },
+        {
+          "message": "new release version after moving away from exiftool and allowing app updating"
+        },
+        {
+          "message": "support for auto updating on new release"
+        },
+        {
+          "message": "revert embedded thumbnail preview in favour of Image.file"
+        },
+        {
+          "message": "fix thumbnail orientation in grid preview"
+        },
+        {
+          "message": "remove hasExifTool gate from metadata loading"
+        },
+        {
+          "message": "phase 3: wire HybridMetadataService as the active provider"
+        },
+        {
+          "message": "feat: Phase 2 native JPEG tag writer — IPTC + XMP without exiftool"
+        },
+        {
+          "message": "feat: Phase 1 native Flutter metadata reader with full unit test coverage"
+        },
+        {
+          "message": "perf: load embedded JPEG thumbnails in grid view instead of full-res images"
+        },
+        {
+          "message": "perf: exiftool daemon mode and one-shot concurrency limiter"
+        },
+        {
+          "message": "perf: halve exiftool process count, eliminate cascade grid rebuilds on selection"
+        },
+        {
+          "message": "update CLAUDE.md to reflect clean architecture refactor"
+        },
+        {
+          "message": "clean architecture refactor: service layer, use cases, domain interfaces, centralised schema"
+        },
+        {
+          "message": "change perms of shared libs"
+        },
+        {
+          "message": "almost there; app can't find flutter runtime"
+        },
+        {
+          "message": "move libs to the correct dir"
+        },
+        {
+          "message": "more tweaks for flatpak"
+        },
+        {
+          "message": "tweaks to ubuntu action to try and create a working flatpak"
+        },
+        {
+          "message": "missed an inkworm reference when changing the action"
+        },
+        {
+          "message": "version upgrades"
+        },
+        {
+          "message": "move to flatpak as the appimage isn't working"
+        },
+        {
+          "message": "need to think about why exif and metadata providers exist"
+        },
+        {
+          "message": "trying to track down a bug which only exhibits on the downloaded app"
+        },
+        {
+          "message": "Apple are using \"security\" to scare people into only using their walled garden. For shame!"
+        },
+        {
+          "message": "fallback to homebrew location for exiftool if we can't find it on the path"
+        },
+        {
+          "message": "version bump the application"
+        },
+        {
+          "message": "version bumps to latest package versions and code chanhes to support the upgrades"
+        },
+        {
+          "message": "Release 1.0.5, better Windows support for network drives, disk space etc; better error handling and better tag management"
+        },
+        {
+          "message": "add code to clean files from the database if they no longer exist. Also improved the error handling to support both errors and notifications"
+        },
+        {
+          "message": "fix issues with focus when entering Metadata"
+        },
+        {
+          "message": "conform to Windows expectations for mounted drives"
+        },
+        {
+          "message": "better error handling"
+        },
+        {
+          "message": "version bumps"
+        },
+        {
+          "message": "support rescanning metadata in library"
+        },
+        {
+          "message": "longer comment for Windows specific functionality"
+        },
+        {
+          "message": "remove generated file from repo"
+        },
+        {
+          "message": "support for deleting tags from the database"
+        },
+        {
+          "message": "dead code removal and reformatting"
+        },
+        {
+          "message": "finally found a way to list drives in Windows in a single pass"
+        },
+        {
+          "message": "better support for network drives on Windows"
+        },
+        {
+          "message": "switch to gtp_markdown given flutter_markdown is now deprecated"
+        },
+        {
+          "message": "version bumps"
+        },
+        {
+          "message": "removed verbose tag from the eject powershell command"
+        },
+        {
+          "message": "better support for USB drives on Windows; unmounting still problematic. Thanks, Microsoft!"
+        },
+        {
+          "message": "version bumps"
+        },
+        {
+          "message": "another try for a working appimage"
+        },
+        {
+          "message": "should check versions before committing"
+        },
+        {
+          "message": "still trying to fix the appimage"
+        },
+        {
+          "message": "maybe the wrong mpv library in the appimage"
+        },
+        {
+          "message": "tweaks to try and get the app image built correctly"
+        },
+        {
+          "message": "desktop file for Linux"
+        },
+        {
+          "message": "fix for github actions, even though this works locally"
+        },
+        {
+          "message": "updates to freeze'd components for v3"
+        },
+        {
+          "message": "try to get the AppImage working again; refresh versions in doing so"
+        },
+        {
+          "message": "version bump for better Windows support (recycle bin) and a variety of tag and selection bugs"
+        },
+        {
+          "message": "fix an issue where the decision to edit a filename was based clicking on any file instead of the specific file"
+        },
+        {
+          "message": "win32 support for recycle bin"
+        },
+        {
+          "message": "fix tag syncing to the database"
+        },
+        {
+          "message": "support directory changes when watching folder contents."
+        },
+        {
+          "message": "support the recycle bin on Windows"
+        },
+        {
+          "message": "drag/drop wasn't selecting entities correctly"
+        },
+        {
+          "message": "pdf previews on Windows need to be in memory to avoid locking the file if we want to delete it!"
+        },
+        {
+          "message": "remove restriction on renaming limiting to files so we can rename directories as well"
+        },
+        {
+          "message": "added a getCount function to the DB class"
+        },
+        {
+          "message": "version bump with all known issues resolved"
+        },
+        {
+          "message": "big refactor to enable keyboard handling in the list view. Fixes #5"
+        },
+        {
+          "message": "fix random highlighting issues in the GridView"
+        },
+        {
+          "message": "properly support mouse selection in the gridview"
+        },
+        {
+          "message": "ensure clicking outside the file list deselects anything selected; and properly support mouse selection in the GridView"
+        },
+        {
+          "message": "removed old debug statements"
+        },
+        {
+          "message": "large refactor on Previewing to separate UI code from the backend"
+        },
+        {
+          "message": "updated to remove Syncfusion PDF viewer"
+        },
+        {
+          "message": "stop the tag provider from rebuilding unnecessarily"
+        },
+        {
+          "message": "fix an issue in GHA maybe?"
+        },
+        {
+          "message": "bump version number as we this fixes #8"
+        },
+        {
+          "message": "fix dropping folders into folders"
+        },
+        {
+          "message": "fix dart analysis issues."
+        },
+        {
+          "message": "fix type casting issue"
+        },
+        {
+          "message": "ensure directory renaming works as expected"
+        },
+        {
+          "message": "version bumps for downstream packages"
+        },
+        {
+          "message": "gifs are images, not video"
+        },
+        {
+          "message": "fixed typo"
+        },
+        {
+          "message": "support filesystemevent modify messages for Linux to work correctly"
+        },
+        {
+          "message": "remove unused imports"
+        },
+        {
+          "message": "ensure that we can drag an unselected item if required"
+        },
+        {
+          "message": "refactoring to fix a mouse tracking issue; not fully tested yet"
+        },
+        {
+          "message": "ensure a minimum height for the preview pane; there should be a better way of doing this. fixes #7"
+        },
+        {
+          "message": "make Preview pane visible all the time; fixes #6"
+        },
+        {
+          "message": "removes context menu from left hand nav given it didn't work. fixes #9"
+        },
+        {
+          "message": "switch PDF packages to support Linux PDF preview."
+        },
+        {
+          "message": "no need to update metadata on image rotation"
+        },
+        {
+          "message": "remove deprecated call with latest Flutter upgrade"
+        },
+        {
+          "message": "remove dead code"
+        },
+        {
+          "message": "update rust installation instructions"
+        },
+        {
+          "message": "fix formatting"
+        },
+        {
+          "message": "filesystemevents on Windows appear out of order; this Fixes #3 to ensure changes are tracked."
+        },
+        {
+          "message": "bump versions of flutter and dependent libraries"
+        },
+        {
+          "message": "remove ability to directly edit metadata in GridView; better to keep it in the MetadataEditor instead. Fixes #1"
+        },
+        {
+          "message": "change the double click functionality to not selectAll if nothing is selected as it is counter intuitive in practice"
+        },
+        {
+          "message": "bump to v1.0 as all known bugs have been resolved"
+        },
+        {
+          "message": "updated README for v1.0 release"
+        },
+        {
+          "message": "ensure the MetadataEditor doesn't automatically claim focus, or we'll have two KeyboardHandlers competing for attention which will lead to accidently deleted files."
+        },
+        {
+          "message": "ensure tags get refreshed when deleting from the PreviewPane"
+        },
+        {
+          "message": "updated to reflect upcoming 1.0 release"
+        },
+        {
+          "message": "dead code cleanup"
+        },
+        {
+          "message": "removed the ability to delete files from the Metadata editor; too risky"
+        },
+        {
+          "message": "removed debugPrint statements"
+        },
+        {
+          "message": "removed unused import"
+        },
+        {
+          "message": "turn off the sandbox to allow the app to access the home directory."
+        },
+        {
+          "message": "ensure dmg name matches that created by create-dmg"
+        },
+        {
+          "message": "oops; changed the wrong name for the create-dmg action. fixed."
+        },
+        {
+          "message": "rename the app for create-dmg to create the image correctly"
+        },
+        {
+          "message": "fix weird code issue to allow block selection to start working again"
+        },
+        {
+          "message": "fix list resetting view position on file select"
+        },
+        {
+          "message": "ensure we handle KeyUp events (to catch Shift/Ctrl/Meta changes) all the time and not just when focused"
+        },
+        {
+          "message": "fix exception with grid length of 1"
+        },
+        {
+          "message": "Revert \"fix exception with grids of only 1 image\""
+        },
+        {
+          "message": "fix exception with grids of only 1 image"
+        },
+        {
+          "message": "fix some dart analysis issues"
+        },
+        {
+          "message": "reading the update back from the DB was too slow; so assume the insert works; worst case, the folder width will be wrong; not a massive issue."
+        },
+        {
+          "message": "bump to beta3"
+        },
+        {
+          "message": "switch dmg creation action to fix misplaced icon"
+        },
+        {
+          "message": "try again with 24.04"
+        },
+        {
+          "message": "grrrr. my bad; should not have renamed the icon file."
+        },
+        {
+          "message": "revert to 22.04 to build on"
+        },
+        {
+          "message": "shift the AppImage to 24.04 to align with the build Action"
+        },
+        {
+          "message": "add flutter create to the macos and windows workflows"
+        },
+        {
+          "message": "missed the directoy for the flutter create command"
+        },
+        {
+          "message": "run flutter create after enabling linux"
+        },
+        {
+          "message": "package version bumps"
+        },
+        {
+          "message": "added a name to KeyboardHandler for easier debugging; moved MouseRegion in MetadataEditor for less picky mouse movements when editing tags/"
+        },
+        {
+          "message": "remove build folders from source control"
+        },
+        {
+          "message": "ignore desktop build artifacts"
+        },
+        {
+          "message": "stop trying to sort an unmodifiable list"
+        },
+        {
+          "message": "updated dependencies"
+        },
+        {
+          "message": "refactor if statement to switch statement for clarity"
+        },
+        {
+          "message": "adding markdown files to be previewable."
+        },
+        {
+          "message": "bump versions of dependent packages; you'll need to ensure your rust toolchain is up to date to compile"
+        },
+        {
+          "message": "provided a mechanism to fix the exif data if it has been corrupted"
+        },
+        {
+          "message": "add mov as a supported movie type"
+        },
+        {
+          "message": "updated process_run dependency"
+        },
+        {
+          "message": "bump to -beta2 with latest fixes"
+        },
+        {
+          "message": "a few keyboard handling fixes in the PreviewPane/Metadata Editor"
+        },
+        {
+          "message": "reset handler focus when adding a tag to an image"
+        },
+        {
+          "message": "massive refactor to deal with selected files in a much better manner."
+        },
+        {
+          "message": "add up and down as valid keyboard shortcuts; migrate to undeprecated keyboard handling."
+        },
+        {
+          "message": "match background colour to appbar"
+        },
+        {
+          "message": "move to material design 3"
+        },
+        {
+          "message": "remove unused import"
+        },
+        {
+          "message": "flutter update"
+        },
+        {
+          "message": "added more video types"
+        },
+        {
+          "message": "ensure only directories are displayed in the mounted folders component"
+        },
+        {
+          "message": "locate the sqlite.dll correctly."
+        },
+        {
+          "message": "Ok, so full path required for the executable."
+        },
+        {
+          "message": "I think I have this right now - name the executable plus directory correctly. Might need an absolute path."
+        },
+        {
+          "message": "stuffing around with the windows pipeline; i'll get there."
+        },
+        {
+          "message": "revert previous change. my bad."
+        },
+        {
+          "message": "name the release exe properly"
+        },
+        {
+          "message": "name the release exe properly"
+        },
+        {
+          "message": "fix regression in resizing the folder list post provider refactor"
+        },
+        {
+          "message": "name the file properly for release"
+        },
+        {
+          "message": "ensure file previews are removed when we unmount filesystems!"
+        },
+        {
+          "message": "display tags with ellipses if they are going to overflow the row in the metadata editor."
+        },
+        {
+          "message": "fixed a couple of TODO's, remove the reminders"
+        },
+        {
+          "message": "show lat/longtitude when multiples files are selected if they are identical."
+        },
+        {
+          "message": "refactor to use providers instead of build elements"
+        },
+        {
+          "message": "ensure tags are cached on reading as well as writing"
+        },
+        {
+          "message": "minor refactoring for layout"
+        },
+        {
+          "message": "process all files in the queue, not just the first one"
+        },
+        {
+          "message": "remove debugPrint"
+        },
+        {
+          "message": "fix a crash when trying to drag non-rendered files in the FolderList widget."
+        },
+        {
+          "message": "ensure rotated image displays consistently"
+        },
+        {
+          "message": "display blue flag for selected location on map after search"
+        },
+        {
+          "message": "better handling of the delete key for two use-cases; editing tags and deleting files"
+        },
+        {
+          "message": "defensive coding if tags for non existant files remain in the database."
+        },
+        {
+          "message": "provide a simple error notification line in the main application for when things go wrong"
+        },
+        {
+          "message": "remove errant debugPrint"
+        },
+        {
+          "message": "fix various dart analysis issues"
+        },
+        {
+          "message": "added support for defining locations for photos with map selection using open street maps."
+        },
+        {
+          "message": "correct repo references"
+        },
+        {
+          "message": "ensure aspect ratio is respected for CircularProgressIndicator"
+        },
+        {
+          "message": "add universe repo to allo libmpv-dev to be installed"
+        },
+        {
+          "message": "move code from build to a filtering provider"
+        },
+        {
+          "message": "make constructor const"
+        },
+        {
+          "message": "rename provider"
+        },
+        {
+          "message": "dart analysis refactoring"
+        },
+        {
+          "message": "add dependencies for maps support"
+        },
+        {
+          "message": "dart analysis refactoring"
+        },
+        {
+          "message": "ensure text is cleared on metadata submission; minor refactoring"
+        },
+        {
+          "message": "show map references for GPS locations in photos"
+        },
+        {
+          "message": "refactor selected entities to register on build and decouple from main class"
+        },
+        {
+          "message": "remove debug message"
+        },
+        {
+          "message": "add new libmpv dependency into the AppImage"
+        },
+        {
+          "message": "added in dependent Linux libraries for video support"
+        },
+        {
+          "message": "allow metadata editor to control image movement if there is no text in the input field"
+        },
+        {
+          "message": "use new file deletion code"
+        },
+        {
+          "message": "refactor file deletion code to remove files from selectedEntities"
+        },
+        {
+          "message": "refactoring on trash folder to support Linux."
+        },
+        {
+          "message": "minor folder renaming to keep things clean"
+        },
+        {
+          "message": "ensure icons don't overlap scrollbar"
+        },
+        {
+          "message": "allow for images with .tif extension"
+        },
+        {
+          "message": "split out entity preview into widgets for each preview type"
+        },
+        {
+          "message": "replace grid preview items when selecting new folder"
+        },
+        {
+          "message": "support video previews"
+        },
+        {
+          "message": "fix stacktrace; not sure how it happens, so code defensively against it."
+        },
+        {
+          "message": "allow dragging of files from preview pane."
+        },
+        {
+          "message": "ensure files are sorted after conversion from Set"
+        },
+        {
+          "message": "remove dependency on msix"
+        },
+        {
+          "message": "only write metadata to supported file formats; should I leave this to the user though?"
+        },
+        {
+          "message": "add support for metadata in video files & pdf documents"
+        },
+        {
+          "message": "make the percentage used image look better."
+        },
+        {
+          "message": "Add .exe to the release files path. Oops."
+        },
+        {
+          "message": "Ensure Windows has a working installer"
+        },
+        {
+          "message": "trying again with powershell"
+        },
+        {
+          "message": "updated instructions"
+        },
+        {
+          "message": "tweaked powershell script to get version into env"
+        },
+        {
+          "message": "removed the rename of lib/"
+        }
+      ],
+      "date": "2026-06-15",
+      "mandatory": false,
+      "url": "https://hobleyd.github.io/shackleton/releases/1.14.0+202-windows",
+      "platform": "windows"
     }
   ]
 }
