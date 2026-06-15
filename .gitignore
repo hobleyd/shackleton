@@ -6,6 +6,7 @@
 *.freezed.dart
 *.g.dart
 *.lock
+!pubspec.lock
 .DS_Store
 .atom/
 .build/

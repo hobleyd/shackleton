@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Shackleton
+Comment=File Explorer and Photo Library Manager
+Exec=shackleton
+Icon=au.com.sharpblue.shackleton
+StartupWMClass=shackleton
+Type=Application
+Terminal=false
+Categories=Utility;FileManager;
