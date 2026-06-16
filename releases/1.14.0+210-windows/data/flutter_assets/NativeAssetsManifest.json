@@ -1,0 +1,1 @@
+{"format-version":[1,0,0],"native-assets":{"windows_x64":{"package:pdfium_dart/libpdfium":["absolute","pdfium.dll"],"package:sqlite3/src/ffi/libsqlite3.g.dart":["system","sqlite3.dll"]}}}
