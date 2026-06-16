@@ -90,3 +90,8 @@ flutter_launcher_icons:
   ios: false
   web:
     generate: false
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
