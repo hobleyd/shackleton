@@ -81,6 +81,17 @@ jobs:
               | awk '{print $1}' \
               | while read lib; do copy_if_missing "$lib"; done
           done
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+      - name: Build Snap package
+        run: |
+          sed -i "s/^version: .*/version: '${VERSION}'/" snap/snapcraft.yaml
+          snapcraft --destructive-mode
+      - name: Upload Linux Snap to Release
+        uses: softprops/action-gh-release@v3.0.0
+        with:
+          tag_name: ${{ env.VERSION }}
+          files: shackleton_${{ env.VERSION }}_amd64.snap
       - name: Install Flatpak tooling
         run: |
           sudo apt-get update

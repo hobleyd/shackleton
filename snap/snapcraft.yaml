@@ -1,0 +1,27 @@
+name: shackleton
+base: core24
+version: 'dev'
+summary: A desktop file explorer and photo library manager
+description: |
+  Shackleton is a desktop file explorer and photo library manager with
+  drag-and-drop file management, EXIF/metadata editing via exiftool,
+  GPS coordinate viewing, and a SQLite-backed tagging and favourites system.
+grade: stable
+confinement: strict
+
+apps:
+  shackleton:
+    command: shackleton
+    plugs:
+      - home
+      - removable-media
+      - desktop
+      - desktop-legacy
+      - x11
+      - wayland
+      - opengl
+
+parts:
+  shackleton:
+    plugin: dump
+    source: build/linux/x64/release/bundle
