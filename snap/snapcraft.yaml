@@ -13,7 +13,7 @@ apps:
   shackleton:
     command: shackleton
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib:$SNAP/lib
+      LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib:$SNAP/lib
     plugs:
       - home
       - removable-media
@@ -40,3 +40,4 @@ parts:
       - libepoxy0
       - libmpv2
       - libfontconfig1
+      - libpulse0
