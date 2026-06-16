@@ -18,6 +18,77 @@ cleanup:
   - /lib/pkgconfig
 
 modules:
+  - name: libass
+    buildsystem: autotools
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share
+    sources:
+      - type: archive
+        url: https://github.com/libass/libass/releases/download/0.17.3/libass-0.17.3.tar.gz
+        sha256: da7c348deb6fa6c24507afab2dee7545ba5dd5bbf90a137bfe9e738f7df68537
+
+  - name: libplacebo
+    buildsystem: meson
+    config-opts:
+      - --libdir=lib
+      - -Dglslang=disabled
+      - -Dshaderc=enabled
+      - -Dvulkan=enabled
+      - -Ddemos=false
+      - -Dtests=false
+      - -Dd3d11=disabled
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share
+    sources:
+      - type: archive
+        url: https://github.com/haasn/libplacebo/archive/refs/tags/v7.349.0.tar.gz
+        sha256: 627e32439a0b3d2b90368ead7e919f470ee7446c87cc0f7841bbe319b23aa8b1
+      - type: archive
+        url: https://github.com/pallets/jinja/archive/b08cd4bc64bb980df86ed2876978ae5735572280.tar.gz
+        sha256: 9a20bab550a760ccb9b38a45d4fe76be92649206ee04633c646d0935a1872b0e
+        dest: 3rdparty/jinja
+        strip-components: 1
+      - type: archive
+        url: https://github.com/pallets/markupsafe/archive/c0254f0cfe51720ecc9e72e8896022af29af5b44.tar.gz
+        sha256: 1826c5d89cc1aa0b3088f538726d339e0c5cd69fbe03f7b8f9a3f880474d1120
+        dest: 3rdparty/markupsafe
+        strip-components: 1
+      - type: archive
+        url: https://github.com/Dav1dde/glad/archive/d08b1aa01f8fe57498f04d47b5fa8c48725be877.tar.gz
+        sha256: 7a5fb3299a20e8088a504f3bb2b7247d85c4207706754180a1b4a4840a8728e4
+        dest: 3rdparty/glad
+        strip-components: 1
+      - type: archive
+        url: https://github.com/fastfloat/fast_float/archive/2b2395f9ac836ffca6404424bcc252bff7aa80e4.tar.gz
+        sha256: 230d20e4e4ac1f6a9df92c4d746c6ec536cdb0c085bc8635d4b88cead5dc22cb
+        dest: 3rdparty/fast_float
+        strip-components: 1
+
+  - name: libmpv
+    buildsystem: meson
+    cleanup:
+      - /include
+      - /lib/pkgconfig
+      - /share
+    config-opts:
+      - --libdir=lib
+      - -Dlibmpv=true
+      - -Dcplayer=false
+      - -Dlua=disabled
+      - -Djavascript=disabled
+      - -Dmanpage-build=disabled
+      - -Dhtml-build=disabled
+      - -Dtests=false
+      - -Ddefault_library=shared
+    sources:
+      - type: archive
+        url: https://github.com/mpv-player/mpv/archive/refs/tags/v0.38.0.tar.gz
+        sha256: 86d9ef40b6058732f67b46d0bbda24a074fae860b3eaae05bab3145041303066
+
   - name: shackleton
     buildsystem: simple
     build-options:
@@ -35,6 +106,9 @@ modules:
         CARGO_HOME: /run/build/shackleton/cargo
         RUSTUP_HOME: /var/lib/rustup
     build-commands:
+      - sed -i '/MIMALLOC_USE_STATIC_LIBS/s/ ON)/ OFF)/' $PUB_CACHE/hosted/pub.dev/media_kit_libs_linux-1.2.1/linux/CMakeLists.txt
+      - setup-flutter.sh
+      - dart run build_runner build --delete-conflicting-outputs
       - flutter config --no-cli-animations
       - flutter build linux --release --no-pub
       - cp -a $BUNDLE_PATH /app/au.com.sharpblue.shackleton
@@ -44,8 +118,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/hobleyd/shackleton.git
-        commit: 1b4153c847752c3f1ea0642b4798073034f2ae4d
+        commit: af4d539b7f4ebc5e9414341a26cec23e550b691b
       - type: git
         url: https://github.com/flutter/flutter.git
-        tag: 3.41.4
+        tag: 3.41.6
         dest: flutter
