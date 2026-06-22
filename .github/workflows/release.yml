@@ -58,22 +58,26 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.version }}
           files: shackleton.dmg
 
-      - name: Create dist structure for desktop_updater
+      - name: Package for desktop_updater
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           BUILD_NUMBER="${{ needs.prepare.outputs.build_number }}"
-          mkdir -p "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos"
-          ditto "build/macos/Build/Products/Release/shackleton.app" \
-            "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-macos/shackleton.app"
-
-      - name: Generate file hashes
-        run: dart run desktop_updater:archive macos
+          ARTIFACT_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-macos/shackleton-${VERSION}-macos.zip"
+          dart run desktop_updater:package \
+            --input "build/macos/Build/Products/Release/shackleton.app" \
+            --output "dist/${BUILD_NUMBER}/macos" \
+            --package-id "com.example.shackleton" \
+            --app-name "shackleton" \
+            --version "${VERSION}" \
+            --build-number "${BUILD_NUMBER}" \
+            --platform macos \
+            --artifact-url "${ARTIFACT_URL}"
 
       - name: Upload distribution artifact
         uses: actions/upload-artifact@v7
         with:
           name: macos-dist
-          path: dist/${{ needs.prepare.outputs.build_number }}/shackleton-${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.build_number }}-macos/
+          path: dist/${{ needs.prepare.outputs.build_number }}/macos/
 
   build-windows:
     needs: prepare
@@ -111,23 +115,27 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.version }}
           files: build/windows/shackleton-${{ needs.prepare.outputs.version }}.exe
 
-      - name: Create dist structure for desktop_updater
+      - name: Package for desktop_updater
         shell: bash
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           BUILD_NUMBER="${{ needs.prepare.outputs.build_number }}"
-          mkdir -p "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-windows"
-          cp -r build/windows/x64/runner/Release/. \
-            "dist/${BUILD_NUMBER}/shackleton-${VERSION}+${BUILD_NUMBER}-windows/"
-
-      - name: Generate file hashes
-        run: dart run desktop_updater:archive windows
+          ARTIFACT_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-windows/shackleton-${VERSION}-windows.zip"
+          dart run desktop_updater:package \
+            --input "build/windows/x64/runner/Release" \
+            --output "dist/${BUILD_NUMBER}/windows" \
+            --package-id "com.example.shackleton" \
+            --app-name "shackleton" \
+            --version "${VERSION}" \
+            --build-number "${BUILD_NUMBER}" \
+            --platform windows \
+            --artifact-url "${ARTIFACT_URL}"
 
       - name: Upload distribution artifact
         uses: actions/upload-artifact@v7
         with:
           name: windows-dist
-          path: dist/${{ needs.prepare.outputs.build_number }}/shackleton-${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.build_number }}-windows/
+          path: dist/${{ needs.prepare.outputs.build_number }}/windows/
 
   build-linux:
     needs: prepare
@@ -220,57 +228,43 @@ jobs:
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           BUILD_NUMBER="${{ needs.prepare.outputs.build_number }}"
-          DATE=$(date +%Y-%m-%d)
-          MACOS_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-macos"
-          WINDOWS_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-windows"
-
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${VERSION}$" | head -1)
-          if [ -n "$PREV_TAG" ]; then
-            RAW_COMMITS=$(git log "${PREV_TAG}..HEAD" --pretty=format:"%s" --no-merges)
-          else
-            RAW_COMMITS=$(git log --pretty=format:"%s" --no-merges | head -30)
-          fi
-          if [ -n "$RAW_COMMITS" ]; then
-            CHANGES=$(echo "$RAW_COMMITS" | jq -R '{"message": .}' | jq -s '.')
-          else
-            CHANGES='[{"message": "Release '"$VERSION"'"}]'
-          fi
+          MACOS_RELEASE_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-macos/release.json"
+          WINDOWS_RELEASE_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-windows/release.json"
 
           git fetch origin gh-pages 2>/dev/null || true
           git show origin/gh-pages:app-archive.json > current-archive.json 2>/dev/null \
-            || echo '{"appName":"Shackleton","description":"Cross-platform desktop file explorer and photo library manager.","items":[]}' > current-archive.json
+            || echo '{"schemaVersion":3,"appName":"Shackleton","items":[]}' > current-archive.json
 
           jq --arg version "$VERSION" \
-             --argjson short_version "$BUILD_NUMBER" \
-             --arg date "$DATE" \
-             --arg macos_url "$MACOS_URL" \
-             --arg windows_url "$WINDOWS_URL" \
-             --argjson changes "$CHANGES" \
-             '.items = (
-               [.items[] | select(
-                 (.shortVersion == $short_version and (.platform == "macos" or .platform == "windows")) | not
-               )]
-               + [
-                 {
-                   "version": $version,
-                   "shortVersion": $short_version,
-                   "changes": $changes,
-                   "date": $date,
-                   "mandatory": false,
-                   "url": $macos_url,
-                   "platform": "macos"
-                 },
-                 {
-                   "version": $version,
-                   "shortVersion": $short_version,
-                   "changes": $changes,
-                   "date": $date,
-                   "mandatory": false,
-                   "url": $windows_url,
-                   "platform": "windows"
-                 }
-               ]
-             )' current-archive.json > deploy/app-archive.json
+             --argjson build_number "$BUILD_NUMBER" \
+             --arg macos_release_url "$MACOS_RELEASE_URL" \
+             --arg windows_release_url "$WINDOWS_RELEASE_URL" \
+             '.schemaVersion = 3 |
+              .appName = "Shackleton" |
+              .items = (
+                [.items[] |
+                  select(has("release")) |
+                  select((.buildNumber == $build_number and (.platform == "macos" or .platform == "windows")) | not)
+                ]
+                + [
+                  {
+                    "version": $version,
+                    "buildNumber": $build_number,
+                    "platform": "macos",
+                    "channel": "stable",
+                    "mandatory": false,
+                    "release": $macos_release_url
+                  },
+                  {
+                    "version": $version,
+                    "buildNumber": $build_number,
+                    "platform": "windows",
+                    "channel": "stable",
+                    "mandatory": false,
+                    "release": $windows_release_url
+                  }
+                ]
+              )' current-archive.json > deploy/app-archive.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
