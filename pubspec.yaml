@@ -49,7 +49,7 @@ dependencies:
   super_context_menu: ^0.9.1
   super_drag_and_drop: ^0.9.1
   super_native_extensions: ^0.9.1
-  syncfusion_flutter_gauges: ^33.1.44
+  syncfusion_flutter_gauges: ^34.2.2
   synchronized: ^3.2.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1
