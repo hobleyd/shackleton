@@ -22,7 +22,7 @@ dependencies:
   flutter_map: ^8.1.1
   flutter_math_fork: ^0.7.4
   flutter_riverpod: ^3.3.1
-  freezed: ^3.2.3
+  freezed: ^4.0.0-dev.3
   freezed_annotation: ^3.0.0
   gpt_markdown: ^1.0.18
   http: ^1.4.0
