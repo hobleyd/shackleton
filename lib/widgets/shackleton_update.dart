@@ -16,10 +16,12 @@ const String _updatePackageId = 'au.com.sharpblue.shackleton';
 ///
 /// Only an app-archive and release descriptor signed by the matching private
 /// key -- a GitHub Actions secret, never in this repository -- are trusted.
-/// TODO: replace with the exact "Public key map" printed by
-/// `dart run desktop_updater:release keygen` (see tool/setup_updater.sh)
-/// before the first signed release is published.
-const Map<String, String> _trustedReleasePublicKeys = {};
+/// This is the whole of the update chain's security: an attacker who serves
+/// a different archive from the same URL cannot sign it.
+const Map<String, String> _trustedReleasePublicKeys = {
+  'release-36d0e245a3e6de1d34242aa0':
+      'bHc0eqvgO86cM4uaf7QFUYuLGQ6aAwVQXCbYMj0IruA=',
+};
 
 class ShackletonUpdate extends StatefulWidget {
   const ShackletonUpdate({super.key});
