@@ -32,6 +32,10 @@ jobs:
   build-macos:
     needs: prepare
     runs-on: macos-latest
+    env:
+      # `if:` conditions cannot reference the secrets context directly, so
+      # gate signing/notarization steps on this instead.
+      HAS_SIGNING_CERT: ${{ secrets.MACOS_CERT_P12 != '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -43,7 +47,97 @@ jobs:
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: dart run flutter_launcher_icons
+
+      # Only a push to main (or a same-repo PR) carries these secrets; a
+      # fork PR builds ad-hoc/unsigned exactly as before, so contributor CI
+      # never fails for lacking a certificate it was never meant to have.
+      # No provisioning profile needed: shackleton's entitlements don't
+      # include keychain-access-groups, the one thing that forces Manual
+      # signing to demand one even for Developer ID (see nightmail's
+      # release.yml).
+      - name: Import Developer ID signing certificate
+        if: ${{ env.HAS_SIGNING_CERT == 'true' }}
+        env:
+          MACOS_CERT_P12_B64: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          echo "$MACOS_CERT_P12_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN_PATH" -P "$MACOS_CERT_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/security
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/"//g')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Patch the checked-out (not committed) pbxproj so Release actually
+          # signs with the Developer ID identity just imported. Left alone,
+          # Release stays CODE_SIGN_STYLE=Automatic with no DEVELOPMENT_TEAM,
+          # i.e. ad-hoc -- exactly what an unsigned/fork run should still get.
+          python3 - <<'EOF'
+          import pathlib
+          path = pathlib.Path("macos/Runner.xcodeproj/project.pbxproj")
+          text = path.read_text()
+
+          anchor = "\t\t\t\tCODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;\n\t\t\t\tCODE_SIGN_STYLE = Automatic;\n"
+          assert text.count(anchor) == 1, "Release Runner build-settings anchor not found or not unique -- pbxproj layout changed, update this patch"
+          replacement = (
+              "\t\t\t\tCODE_SIGN_ENTITLEMENTS = Runner/Release.entitlements;\n"
+              "\t\t\t\tCODE_SIGN_IDENTITY = \"Developer ID Application\";\n"
+              "\t\t\t\tCODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;\n"
+              "\t\t\t\tCODE_SIGN_STYLE = Manual;\n"
+              "\t\t\t\tDEVELOPMENT_TEAM = 69XRMYD9XG;\n"
+              "\t\t\t\tENABLE_HARDENED_RUNTIME = YES;\n"
+              "\t\t\t\tOTHER_CODE_SIGN_FLAGS = \"--timestamp\";\n"
+          )
+          text = text.replace(anchor, replacement)
+
+          # TargetAttributes.ProvisioningStyle is a separate, higher-precedence
+          # setting Xcode's own UI maintains; per-config CODE_SIGN_STYLE alone
+          # doesn't override it, so it has to move to Manual too.
+          old_attr = "\t\t\t\t\t\tCreatedOnToolsVersion = 9.2;\n\t\t\t\t\t\tLastSwiftMigration = 1100;\n\t\t\t\t\t\tProvisioningStyle = Automatic;\n"
+          assert text.count(old_attr) == 1, "ProvisioningStyle anchor not found or not unique"
+          new_attr = "\t\t\t\t\t\tCreatedOnToolsVersion = 9.2;\n\t\t\t\t\t\tLastSwiftMigration = 1100;\n\t\t\t\t\t\tProvisioningStyle = Manual;\n"
+          text = text.replace(old_attr, new_attr)
+
+          path.write_text(text)
+          EOF
+
       - run: flutter build macos --release --no-tree-shake-icons --build-number ${{ needs.prepare.outputs.build_number }}
+
+      - name: Notarize and staple
+        if: ${{ env.HAS_SIGNING_CERT == 'true' }}
+        env:
+          NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          APP_PATH="build/macos/Build/Products/Release/shackleton.app"
+          echo "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary_key.p8"
+
+          ditto -c -k --keepParent "$APP_PATH" "$RUNNER_TEMP/shackleton-notarize.zip"
+          # --wait exits 0 once Apple responds at all, Accepted or Invalid --
+          # a rejection is not a CLI failure, so the status has to be checked
+          # explicitly rather than relying on notarytool's own exit code.
+          SUBMIT_OUTPUT=$(xcrun notarytool submit "$RUNNER_TEMP/shackleton-notarize.zip" \
+            --key "$RUNNER_TEMP/notary_key.p8" \
+            --key-id "$NOTARY_KEY_ID" \
+            --issuer "$NOTARY_ISSUER_ID" \
+            --wait)
+          echo "$SUBMIT_OUTPUT"
+          SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | awk '/id:/ { print $2; exit }')
+          if ! echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            echo "::error::Notarization did not succeed -- fetching the detailed log"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --key "$RUNNER_TEMP/notary_key.p8" \
+              --key-id "$NOTARY_KEY_ID" \
+              --issuer "$NOTARY_ISSUER_ID"
+            exit 1
+          fi
+          xcrun stapler staple "$APP_PATH"
 
       - name: Create DMG
         uses: lethja/create-dmg-action@v0.0.2
@@ -66,7 +160,7 @@ jobs:
           dart run desktop_updater:package \
             --input "build/macos/Build/Products/Release/shackleton.app" \
             --output "dist/${BUILD_NUMBER}/macos" \
-            --package-id "com.example.shackleton" \
+            --package-id "au.com.sharpblue.shackleton" \
             --app-name "shackleton" \
             --version "${VERSION}" \
             --build-number "${BUILD_NUMBER}" \
@@ -78,6 +172,10 @@ jobs:
         with:
           name: macos-dist
           path: dist/${{ needs.prepare.outputs.build_number }}/macos/
+
+      - name: Remove signing keychain
+        if: ${{ always() && env.HAS_SIGNING_CERT == 'true' }}
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
 
   build-windows:
     needs: prepare
@@ -124,7 +222,7 @@ jobs:
           dart run desktop_updater:package \
             --input "build/windows/x64/runner/Release" \
             --output "dist/${BUILD_NUMBER}/windows" \
-            --package-id "com.example.shackleton" \
+            --package-id "au.com.sharpblue.shackleton" \
             --app-name "shackleton" \
             --version "${VERSION}" \
             --build-number "${BUILD_NUMBER}" \
