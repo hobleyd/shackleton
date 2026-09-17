@@ -146,7 +146,7 @@ jobs:
           srcdir: 'build/macos/Build/Products/Release/shackleton.app'
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@v3.0.3
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
@@ -207,7 +207,7 @@ jobs:
           VERSION: ${{ needs.prepare.outputs.version }}
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@v3.0.3
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
@@ -293,7 +293,7 @@ jobs:
           snapcraft --destructive-mode
 
       - name: Upload Snap to GitHub Release
-        uses: softprops/action-gh-release@v3.0.1
+        uses: softprops/action-gh-release@v3.0.3
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}

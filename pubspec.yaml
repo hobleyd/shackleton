@@ -22,7 +22,7 @@ dependencies:
   flutter_map: ^8.1.1
   flutter_math_fork: ^0.7.4
   flutter_riverpod: ^3.3.1
-  freezed: ^3.2.3
+  freezed: ^4.0.0-dev.3
   freezed_annotation: ^3.0.0
   gpt_markdown: ^1.0.18
   http: ^1.4.0
@@ -30,7 +30,7 @@ dependencies:
   intersperse: ^2.0.0
   intl: ^0.20.2
   json_annotation: ^4.11.0
-  latlong2: ^0.9.1
+  latlong2: ^0.10.1
   logger: ^2.4.0
   media_kit: ^1.1.11
   media_kit_video: ^2.0.1
@@ -49,14 +49,14 @@ dependencies:
   super_context_menu: ^0.9.1
   super_drag_and_drop: ^0.9.1
   super_native_extensions: ^0.9.1
-  syncfusion_flutter_gauges: ^33.1.44
+  syncfusion_flutter_gauges: ^34.2.3
   synchronized: ^3.2.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1
   desktop_multi_window: ^0.3.0
   desktop_updater: ^2.3.1
   package_info_plus: ^9.0.0
-  pro_image_editor: ^12.4.4
+  pro_image_editor: ^13.3.1
   version: ^3.0.2
   window_manager: ^0.5.1
   win32: ^5.15.0
