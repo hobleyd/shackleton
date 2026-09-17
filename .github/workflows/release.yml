@@ -165,7 +165,23 @@ jobs:
             --version "${VERSION}" \
             --build-number "${BUILD_NUMBER}" \
             --platform macos \
-            --artifact-url "${ARTIFACT_URL}"
+            --artifact-url "${ARTIFACT_URL}" \
+            --install-strategy wholeBundleReplace
+
+      - name: Import release signing key
+        env:
+          DESKTOP_UPDATER_KEY_PASSPHRASE: ${{ secrets.DESKTOP_UPDATER_KEY_PASSPHRASE }}
+        run: |
+          echo "${{ secrets.DESKTOP_UPDATER_KEY_BUNDLE_B64 }}" | base64 --decode > "$RUNNER_TEMP/release-key.dukey"
+          dart run desktop_updater:release keys import \
+            --input "$RUNNER_TEMP/release-key.dukey" \
+            --passphrase-env DESKTOP_UPDATER_KEY_PASSPHRASE
+
+      - name: Sign release descriptor
+        run: |
+          dart run desktop_updater:release sign \
+            --release "dist/${{ needs.prepare.outputs.build_number }}/macos/release.json" \
+            --key-profile desktop_updater.keys.json
 
       - name: Upload distribution artifact
         uses: actions/upload-artifact@v7
@@ -227,7 +243,25 @@ jobs:
             --version "${VERSION}" \
             --build-number "${BUILD_NUMBER}" \
             --platform windows \
-            --artifact-url "${ARTIFACT_URL}"
+            --artifact-url "${ARTIFACT_URL}" \
+            --install-strategy wholeDirectoryReplace
+
+      - name: Import release signing key
+        shell: bash
+        env:
+          DESKTOP_UPDATER_KEY_PASSPHRASE: ${{ secrets.DESKTOP_UPDATER_KEY_PASSPHRASE }}
+        run: |
+          echo "${{ secrets.DESKTOP_UPDATER_KEY_BUNDLE_B64 }}" | base64 --decode > "$RUNNER_TEMP/release-key.dukey"
+          dart run desktop_updater:release keys import \
+            --input "$RUNNER_TEMP/release-key.dukey" \
+            --passphrase-env DESKTOP_UPDATER_KEY_PASSPHRASE
+
+      - name: Sign release descriptor
+        shell: bash
+        run: |
+          dart run desktop_updater:release sign \
+            --release "dist/${{ needs.prepare.outputs.build_number }}/windows/release.json" \
+            --key-profile desktop_updater.keys.json
 
       - name: Upload distribution artifact
         uses: actions/upload-artifact@v7
@@ -322,51 +356,63 @@ jobs:
           name: windows-dist
           path: deploy/releases/${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.build_number }}-windows/
 
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: false
+
+      - run: flutter pub get
+
       - name: Update app-archive.json
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           BUILD_NUMBER="${{ needs.prepare.outputs.build_number }}"
-          MACOS_RELEASE_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-macos/release.json"
-          WINDOWS_RELEASE_URL="https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-windows/release.json"
 
           git fetch origin gh-pages 2>/dev/null || true
-          git show origin/gh-pages:app-archive.json > current-archive.json 2>/dev/null \
-            || echo '{"schemaVersion":3,"appName":"Shackleton","items":[]}' > current-archive.json
+          if git show origin/gh-pages:app-archive.json > deploy/app-archive.json 2>/dev/null \
+              && jq -e '.schemaVersion == 3' deploy/app-archive.json > /dev/null 2>&1; then
+            echo "Using existing schema v3 app-archive.json from gh-pages"
+            # The published archive is signed from the previous run; upsert
+            # refuses to touch a signed archive, and the whole thing is
+            # re-signed below anyway.
+            jq 'del(.signature)' deploy/app-archive.json > deploy/app-archive.json.tmp
+            mv deploy/app-archive.json.tmp deploy/app-archive.json
+          else
+            rm -f deploy/app-archive.json
+            echo "No compatible existing app-archive.json found; starting a new schema v3 index"
+          fi
 
-          jq --arg version "$VERSION" \
-             --argjson build_number "$BUILD_NUMBER" \
-             --arg macos_release_url "$MACOS_RELEASE_URL" \
-             --arg windows_release_url "$WINDOWS_RELEASE_URL" \
-             '.schemaVersion = 3 |
-              .appName = "Shackleton" |
-              .items = (
-                [.items[] |
-                  select(has("release")) |
-                  select((.buildNumber == $build_number and (.platform == "macos" or .platform == "windows")) | not)
-                ]
-                + [
-                  {
-                    "version": $version,
-                    "buildNumber": $build_number,
-                    "platform": "macos",
-                    "channel": "stable",
-                    "mandatory": false,
-                    "release": $macos_release_url
-                  },
-                  {
-                    "version": $version,
-                    "buildNumber": $build_number,
-                    "platform": "windows",
-                    "channel": "stable",
-                    "mandatory": false,
-                    "release": $windows_release_url
-                  }
-                ]
-              )' current-archive.json > deploy/app-archive.json
+          for PLATFORM in macos windows; do
+            dart run desktop_updater:app_archive upsert \
+              --archive deploy/app-archive.json \
+              --app-name "shackleton" \
+              --version "$VERSION" \
+              --build-number "$BUILD_NUMBER" \
+              --platform "$PLATFORM" \
+              --channel stable \
+              --release-url "https://hobleyd.github.io/shackleton/releases/${VERSION}+${BUILD_NUMBER}-${PLATFORM}/release.json"
+          done
+
+      - name: Import release signing key
+        env:
+          DESKTOP_UPDATER_KEY_PASSPHRASE: ${{ secrets.DESKTOP_UPDATER_KEY_PASSPHRASE }}
+        run: |
+          echo "${{ secrets.DESKTOP_UPDATER_KEY_BUNDLE_B64 }}" | base64 --decode > "$RUNNER_TEMP/release-key.dukey"
+          dart run desktop_updater:release keys import \
+            --input "$RUNNER_TEMP/release-key.dukey" \
+            --passphrase-env DESKTOP_UPDATER_KEY_PASSPHRASE
+
+      - name: Sign app-archive.json
+        run: |
+          dart run desktop_updater:release sign \
+            --app-archive deploy/app-archive.json \
+            --key-profile desktop_updater.keys.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./deploy
+          # Past releases must survive: an app still on an old version fetches
+          # its descriptor from the URL the archive recorded at the time.
           keep_files: true

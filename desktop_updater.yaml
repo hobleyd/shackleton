@@ -1,0 +1,7 @@
+# Config for `dart run desktop_updater:release ...` (desktop_updater 3.x).
+# See https://pub.dev/packages/desktop_updater for the full schema.
+#
+# The release workflow publishes app-archive.json and each release descriptor
+# under this base URL from the gh-pages branch.
+updates:
+  baseUrl: https://hobleyd.github.io/shackleton/

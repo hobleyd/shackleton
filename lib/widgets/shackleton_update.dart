@@ -1,9 +1,25 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:desktop_updater/desktop_updater.dart';
-import 'package:desktop_updater/updater_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+
+import '../services/update_recovery_store.dart';
+
+/// Must match `--package-id` in the release workflow's packaging steps and
+/// the `packageId` bound into each signed release descriptor.
+const String _updatePackageId = 'au.com.sharpblue.shackleton';
+
+/// Pinned Ed25519 public keys from `desktop_updater.keys.json`.
+///
+/// Only an app-archive and release descriptor signed by the matching private
+/// key -- a GitHub Actions secret, never in this repository -- are trusted.
+/// TODO: replace with the exact "Public key map" printed by
+/// `dart run desktop_updater:release keygen` (see tool/setup_updater.sh)
+/// before the first signed release is published.
+const Map<String, String> _trustedReleasePublicKeys = {};
 
 class ShackletonUpdate extends StatefulWidget {
   const ShackletonUpdate({super.key});
@@ -25,10 +41,23 @@ class _ShackletonUpdateState extends State<ShackletonUpdate> {
       if (mounted) setState(() => _version = info.version);
     });
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      _controller = DesktopUpdaterController(
-        appArchiveUrl: Uri.parse(_appArchiveUrl),
-      );
+      unawaited(_initController());
     }
+  }
+
+  Future<void> _initController() async {
+    final supportDirectory = await getApplicationSupportDirectory();
+    final recoveryFile = File(
+      '${supportDirectory.path}${Platform.pathSeparator}'
+      'desktop_updater${Platform.pathSeparator}pending-install.json',
+    );
+    final controller = DesktopUpdaterController(
+      appArchiveUrl: Uri.parse(_appArchiveUrl),
+      expectedPackageId: _updatePackageId,
+      trustedReleasePublicKeys: _trustedReleasePublicKeys,
+      recoveryStore: ShackletonUpdateRecoveryStore(recoveryFile),
+    );
+    if (mounted) setState(() => _controller = controller);
   }
 
   @override

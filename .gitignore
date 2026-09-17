@@ -52,3 +52,7 @@ app.*.map.json
 linux/
 windows/
 
+# desktop_updater release-signing key export -- the private half must never
+# be committed. tool/setup_updater.sh writes this only to a temp dir.
+*.dukey
+

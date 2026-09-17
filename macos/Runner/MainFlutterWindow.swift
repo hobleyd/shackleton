@@ -10,7 +10,6 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
-    DesktopUpdaterPatch.register(with: flutterViewController.engine.binaryMessenger)
     SlideshowExporter.register(with: flutterViewController.engine.binaryMessenger)
 
     FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in
