@@ -33,6 +33,22 @@
       "channel": "stable",
       "mandatory": false,
       "release": "https://hobleyd.github.io/shackleton/releases/1.14.0+7-windows/release.json"
+    },
+    {
+      "version": "1.14.0",
+      "buildNumber": 8,
+      "platform": "macos",
+      "channel": "stable",
+      "mandatory": false,
+      "release": "https://hobleyd.github.io/shackleton/releases/1.14.0+8-macos/release.json"
+    },
+    {
+      "version": "1.14.0",
+      "buildNumber": 8,
+      "platform": "windows",
+      "channel": "stable",
+      "mandatory": false,
+      "release": "https://hobleyd.github.io/shackleton/releases/1.14.0+8-windows/release.json"
     }
   ],
   "schemaVersion": 3
