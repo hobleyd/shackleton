@@ -35,6 +35,14 @@
       "release": "https://hobleyd.github.io/shackleton/releases/2.0.0+9-macos/release.json"
     },
     {
+      "version": "2.0.0",
+      "buildNumber": 10,
+      "platform": "macos",
+      "channel": "stable",
+      "mandatory": false,
+      "release": "https://hobleyd.github.io/shackleton/releases/2.0.0+10-macos/release.json"
+    },
+    {
       "version": "1.14.0",
       "buildNumber": 6,
       "platform": "windows",
@@ -65,11 +73,19 @@
       "channel": "stable",
       "mandatory": false,
       "release": "https://hobleyd.github.io/shackleton/releases/2.0.0+9-windows/release.json"
+    },
+    {
+      "version": "2.0.0",
+      "buildNumber": 10,
+      "platform": "windows",
+      "channel": "stable",
+      "mandatory": false,
+      "release": "https://hobleyd.github.io/shackleton/releases/2.0.0+10-windows/release.json"
     }
   ],
   "signature": {
     "algorithm": "ed25519",
     "publicKeyId": "release-36d0e245a3e6de1d34242aa0",
-    "value": "LPRceMFEtVEUITreE2kD3WI5w//fj3xATN7asKqwP6yxb0pNjjJLRqXc3ise6D+YLXI4bDEJct0ovfhmVr6QCA=="
+    "value": "1ZmD3jLfTUNz+DjvK0Ld6WVRRGhNj5ODieSCfFPknwlFgCPtqHiJUN9tmEx9v8quJw85boiKyNClWKhkkd1oCw=="
   }
 }
