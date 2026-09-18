@@ -139,18 +139,42 @@ jobs:
           fi
           xcrun stapler staple "$APP_PATH"
 
+      # create-dmg is called directly rather than through
+      # lethja/create-dmg-action, which derives *three* things from its one
+      # `name` input: the output file, `--volname`, and `--icon <name>.app` —
+      # and that last one names the bundle **inside** the volume, which Finder
+      # then has to find to position it. So the version can't be added to the
+      # file name without also claiming the app is called
+      # `shackleton-<version>.app`, which fails with "Can't set item ...
+      # (-10006)". The bundle name is resolved from disk instead. See
+      # nightmail's release.yml for the same trap and fix.
       - name: Create DMG
-        uses: lethja/create-dmg-action@v0.0.2
-        with:
-          name: 'shackleton'
-          srcdir: 'build/macos/Build/Products/Release/shackleton.app'
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          APP_DIR="build/macos/Build/Products/Release"
+          APP_BUNDLE_NAME=$(basename "$(ls -d "$APP_DIR"/*.app | head -1)")
+          if [ -z "$APP_BUNDLE_NAME" ]; then
+            echo "::error::no .app in $APP_DIR to build a DMG from" >&2
+            exit 1
+          fi
+          echo "Packaging $APP_BUNDLE_NAME as shackleton-$VERSION.dmg"
+          brew install create-dmg
+          create-dmg \
+            --volname "Shackleton $VERSION" \
+            --window-pos 200 120 \
+            --window-size 800 450 \
+            --icon-size 100 \
+            --icon "$APP_BUNDLE_NAME" 200 185 \
+            --app-drop-link 600 185 \
+            "shackleton-$VERSION.dmg" \
+            "$APP_DIR/$APP_BUNDLE_NAME"
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v3.0.3
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
-          files: shackleton.dmg
+          files: shackleton-${{ needs.prepare.outputs.version }}.dmg
 
       - name: Package for desktop_updater
         run: |
