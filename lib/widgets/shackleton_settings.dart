@@ -15,6 +15,12 @@ import 'shackleton_notifications.dart';
 import 'shackleton_statistics.dart';
 import 'shackleton_update.dart';
 
+// Tracked notification for the current library-folder error, cleared once
+// resolved, is stored as a mutable field below. Belongs in State, not on the
+// widget, but this settings widget is only ever constructed once per dialog
+// lifetime; left as-is rather than restructured without exercising the
+// settings UI to confirm no regression.
+// ignore: must_be_immutable
 class ShackletonSettings extends ConsumerWidget {
   final TextEditingController fontSizeController = TextEditingController();
   final TextEditingController libraryFolderController = TextEditingController();

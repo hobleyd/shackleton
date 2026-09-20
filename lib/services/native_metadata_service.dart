@@ -66,7 +66,7 @@ class NativeMetadataService implements IExifToolService {
       if (reader == null || !reader.isValidJpeg) return null;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return null;
-      return ExifReader.readThumbnail(exifBytes);
+      return await ExifReader.readThumbnail(exifBytes);
     } catch (_) {
       return null;
     }
@@ -79,7 +79,7 @@ class NativeMetadataService implements IExifToolService {
       if (reader == null || !reader.isValidJpeg) return null;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return null;
-      return ExifReader.readCreationDate(exifBytes);
+      return await ExifReader.readCreationDate(exifBytes);
     } catch (_) {
       return null;
     }
@@ -92,7 +92,7 @@ class NativeMetadataService implements IExifToolService {
       if (reader == null || !reader.isValidJpeg) return 0;
       final exifBytes = reader.getExifBytes();
       if (exifBytes == null) return 0;
-      return ExifReader.readOrientationQuarterTurns(exifBytes);
+      return await ExifReader.readOrientationQuarterTurns(exifBytes);
     } catch (_) {
       return 0;
     }

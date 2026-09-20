@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../models/file_metadata.dart';
 import '../../models/file_of_interest.dart';
 import '../../models/tag.dart';
 import '../../providers/metadata.dart';
