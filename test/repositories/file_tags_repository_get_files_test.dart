@@ -66,7 +66,11 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('excludes paths that no longer exist on disk', () async {
+    test('still returns paths that no longer exist on disk', () async {
+      // The existence check was deliberately removed from getFilesForTag
+      // (see the comment there): a sync existsSync() per row would block
+      // the main thread for large tag results, so a since-deleted file is
+      // returned and renders as a broken preview instead.
       final ghost = File('${tempDir.path}/ghost.jpg')..writeAsBytesSync([]);
       final ghostFoi = FileOfInterest(entity: ghost);
       await tagFile(ghostFoi, [Tag(tag: 'landscape')]);
@@ -75,7 +79,7 @@ void main() {
       final repo = container.read(fileTagsRepositoryProvider.notifier);
       final result = await repo.getFilesForTag(Tag(tag: 'landscape'));
 
-      expect(result, isEmpty);
+      expect(result.map((f) => f.path), [ghostFoi.path]);
     });
   });
 }

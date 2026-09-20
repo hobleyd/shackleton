@@ -84,7 +84,11 @@ void main() {
         (_) async => (tags: [Tag(tag: 'nature'), Tag(tag: 'travel')], location: null),
       );
 
-      container.read(metadataProvider(entity));
+      // A real widget keeps the provider alive via ref.watch(); container.read()
+      // alone leaves it with no listener, so it auto-disposes before the
+      // fire-and-forget load resolves. Simulate the widget with a listener.
+      final subscription = container.listen(metadataProvider(entity), (_, _) {});
+      addTearDown(subscription.close);
 
       // Allow the fire-and-forget loadMetadataFromFile to complete.
       await Future.delayed(const Duration(milliseconds: 50));

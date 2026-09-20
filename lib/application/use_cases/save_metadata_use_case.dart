@@ -1,4 +1,4 @@
-import '../../application/exceptions.dart' show MetadataWriteException;
+import '../../application/exceptions.dart' show ExifToolMissingException, MetadataWriteException;
 import '../../domain/repositories/i_file_tags_repository.dart';
 import '../../domain/services/i_exif_tool_service.dart';
 import '../../models/entity.dart';
@@ -24,6 +24,8 @@ class SaveMetadataUseCase {
 
     if (!updateFile) return metadata;
     if (!metadata.entity!.isMetadataSupported) return metadata;
+
+    if (_exifService.findExifTool() == null) throw const ExifToolMissingException();
 
     final location = metadata.entity!.isLocationSupported ? metadata.gpsLocation : null;
     final success = await _exifService.writeTags(metadata.entity!.path, metadata.tags, location: location);

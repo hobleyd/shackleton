@@ -13,6 +13,10 @@ class InMemoryAppDatabase extends AppDatabase {
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
         version: 4,
+        // sqflite caches connections by path when singleInstance is true
+        // (the default), so every test opening the same ":memory:" path
+        // would otherwise share one database and leak state across tests.
+        singleInstance: false,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON;');
         },
