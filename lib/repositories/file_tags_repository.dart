@@ -31,6 +31,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   void _scheduleTagListRefresh() {
     _tagListDebounce?.cancel();
     _tagListDebounce = Timer(const Duration(milliseconds: 500), () async {
+      if (!ref.mounted) return;
       final tags = await getTags();
       if (ref.mounted) state = AsyncData(tags);
     });
@@ -39,6 +40,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
   @override
   Future<List<Tag>> build() {
     ref.keepAlive();
+    ref.onDispose(() => _tagListDebounce?.cancel());
     _db = ref.read(appDatabaseProvider.notifier);
     return getTags();
   }
