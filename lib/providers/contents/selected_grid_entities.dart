@@ -54,6 +54,7 @@ class SelectedGridEntities extends _$SelectedGridEntities implements FileEventsC
   }
 
   Future<void> register() async {
+    if (!ref.mounted) return;
     ref.read(fileEventsProvider.notifier).register(this);
   }
 

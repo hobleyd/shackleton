@@ -91,7 +91,8 @@ class FolderContents extends _$FolderContents {
 
   void watchFolder(Directory path) async {
     Stream<FileSystemEvent> events = path.watch(events: FileSystemEvent.all);
-    events.listen((FileSystemEvent event) {
+    final sub = events.listen((FileSystemEvent event) {
+      if (!ref.mounted) return;
       FileOfInterest foi = FileOfInterest(entity: event.isDirectory ? Directory(event.path) : File(event.path));
       // Windows provides out of order file system events; so let's use a sledgehammer.
       if (Platform.isWindows) {
@@ -140,5 +141,6 @@ class FolderContents extends _$FolderContents {
         }
       }
     });
+    ref.onDispose(sub.cancel);
   }
 }

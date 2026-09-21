@@ -62,6 +62,7 @@ class GridContents extends _$GridContents implements FileEventsCallback {
   }
 
   Future<void> register() async {
+    if (!ref.mounted) return;
     ref.read(fileEventsProvider.notifier).register(this);
   }
 

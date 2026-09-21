@@ -41,6 +41,7 @@ class SelectedFolderContents extends _$SelectedFolderContents implements FileEve
   }
 
   Future<void> register() async {
+    if (!ref.mounted) return;
     ref.read(fileEventsProvider.notifier).register(this);
   }
 
