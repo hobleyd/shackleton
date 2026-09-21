@@ -22,9 +22,12 @@ class AppStatisticsRepository extends _$AppStatisticsRepository implements IAppS
 
   @override
   void clear() async {
+    // file_tags references both files and tags via foreign keys with no
+    // cascade delete, so the junction table must be cleared first or a
+    // tagged file trips a foreign key constraint violation.
+    await _db.delete('file_tags');
     await _db.delete('files');
     await _db.delete('tags');
-    await _db.delete('file_tags');
 
     state = await AsyncValue.guard(() => _getDatabaseStatistics());
   }
