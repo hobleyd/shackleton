@@ -36,7 +36,7 @@ class _ShackletonNotifications extends ConsumerState<ShackletonNotifications> wi
                       itemCount: errors.length,
                       itemBuilder: (context, index) {
                         return Container(
-                          color: errors[index].type == NotificationType.ERROR ? Colors.pink[50] : Colors.blue[50],
+                          color: errors[index].type == NotificationType.error ? Colors.pink[50] : Colors.blue[50],
                           child: Text(
                             errors[index].message,
                             style: Theme.of(context).textTheme.bodySmall,

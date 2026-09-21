@@ -332,7 +332,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
     }
 
     // Fast path: skip the transaction when tags + GPS are already up to date.
-    final incomingNames = (entity.tags as List<Tag>?)
+    final incomingNames = entity.tags
             ?.where((t) => t.tag.isNotEmpty)
             .map((t) => t.tag)
             .toSet() ??
@@ -378,7 +378,7 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
 
       // Resolve/create tag records for incoming tags.
       final incomingTagIds = <int>{};
-      for (final tag in (entity.tags as List<Tag>? ?? <Tag>[])) {
+      for (final tag in (entity.tags ?? <Tag>[])) {
         if (tag.tag.isEmpty) continue;
         if (tag.id == null) {
           final existing = await txn.query('tags',

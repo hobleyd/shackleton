@@ -20,9 +20,9 @@ class PDFPreview extends ConsumerStatefulWidget {
 }
 
 class _PDFPreview extends ConsumerState<PDFPreview> {
-  get entityPreview => widget.entity;
-  get isSelected    => widget.isSelected;
-  get showFullFile => widget.showFullFile;
+  FileOfInterest get entityPreview => widget.entity;
+  bool get isSelected    => widget.isSelected;
+  bool get showFullFile => widget.showFullFile;
 
   late Uint8List windowsPDFData;
 
@@ -33,7 +33,7 @@ class _PDFPreview extends ConsumerState<PDFPreview> {
     if (Platform.isWindows) {
       // Windows locks the file if we open it in the PDFViewer constructor, so we need to load the data into memory on Windows...
       // I can't believe Windows still locks files exclusively. It's not the 90's any more Microsoft.
-      windowsPDFData = entityPreview.entity.readAsBytesSync();
+      windowsPDFData = (entityPreview.entity as File).readAsBytesSync();
     }
 
     return Column(

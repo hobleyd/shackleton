@@ -25,10 +25,10 @@ class DirectoryRow extends ConsumerStatefulWidget {
 class _DirectoryRow extends ConsumerState<DirectoryRow> {
   bool isDropZone = false;
 
-  get entity => widget.entity;
-  get showDetailedView => widget.showDetailedView;
-  get paneController => widget.paneController;
-  get entities => widget.entities;
+  FileOfInterest get entity => widget.entity;
+  bool get showDetailedView => widget.showDetailedView;
+  FolderPaneController get paneController => widget.paneController;
+  List<FileOfInterest> get entities => widget.entities;
 
   @override
   Widget build(BuildContext context) {

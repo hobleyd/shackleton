@@ -3,6 +3,8 @@
 ///
 /// Run from the project root:
 ///   dart run tool/generate_music.dart
+// print is the intended output channel for this CLI script, not app code.
+// ignore_for_file: avoid_print
 library;
 
 import 'dart:io';
@@ -43,7 +45,7 @@ void main() async {
     final mp3Path  = '${outDir.path}/${piece.filename}.mp3';
     await _encodeToMp3(wavBytes, mp3Path);
     final kb = File(mp3Path).lengthSync() ~/ 1024;
-    print('✓ ${piece.description}  →  $mp3Path  (${kb} KB)');
+    print('✓ ${piece.description}  →  $mp3Path  ($kb KB)');
   }
 }
 

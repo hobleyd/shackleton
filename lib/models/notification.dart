@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum NotificationType { ERROR, INFO }
+enum NotificationType { error, info }
 
 @immutable
 class Notification {

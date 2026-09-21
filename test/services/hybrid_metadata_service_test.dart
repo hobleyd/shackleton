@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../lib/domain/services/i_exif_tool_service.dart';
-import '../../lib/models/tag.dart';
-import '../../lib/services/hybrid_metadata_service.dart';
+import 'package:shackleton/domain/services/i_exif_tool_service.dart';
+import 'package:shackleton/models/tag.dart';
+import 'package:shackleton/services/hybrid_metadata_service.dart';
 
 class MockExifToolService extends Mock implements IExifToolService {}
 

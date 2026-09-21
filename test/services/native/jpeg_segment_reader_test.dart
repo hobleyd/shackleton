@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/jpeg_segment_reader.dart';
+import 'package:shackleton/services/native/jpeg_segment_reader.dart';
 import '../../helpers/jpeg_builder.dart';
 import '../../helpers/tiff_builder.dart';
 

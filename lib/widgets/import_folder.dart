@@ -183,7 +183,7 @@ class _ImportFolder extends ConsumerState<ImportFolder> {
     for (var entity in entitiesToProcess) {
       try {
         if (entity.willImport) {
-          ref.read(notifyProvider.notifier).addNotification(message: 'Importing ${entity.renamedFile}', type: NotificationType.INFO);
+          ref.read(notifyProvider.notifier).addNotification(message: 'Importing ${entity.renamedFile}', type: NotificationType.info);
           entity.fileToImport.moveFile(entity.renamedFile);
           setState(() {
             entities.remove(entity);

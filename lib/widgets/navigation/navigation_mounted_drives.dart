@@ -44,7 +44,7 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
                         children: [
                           Expanded(
                             child: Text(
-                              mountPointRepository[index].name!,
+                              mountPointRepository[index].name,
                               style: Theme.of(context).textTheme.bodySmall,
                               textAlign: TextAlign.center,
                             ),
@@ -65,7 +65,7 @@ class _NavigationMountedDrives extends ConsumerState<NavigationMountedDrives> {
                               tooltip: 'Eject...',
                               onPressed: () => ref
                                   .read(diskSizeDetailsProvider.notifier)
-                                  .unmountPath(mountPointRepository[index].path!)),
+                                  .unmountPath(mountPointRepository[index].path)),
                         ),
                       ),
                     ],

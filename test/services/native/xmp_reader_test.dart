@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/xmp_reader.dart';
+import 'package:shackleton/services/native/xmp_reader.dart';
 
 Uint8List _encode(String xml) => Uint8List.fromList(utf8.encode(xml));
 

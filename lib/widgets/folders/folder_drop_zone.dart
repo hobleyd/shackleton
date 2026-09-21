@@ -35,8 +35,8 @@ class _FolderDropZone extends ConsumerState<FolderDropZone> {
   bool showFolderButtons = false;
   late double width;
 
-  get folderPath => widget.path;
-  get folderSettings => widget.settings;
+  Directory get folderPath => widget.path;
+  FolderUISettings get folderSettings => widget.settings;
 
   @override
   Widget build(BuildContext context) {

@@ -34,7 +34,7 @@ class GridTags extends _$GridTags {
   Future<void> _loadTagsForGrid(
       FileTagsRepository repo, List<FileOfInterest> entities) async {
     if (entities.isEmpty) return;
-    final tags = await repo.getTagsForPaths([for (final e in entities) e.path as String]);
+    final tags = await repo.getTagsForPaths([for (final e in entities) e.path]);
     if (ref.mounted) state = tags;
   }
 }

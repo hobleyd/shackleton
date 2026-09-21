@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/iptc_reader.dart';
+import 'package:shackleton/services/native/iptc_reader.dart';
 import '../../helpers/jpeg_builder.dart';
 
 void main() {

@@ -14,7 +14,7 @@ class FileMetaData implements Comparable {
 
   @override
   get hashCode => tags.hashCode;
-  get hasTags => tags.isNotEmpty;
+  bool get hasTags => tags.isNotEmpty;
 
   @override
   bool operator ==(other) => other is FileMetaData && gpsLocation == other.gpsLocation && toString() == other.toString();

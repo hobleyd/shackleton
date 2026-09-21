@@ -30,10 +30,10 @@ class _FolderPane extends ConsumerState<FolderPane> {
 
   List<GlobalKey?> keys = [];
 
-  get path => widget.path;
-  get showHiddenFiles => widget.showHiddenFiles;
-  get showDetailedView => widget.showDetailedView;
-  get paneController => widget.paneController;
+  Directory get path => widget.path;
+  bool get showHiddenFiles => widget.showHiddenFiles;
+  bool get showDetailedView => widget.showDetailedView;
+  FolderPaneController get paneController => widget.paneController;
 
   @override
   Widget build(BuildContext context) {

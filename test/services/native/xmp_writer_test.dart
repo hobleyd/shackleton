@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/xmp_reader.dart';
-import '../../../lib/services/native/xmp_writer.dart';
+import 'package:shackleton/services/native/xmp_reader.dart';
+import 'package:shackleton/services/native/xmp_writer.dart';
 
 Uint8List _toBytes(String xml) => Uint8List.fromList(utf8.encode(xml));
 

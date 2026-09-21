@@ -2,12 +2,12 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/iptc_reader.dart';
-import '../../../lib/services/native/iptc_writer.dart';
-import '../../../lib/services/native/jpeg_segment_reader.dart';
-import '../../../lib/services/native/jpeg_segment_writer.dart';
-import '../../../lib/services/native/xmp_reader.dart';
-import '../../../lib/services/native/xmp_writer.dart';
+import 'package:shackleton/services/native/iptc_reader.dart';
+import 'package:shackleton/services/native/iptc_writer.dart';
+import 'package:shackleton/services/native/jpeg_segment_reader.dart';
+import 'package:shackleton/services/native/jpeg_segment_writer.dart';
+import 'package:shackleton/services/native/xmp_reader.dart';
+import 'package:shackleton/services/native/xmp_writer.dart';
 import '../../helpers/jpeg_builder.dart';
 import '../../helpers/tiff_builder.dart';
 

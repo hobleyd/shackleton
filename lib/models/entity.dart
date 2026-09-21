@@ -2,15 +2,16 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:shackleton/models/file_metadata.dart';
+import 'package:shackleton/models/tag.dart';
 
 class Entity  {
   int? id;
   String path;
   FileMetaData? metadata;
 
-  get exists => File(path).existsSync();
-  get hasTags => metadata?.hasTags;
-  get tags => metadata?.tags;
+  bool get exists => File(path).existsSync();
+  bool? get hasTags => metadata?.hasTags;
+  List<Tag>? get tags => metadata?.tags;
 
   Entity({
     required this.path,

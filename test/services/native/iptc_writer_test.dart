@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/iptc_reader.dart';
-import '../../../lib/services/native/iptc_writer.dart';
+import 'package:shackleton/services/native/iptc_reader.dart';
+import 'package:shackleton/services/native/iptc_writer.dart';
 
 void main() {
   group('IptcWriter', () {

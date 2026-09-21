@@ -23,23 +23,23 @@ class FileOfInterest implements Comparable {
 
   @override
   get hashCode => entity.path.hashCode;
-  get canPreview => imageExtensions.contains(extension) || documentExtensions.contains(extension) || videoExtensions.contains(extension);
-  get exists => entity.existsSync();
-  get extension => entity.path.split('.').last.toLowerCase();
-  get extensionIndex => name.lastIndexOf('.') ==  -1 ? name.length : name.lastIndexOf('.');
-  get isDirectory => entity is Directory;
-  get isFile => entity.statSync().type == FileSystemEntityType.file;
-  get isImage => imageExtensions.contains(extension);
-  get isLocationSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension);
-  get isHidden => name.startsWith('.');
-  get isMetadataSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension) || documentExtensions.contains(extension);
-  get isVideo => videoExtensions.contains(extension);
-  get name => basename(path);
-  get path => entity.path;
-  get parent => entity.parent;
-  get shouldImport => isImage || isVideo;
-  get stat => entity.statSync();
-  get uri => entity.uri;
+  bool get canPreview => imageExtensions.contains(extension) || documentExtensions.contains(extension) || videoExtensions.contains(extension);
+  bool get exists => entity.existsSync();
+  String get extension => entity.path.split('.').last.toLowerCase();
+  int get extensionIndex => name.lastIndexOf('.') ==  -1 ? name.length : name.lastIndexOf('.');
+  bool get isDirectory => entity is Directory;
+  bool get isFile => entity.statSync().type == FileSystemEntityType.file;
+  bool get isImage => imageExtensions.contains(extension);
+  bool get isLocationSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension);
+  bool get isHidden => name.startsWith('.');
+  bool get isMetadataSupported => imageExtensions.contains(extension) || videoExtensions.contains(extension) || documentExtensions.contains(extension);
+  bool get isVideo => videoExtensions.contains(extension);
+  String get name => basename(path);
+  String get path => entity.path;
+  Directory get parent => entity.parent;
+  bool get shouldImport => isImage || isVideo;
+  FileStat get stat => entity.statSync();
+  Uri get uri => entity.uri;
 
   @override
   bool operator ==(other) => other is FileOfInterest && entity.path == other.entity.path;

@@ -28,9 +28,9 @@ class _MetadataEditor extends ConsumerState<MetadataEditor> {
   late TextEditingController tagController;
   late FocusNode focusNode;
 
-  get keyHandlerCallback => widget.keyHandlerCallback;
-  get tagHandler => widget.tagHandler;
-  get paneEntity => widget.paneEntity;
+  KeyboardCallback get keyHandlerCallback => widget.keyHandlerCallback;
+  TagHandler get tagHandler => widget.tagHandler;
+  FileOfInterest? get paneEntity => widget.paneEntity;
 
   @override
   Widget build(BuildContext context,) {

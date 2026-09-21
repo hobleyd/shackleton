@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -85,7 +86,7 @@ class _ShackletonGridView extends ConsumerState<ShackletonGridView> {
 
                 return GridView.builder(
                   controller: scrollController,
-                  cacheExtent: 2000,
+                  scrollCacheExtent: const ScrollCacheExtent.pixels(2000),
                   itemCount: entities.length,
                   itemBuilder: (context, idx) {
                     keys[idx] = GlobalKey<DragItemWidgetState>();

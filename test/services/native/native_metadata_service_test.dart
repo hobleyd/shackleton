@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native_metadata_service.dart';
+import 'package:shackleton/services/native_metadata_service.dart';
 import '../../helpers/jpeg_builder.dart';
 import '../../helpers/tiff_builder.dart';
 

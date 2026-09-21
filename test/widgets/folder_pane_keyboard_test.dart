@@ -133,7 +133,7 @@ void main() {
   ProviderContainer makeContainer(Directory path) => ProviderContainer(overrides: [
     folderContentsProvider(path.path).overrideWith(_StaticFolderContents.new),
     selectedFolderContentsProvider.overrideWith(_NoTimerSelectedFolderContents.new),
-    metadataProvider.overrideWith(_StubMetadata.new),
+    metadataProvider.overrideWith2((entity) => _StubMetadata()),
   ]);
 
   Widget buildApp(ProviderContainer container, Directory path) => UncontrolledProviderScope(

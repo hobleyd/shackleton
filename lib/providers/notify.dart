@@ -7,7 +7,7 @@ part 'notify.g.dart';
 
 @Riverpod(keepAlive: true)
 class Notify extends _$Notify {
-  List<NotificationListener> _listeners = [];
+  final List<NotificationListener> _listeners = [];
 
   @override
   List<Notification> build() {
@@ -41,7 +41,7 @@ class Notify extends _$Notify {
     state = errors;
   }
 
-  Notification addNotification({ required String message, NotificationType type = NotificationType.ERROR, int lifespan = -1 }) {
+  Notification addNotification({ required String message, NotificationType type = NotificationType.error, int lifespan = -1 }) {
     Notification e = Notification(message: message, type: type, lifespan: lifespan);
     List<Notification> errors = List.from(state);
     errors.insert(0, e);

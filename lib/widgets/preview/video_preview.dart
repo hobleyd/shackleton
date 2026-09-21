@@ -19,8 +19,8 @@ class _VideoPreview extends ConsumerState<VideoPreview> {
   late final _player = Player();
   late final VideoController _controller = VideoController(_player);
 
-  get entityPreview  => widget.entity;
-  get isSelected => widget.isSelected;
+  FileOfInterest get entityPreview  => widget.entity;
+  bool get isSelected => widget.isSelected;
 
   @override
   void dispose() {

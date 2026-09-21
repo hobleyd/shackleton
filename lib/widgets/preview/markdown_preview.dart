@@ -19,8 +19,8 @@ class MarkdownPreview extends ConsumerStatefulWidget {
 class _MarkdownPreview extends ConsumerState<MarkdownPreview> {
   final ScrollController _scrollController = ScrollController();
 
-  get entityPreview => widget.entity;
-  get isSelected    => widget.isSelected;
+  FileOfInterest get entityPreview => widget.entity;
+  bool get isSelected    => widget.isSelected;
 
   @override
   Widget build(BuildContext context) {

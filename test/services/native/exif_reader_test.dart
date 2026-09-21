@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../lib/services/native/exif_reader.dart';
+import 'package:shackleton/services/native/exif_reader.dart';
 import '../../helpers/tiff_builder.dart';
 
 void main() {
