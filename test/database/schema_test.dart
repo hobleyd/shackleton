@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shackleton/database/app_database.dart';
@@ -142,6 +143,180 @@ void main() {
       // Exactly one file_tags row per unique tag for this file
       final junctions = await migDb.query('file_tags', where: 'fileId = ?', whereArgs: [fileId]);
       expect(junctions.length, equals(2));
+    });
+  });
+
+  group('AppSchema.createFaceTables', () {
+    setUp(() => AppSchema.createFaceTables(db));
+
+    test('creates all expected face tables', () async {
+      final tables = await db.rawQuery(
+        "select name from sqlite_master where type='table' order by name",
+      );
+      final names = tables.map((r) => r['name'] as String).toSet();
+      expect(names, containsAll({'face_identities', 'file_faces', 'file_face_scan_status'}));
+    });
+
+    test('face_identities replaces on duplicate name', () async {
+      await db.insert('face_identities', {'name': 'Alice', 'embedding': Uint8List(4)});
+      await db.insert('face_identities', {'name': 'Alice', 'embedding': Uint8List(8)});
+
+      final rows = await db.query('face_identities', where: 'name = ?', whereArgs: ['Alice']);
+      expect(rows, hasLength(1));
+      expect((rows.first['embedding'] as Uint8List).length, 8);
+    });
+
+    test('file_faces are deleted when the parent file is deleted (cascade)', () async {
+      final fileId = await db.insert('files', {'path': '/a.jpg'});
+      await db.insert('file_faces', {
+        'file_id': fileId,
+        'face_index': 0,
+        'embedding': Uint8List(4),
+        'bbox_x': 0.0,
+        'bbox_y': 0.0,
+        'bbox_w': 1.0,
+        'bbox_h': 1.0,
+        'confidence': 0.9,
+      });
+
+      await db.delete('files', where: 'id = ?', whereArgs: [fileId]);
+
+      final rows = await db.query('file_faces', where: 'file_id = ?', whereArgs: [fileId]);
+      expect(rows, isEmpty);
+    });
+
+    test('file_faces.identity_id is cleared, not the row deleted, when the identity is deleted', () async {
+      final fileId = await db.insert('files', {'path': '/a.jpg'});
+      final identityId = await db.insert('face_identities', {'name': 'Alice', 'embedding': Uint8List(4)});
+      await db.insert('file_faces', {
+        'file_id': fileId,
+        'face_index': 0,
+        'embedding': Uint8List(4),
+        'bbox_x': 0.0,
+        'bbox_y': 0.0,
+        'bbox_w': 1.0,
+        'bbox_h': 1.0,
+        'confidence': 0.9,
+        'identity_id': identityId,
+      });
+
+      await db.delete('face_identities', where: 'id = ?', whereArgs: [identityId]);
+
+      final rows = await db.query('file_faces', where: 'file_id = ?', whereArgs: [fileId]);
+      expect(rows, hasLength(1));
+      expect(rows.first['identity_id'], isNull);
+    });
+
+    test('file_faces replaces on duplicate (file_id, face_index)', () async {
+      final fileId = await db.insert('files', {'path': '/a.jpg'});
+      final row = {
+        'file_id': fileId,
+        'face_index': 0,
+        'bbox_x': 0.0,
+        'bbox_y': 0.0,
+        'bbox_w': 1.0,
+        'bbox_h': 1.0,
+        'confidence': 0.9,
+      };
+      await db.insert('file_faces', {...row, 'embedding': Uint8List(4)});
+      await db.insert('file_faces', {...row, 'embedding': Uint8List(8)});
+
+      final rows = await db.query('file_faces', where: 'file_id = ? AND face_index = ?', whereArgs: [fileId, 0]);
+      expect(rows, hasLength(1));
+      expect((rows.first['embedding'] as Uint8List).length, 8);
+    });
+
+    test('file_face_scan_status is deleted when the parent file is deleted (cascade)', () async {
+      final fileId = await db.insert('files', {'path': '/a.jpg'});
+      await db.insert('file_face_scan_status', {'file_id': fileId, 'scanned_at': 1000});
+
+      await db.delete('files', where: 'id = ?', whereArgs: [fileId]);
+
+      final rows = await db.query('file_face_scan_status', where: 'file_id = ?', whereArgs: [fileId]);
+      expect(rows, isEmpty);
+    });
+  });
+
+  group('AppSchema.migrateV4AddGpsToFiles', () {
+    late Database legacyDb;
+
+    setUp(() async {
+      // Simulate a pre-v4 files table: no gps_lat/gps_lng columns.
+      legacyDb = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          singleInstance: false,
+          onCreate: (d, _) => d.execute('''
+              create table files(
+                id   integer primary key,
+                path text    not null,
+                unique (path) on conflict ignore);
+              '''),
+        ),
+      );
+    });
+
+    tearDown(() => legacyDb.close());
+
+    test('adds gps_lat and gps_lng columns without losing existing rows', () async {
+      final fileId = await legacyDb.insert('files', {'path': '/a.jpg'});
+
+      await AppSchema.migrateV4AddGpsToFiles(legacyDb);
+
+      final rows = await legacyDb.query('files', where: 'id = ?', whereArgs: [fileId]);
+      expect(rows, hasLength(1));
+      expect(rows.first['path'], '/a.jpg');
+      expect(rows.first.containsKey('gps_lat'), isTrue);
+      expect(rows.first['gps_lat'], isNull);
+    });
+
+    test('gps columns accept values after migration', () async {
+      await AppSchema.migrateV4AddGpsToFiles(legacyDb);
+
+      await legacyDb.insert('files', {'path': '/gps.jpg', 'gps_lat': 27.47, 'gps_lng': 153.02});
+
+      final rows = await legacyDb.query('files', where: 'path = ?', whereArgs: ['/gps.jpg']);
+      expect(rows.first['gps_lat'], 27.47);
+      expect(rows.first['gps_lng'], 153.02);
+    });
+  });
+
+  group('AppSchema.migrateV5AddFileTagsIndices', () {
+    late Database legacyDb;
+
+    setUp(() async {
+      // Simulate a pre-v5 file_tags table: created without its indices.
+      legacyDb = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          singleInstance: false,
+          onCreate: (d, _) => d.execute(AppSchema.createFileTags),
+        ),
+      );
+    });
+
+    tearDown(() => legacyDb.close());
+
+    test('adds the file_tags indices', () async {
+      final before = await legacyDb.rawQuery(
+        "select name from sqlite_master where type='index' and name not like 'sqlite_%'",
+      );
+      expect(before, isEmpty);
+
+      await AppSchema.migrateV5AddFileTagsIndices(legacyDb);
+
+      final after = await legacyDb.rawQuery(
+        "select name from sqlite_master where type='index' and name not like 'sqlite_%'",
+      );
+      final names = after.map((r) => r['name'] as String).toSet();
+      expect(names, containsAll({'file_tags_file_idx', 'file_tags_tag_idx'}));
+    });
+
+    test('is idempotent — can be called twice without error', () async {
+      await AppSchema.migrateV5AddFileTagsIndices(legacyDb);
+      await expectLater(AppSchema.migrateV5AddFileTagsIndices(legacyDb), completes);
     });
   });
 

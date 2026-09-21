@@ -11,8 +11,8 @@ extension StringFuncs on String {
   String trimCharLeft(String pattern) {
     if (isEmpty || pattern.isEmpty || pattern.length > length) return this;
     var tmp = this;
-    while (tmp.startsWith(pattern)) {
-      tmp = substring(pattern.length);
+    while (tmp.length >= pattern.length && tmp.startsWith(pattern)) {
+      tmp = tmp.substring(pattern.length);
     }
     return tmp;
   }
@@ -20,8 +20,8 @@ extension StringFuncs on String {
   String trimCharRight(String pattern) {
     if (isEmpty || pattern.isEmpty || pattern.length > length) return this;
     var tmp = this;
-    while (tmp.endsWith(pattern)) {
-      tmp = substring(0, length - pattern.length);
+    while (tmp.length >= pattern.length && tmp.endsWith(pattern)) {
+      tmp = tmp.substring(0, tmp.length - pattern.length);
     }
     return tmp;
   }
