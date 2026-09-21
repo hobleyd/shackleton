@@ -16,7 +16,10 @@ class Exif extends _$Exif {
     ref.keepAlive();
     _exif = ref.read(exifToolServiceProvider);
     _notify = ref.read(notifyProvider.notifier);
-    loadExifTags(path);
+    // Deferred: when exiftool is missing, loadExifTags notifies synchronously
+    // (no await before it), which would otherwise mutate notifyProvider
+    // while this provider is still building -- not allowed by Riverpod.
+    Future(() => loadExifTags(path));
     return const {};
   }
 
