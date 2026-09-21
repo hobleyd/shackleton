@@ -13,6 +13,12 @@ analyzer:
     - macos/**
 include: package:flutter_lints/flutter.yaml
 
+# riverpod_lint is implemented via the native analysis_server_plugin system
+# (no separate custom_lint package needed for this version) -- installed by
+# listing it here, matching the version pinned in pubspec.yaml/pubspec.lock.
+plugins:
+  riverpod_lint: 3.1.9
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

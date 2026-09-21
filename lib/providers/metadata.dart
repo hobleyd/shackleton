@@ -1,4 +1,5 @@
 import 'package:latlong2/latlong.dart';
+import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../application/exceptions.dart';
@@ -36,6 +37,7 @@ class Metadata extends _$Metadata {
     return const FileMetaData(entity: null, tags: []);
   }
 
+  @visibleForTesting
   bool get hasExifTool => _exif.findExifTool() != null;
 
   bool contains(Tag tag) => state.contains(tag);

@@ -52,6 +52,9 @@ void main() {
     test('marks a non-media file as not importable regardless of exiftool', () async {
       final textFile = FileOfInterest(entity: File('${tempDir.path}/notes.txt')..writeAsBytesSync([]));
 
+      // A fresh Set literal has no custom ==, unlike production callers which
+      // always pass the Set already held by selectedFolderContentsProvider.
+      // ignore: riverpod_lint/provider_parameters
       final result = await container.read(importProvider({textFile}).future);
 
       expect(result, hasLength(1));

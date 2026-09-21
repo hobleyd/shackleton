@@ -15,7 +15,7 @@ import '../models/tag.dart';
 
 part 'file_tags_repository.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FileTagsRepository extends _$FileTagsRepository implements IFileTagsRepository {
   late final AppDatabase _db;
 
@@ -39,7 +39,6 @@ class FileTagsRepository extends _$FileTagsRepository implements IFileTagsReposi
 
   @override
   Future<List<Tag>> build() {
-    ref.keepAlive();
     ref.onDispose(() => _tagListDebounce?.cancel());
     _db = ref.read(appDatabaseProvider.notifier);
     return getTags();

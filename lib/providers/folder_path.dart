@@ -9,7 +9,7 @@ import 'file_events.dart';
 
 part 'folder_path.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FolderPath extends _$FolderPath implements FileEventsCallback {
   @override
   List<Directory> build() {

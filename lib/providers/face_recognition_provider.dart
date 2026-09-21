@@ -281,6 +281,10 @@ class FaceSearch extends _$FaceSearch {
       await tagsRepo.addTagToFile(file.path, name);
 
       if (ref.exists(metadataProvider(file))) {
+        // metadataProvider is deliberately conditionally-alive (auto-disposed
+        // for off-screen items); this only touches an already-built instance
+        // (guarded by ref.exists) and doesn't force it to stay alive.
+        // ignore: riverpod_lint/only_use_keep_alive_inside_keep_alive
         ref.read(metadataProvider(file).notifier).updateTagsFromString(name, updateFile: false);
       }
 

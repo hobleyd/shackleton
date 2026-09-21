@@ -19,5 +19,12 @@ jobs:
 
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
-      - run: flutter analyze
+      # dart analyze (not flutter analyze) is what actually loads the
+      # riverpod_lint analyzer plugin configured in analysis_options.yaml --
+      # flutter analyze silently skips plugin-based diagnostics. It also
+      # covers everything flutter analyze does (same flutter_lints rule set),
+      # so this replaces rather than supplements that step. --fatal-infos
+      # matches flutter analyze's stricter default (dart analyze's own
+      # default only fails on warnings/errors).
+      - run: dart analyze --fatal-infos
       - run: flutter test

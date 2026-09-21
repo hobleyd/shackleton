@@ -10,7 +10,7 @@ import '../providers/shackleton_theme.dart';
 
 part 'app_settings_repository.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppSettingsRepository extends _$AppSettingsRepository implements IAppSettingsRepository {
   static const String tableName = 'app_settings';
 
@@ -19,7 +19,6 @@ class AppSettingsRepository extends _$AppSettingsRepository implements IAppSetti
 
   @override
   Future<AppSettings> build() {
-    ref.keepAlive();
     _db = ref.read(appDatabaseProvider.notifier);
     _theme = ref.read(shackletonThemeProvider.notifier);
     return getSettings();
