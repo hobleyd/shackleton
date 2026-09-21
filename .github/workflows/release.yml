@@ -4,13 +4,45 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  # Gates everything below: prepare/build-*/deploy all need this (directly
+  # or transitively via prepare), so a failure here stops the release before
+  # any platform build starts, the same shape nightmail's release.yml uses.
+  analyze-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: false
+
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      # dart analyze (not flutter analyze) is what actually loads the
+      # riverpod_lint analyzer plugin configured in analysis_options.yaml --
+      # flutter analyze silently skips plugin-based diagnostics. It also
+      # covers everything flutter analyze does (same flutter_lints rule set),
+      # so this replaces rather than supplements that step. --fatal-infos
+      # matches flutter analyze's stricter default (dart analyze's own
+      # default only fails on warnings/errors).
+      - run: dart analyze --fatal-infos
+      - run: flutter test
+
   prepare:
+    needs: analyze-and-test
+    # Release jobs only make sense off a real commit on main (push) or a
+    # manual re-run (workflow_dispatch); a pull_request event only needs the
+    # test job above, so prepare (and everything that needs it, transitively)
+    # skips there.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
