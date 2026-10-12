@@ -12,7 +12,14 @@ class RotateImageUseCase {
   Future<Uint8List?> execute(FileOfInterest entity, int degrees) async {
     final imageFile = entity.entity as File;
     final originalBytes = await imageFile.readAsBytes();
-    final decoded = img.decodeImage(originalBytes);
+    // Newer versions of package:image throw on unrecognised/corrupt data
+    // rather than returning null, so treat both as "cannot be decoded".
+    final img.Image? decoded;
+    try {
+      decoded = img.decodeImage(originalBytes);
+    } on img.ImageException {
+      return null;
+    }
     if (decoded == null) return null;
 
     final rotated = img.copyRotate(decoded, angle: degrees);
