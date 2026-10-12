@@ -14,7 +14,7 @@ dependencies:
   collection: ^1.18.0
   convert: ^3.1.2
   crypto: ^3.0.5
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   device_info_plus: ^11.5.0
   exif: ^3.3.0
   ffi: ^2.1.4
