@@ -261,10 +261,10 @@ packages:
     dependency: "direct main"
     description:
       name: desktop_updater
-      sha256: "9b4aec9683fb6ccc75f2b13a02036694a4718945b47b064eda2f696a77b820d3"
+      sha256: "33e9fba27871d5756cc8179d1570ecec94459dbfbcec2d5079c13008e7e0a87f"
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.1"
+    version: "3.2.3"
   device_info_plus:
     dependency: "direct main"
     description:
