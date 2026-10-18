@@ -51,7 +51,7 @@ dependencies:
   super_drag_and_drop: ^0.9.1
   super_native_extensions: ^0.9.1
   syncfusion_flutter_gauges: ^35.1.39
-  synchronized: ^3.2.0
+  synchronized: ^3.5.0
   universal_disk_space: ^0.2.3
   url_launcher: ^6.3.1
   desktop_multi_window: ^0.3.0
