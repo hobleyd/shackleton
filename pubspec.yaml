@@ -43,7 +43,7 @@ dependencies:
   path: ^1.9.0
   path_provider: ^2.1.4
   pdfrx: ^2.4.2
-  process_run: ^1.2.2
+  process_run: ^1.4.1
   riverpod_annotation: ^4.0.2
   scrollable_positioned_list: ^0.3.8
   sqflite_common_ffi: ^2.4.5
