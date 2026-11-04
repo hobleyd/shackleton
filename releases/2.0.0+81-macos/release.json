@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 3,
+  "packageId": "au.com.sharpblue.shackleton",
+  "appName": "shackleton",
+  "version": "2.0.0",
+  "buildNumber": 81,
+  "platform": "macos",
+  "channel": "stable",
+  "artifact": {
+    "kind": "zip",
+    "url": "https://hobleyd.github.io/shackleton/releases/2.0.0+81-macos/shackleton-2.0.0-macos.zip",
+    "sha256": "d851bf7dce43068e3bb851c96cfdc5dcd3929f87d2d8f4503f0854fc618bb662",
+    "length": 83050743
+  },
+  "install": {
+    "strategy": "wholeBundleReplace"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "publicKeyId": "release-36d0e245a3e6de1d34242aa0",
+    "value": "KP/5OMUoy4qM2NogV6Klc0c/McWwNispO4rnpoHAUznvzjcgXYYVc+PTF+4KWwQ0KDugxWXojf60dze+p4ZbAg=="
+  },
+  "minimumUpdaterVersion": "2.0.0",
+  "generatedAt": "2026-11-04T07:05:41.380521Z"
+}
