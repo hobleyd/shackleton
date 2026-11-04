@@ -92,9 +92,10 @@ jobs:
         env:
           MACOS_CERT_P12_B64: ${{ secrets.MACOS_CERT_P12 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          # The keychain only lives for this job, so any random password will do.
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 24)
           echo "$MACOS_CERT_P12_B64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -143,9 +144,9 @@ jobs:
       - name: Notarize and staple
         if: ${{ env.HAS_SIGNING_CERT == 'true' }}
         env:
-          NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
-          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+          NOTARY_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/shackleton.app"
           echo "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary_key.p8"
