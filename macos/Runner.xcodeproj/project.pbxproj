@@ -348,6 +348,7 @@
 			inputPaths = (
 				"$(PROJECT_DIR)/embed_update_helper.sh",
 				"$(PROJECT_DIR)/Runner/DesktopUpdaterHelperPolicy.json",
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "Embed Desktop Updater Install Helper";
 			outputFileListPaths = (
