@@ -985,10 +985,10 @@ packages:
     dependency: "direct main"
     description:
       name: process_run
-      sha256: "4818d891c15347d84abb67319f18ed605cd5710e50a2fe82822e8f3b6b9295d2"
+      sha256: "38569f39f8057275d6832a25f985fbea23d251a905270eacdfc6c86437282224"
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.1"
+    version: "1.4.2"
   proj4dart:
     dependency: transitive
     description:
