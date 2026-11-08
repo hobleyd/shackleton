@@ -59,7 +59,7 @@ dependencies:
   package_info_plus: ^9.0.0
   pro_image_editor: ^14.3.0
   version: ^3.0.2
-  window_manager: ^0.5.1
+  window_manager: ^0.6.0
   win32: ^5.15.0
 
 dev_dependencies:
