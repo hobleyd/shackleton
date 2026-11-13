@@ -203,7 +203,7 @@ jobs:
             "$APP_DIR/$APP_BUNDLE_NAME"
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v3.0.4
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
@@ -280,7 +280,7 @@ jobs:
           VERSION: ${{ needs.prepare.outputs.version }}
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v3.0.4
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
@@ -384,7 +384,7 @@ jobs:
           snapcraft --destructive-mode
 
       - name: Upload Snap to GitHub Release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@v3.0.4
         with:
           name: 'shackleton-${{ needs.prepare.outputs.version }}'
           tag_name: ${{ needs.prepare.outputs.version }}
